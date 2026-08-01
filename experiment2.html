@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 2</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Virtual Laboratory</h1>
+            <div class="subtitle">Computer Networks Lab</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div>
+                <label for="global-difficulty" style="margin-right: 0.5rem; font-weight: 500;">Difficulty:</label>
+                <select id="global-difficulty" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #CBD5E1;">
+                    <option value="beginner">Beginner (Guided)</option>
+                    <option value="intermediate">Intermediate (No Hints)</option>
+                    <option value="advanced">Advanced (Timed)</option>
+                </select>
+            </div>
+            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 2</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Simulation</h2>
+                    <p>Select a module to interact with the virtual environment.</p>
+                    
+                    <div class="sim-container">
+                        <!-- Module 1: Interactive Cable Configuration (T568B) -->
+                        <div class="card">
+                            <h3>Module 1: Cable Pin Configuration (T568B)</h3>
+                            <p>Drag and drop the colored wires into the correct RJ-45 pins to build a T568B Straight-Through cable.</p>
+                            
+                            <div class="pinout-container" style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                                <!-- Wires Source -->
+                                <div id="wire-source" style="display: flex; flex-direction: column; gap: 0.5rem; width: 150px;">
+                                    <div class="wire-item" draggable="true" id="wire-ow" data-color="ow" style="background: linear-gradient(90deg, #F97316 50%, white 50%); border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Orange-White</div>
+                                    <div class="wire-item" draggable="true" id="wire-o" data-color="o" style="background: #F97316; color: white; border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Orange</div>
+                                    <div class="wire-item" draggable="true" id="wire-gw" data-color="gw" style="background: linear-gradient(90deg, #10B981 50%, white 50%); border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Green-White</div>
+                                    <div class="wire-item" draggable="true" id="wire-bl" data-color="bl" style="background: #3B82F6; color: white; border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Blue</div>
+                                    <div class="wire-item" draggable="true" id="wire-blw" data-color="blw" style="background: linear-gradient(90deg, #3B82F6 50%, white 50%); border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Blue-White</div>
+                                    <div class="wire-item" draggable="true" id="wire-g" data-color="g" style="background: #10B981; color: white; border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Green</div>
+                                    <div class="wire-item" draggable="true" id="wire-brw" data-color="brw" style="background: linear-gradient(90deg, #8B5A2B 50%, white 50%); border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Brown-White</div>
+                                    <div class="wire-item" draggable="true" id="wire-br" data-color="br" style="background: #8B5A2B; color: white; border: 1px solid #ccc; padding: 0.5rem; text-align: center; cursor: grab;">Brown</div>
+                                </div>
+                                
+                                <!-- RJ45 Connector Slots -->
+                                <div style="flex: 1; display: flex; flex-direction: column; max-width: 600px;">
+                                    <!-- RJ45 Top (Gold Pins & Plastic Clip) -->
+                                    <div style="width: 100%; height: 60px; background: #F1F5F9; border: 4px solid #94A3B8; border-bottom: none; border-radius: 12px 12px 0 0; display: flex; justify-content: space-evenly; align-items: flex-end; padding: 0 0.5rem; position: relative; z-index: 2;">
+                                        <!-- Plastic Clip -->
+                                        <div style="position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 60px; height: 20px; background: #F1F5F9; border: 4px solid #94A3B8; border-bottom: none; border-radius: 8px 8px 0 0;"></div>
+                                        
+                                        <!-- 8 Gold Pins -->
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                        <div style="width: 12px; height: 40px; background: linear-gradient(to bottom, #FBBF24, #D97706); border-radius: 2px 2px 0 0;"></div>
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 0.5rem; background: #F8FAFC; padding: 1rem 0.5rem; border-radius: 0 0 12px 12px; border: 4px solid #94A3B8; border-top: none; position: relative; overflow: hidden;">
+                                        <div class="pin-slot" data-pin="1" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 1</div>
+                                        <div class="pin-slot" data-pin="2" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 2</div>
+                                        <div class="pin-slot" data-pin="3" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 3</div>
+                                        <div class="pin-slot" data-pin="4" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 4</div>
+                                        <div class="pin-slot" data-pin="5" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 5</div>
+                                        <div class="pin-slot" data-pin="6" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 6</div>
+                                        <div class="pin-slot" data-pin="7" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 7</div>
+                                        <div class="pin-slot" data-pin="8" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 8</div>
+                                    </div>
+                                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                                        <button class="btn" id="crimp-pinout" style="background-color: var(--primary-color);">Crimp Connector</button>
+                                        <button class="btn" id="reset-pinout" style="background: var(--secondary-color);">Reset Wires</button>
+                                        <p id="pinout-feedback" style="font-weight: bold;"></p>
+                                    </div>
+                                    
+                                    <!-- Cable Tester UI -->
+                                    <div id="cable-tester" style="display: none; margin-top: 2rem; background: #1F2937; padding: 1.5rem; border-radius: 8px; color: white; width: 100%;">
+                                        <h4 style="margin-bottom: 1rem; text-align: center; border-bottom: 1px solid #374151; padding-bottom: 0.5rem;">Cable Tester</h4>
+                                        <div style="display: flex; justify-content: space-around;">
+                                            <div style="text-align: center;">
+                                                <div id="led-1" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 1</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-2" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 2</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-3" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 3</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-4" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 4</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-5" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 5</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-6" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 6</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-7" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 7</span>
+                                            </div>
+                                            <div style="text-align: center;">
+                                                <div id="led-8" style="width: 20px; height: 20px; border-radius: 50%; background: #4B5563; margin: 0 auto 0.5rem auto;"></div>
+                                                <span>Pin 8</span>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: center; margin-top: 1.5rem;">
+                                            <button class="btn" id="run-test" style="background-color: #059669; width: 100%;">Run Test</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Module 2: Device Connectivity -->
+                        <div class="card">
+                            <h3>Module 2: Device Connectivity</h3>
+                            <p>Select the correct cable to connect a <strong>PC</strong> directly to another <strong>PC</strong>:</p>
+                            <select id="connectivity-select" style="padding: 0.5rem; font-family: inherit; margin-top: 1rem;">
+                                <option value="">-- Select Cable --</option>
+                                <option value="straight">Straight-Through Cable</option>
+                                <option value="crossover">Crossover Cable</option>
+                                <option value="fiber">Fiber Optic</option>
+                            </select>
+                            <p id="connectivity-feedback" style="margin-top: 0.5rem;"></p>
+                        </div>
+
+                        <!-- Module 3: Device Topology Builder -->
+                        <div class="card">
+                            <h3>Module 3: Device Topology Builder</h3>
+                            <p>Drag devices into the workspace. Use Connect Mode to cable them together with the appropriate cable type!</p>
+                            <div class="dnd-container" style="flex-direction: column;">
+                                <div style="display: flex; gap: 1rem; align-items: center;" id="topo-tools">
+                                    <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc">
+                                        <img src="assets/icons/pc.svg" width="32" height="32" alt="PC"><br>PC
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-switch" data-type="Switch" data-icon="switch">
+                                        <img src="assets/icons/switch.svg" width="32" height="32" alt="Switch"><br>Switch
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router">
+                                        <img src="assets/icons/router.svg" width="32" height="32" alt="Router"><br>Router
+                                    </div>
+                                    <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 1rem;"></div>
+                                    <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color);">
+                                        <i data-lucide="link"></i> Enable Connect Mode
+                                    </button>
+                                    <select id="cable-type-select" style="padding: 0.5rem; font-family: inherit; margin-left: 0.5rem; display: none;">
+                                        <option value="straight">Straight-Through</option>
+                                        <option value="crossover">Crossover</option>
+                                    </select>
+                                </div>
+                                <div class="topology-canvas" id="topology-canvas">
+                                    <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    <!-- Nodes will be dropped here -->
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                    <button class="btn" id="check-topology">Check Topology</button>
+                                    <button class="btn" id="reset-topology" style="background-color: var(--secondary-color);">Reset</button>
+                                    <button class="btn" id="send-ping" style="background-color: #8B5CF6; display: none;"><i data-lucide="radio"></i> Send Ping</button>
+                                </div>
+                                <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
+                                
+                                <div id="ping-stats" style="display: none; margin-top: 1rem; padding: 1rem; background: #F1F5F9; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                    <h4 style="margin-bottom: 0.5rem;">Ping Statistics</h4>
+                                    <div style="display: flex; justify-content: space-between; font-family: monospace;">
+                                        <div>Packets Sent: <span id="stat-sent">0</span></div>
+                                        <div>Received: <span id="stat-received">0</span></div>
+                                        <div>Lost: <span id="stat-lost" style="color: #EF4444;">0</span></div>
+                                        <div>Success: <span id="stat-rate">0%</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <p id="result-text">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Questions</h2>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results"></div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Jashwanth B</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 2</h3>
+                <p style="margin-bottom: 2rem;">Straight-through and Cross-over Cabling</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/platform-manager.js"></script>
+    <script src="modules/timer.js"></script>
+    <script src="data/experiment2.js"></script>
+    <script src="modules/pinout-builder.js"></script>
+    <script src="modules/packet-tracer.js"></script>
+    <script src="modules/commands.js"></script>
+    <script src="modules/cables.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/packet-animation.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

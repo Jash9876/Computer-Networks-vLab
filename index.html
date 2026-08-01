@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 1</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Virtual Laboratory</h1>
+            <div class="subtitle">Computer Networks Lab</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div>
+                <label for="global-difficulty" style="margin-right: 0.5rem; font-weight: 500;">Difficulty:</label>
+                <select id="global-difficulty" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #CBD5E1;">
+                    <option value="beginner">Beginner (Guided)</option>
+                    <option value="intermediate">Intermediate (No Hints)</option>
+                    <option value="advanced">Advanced (Timed)</option>
+                </select>
+            </div>
+            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 1</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Simulation</h2>
+                    <p>Select a module to interact with the virtual environment.</p>
+                    
+                    <div class="sim-container">
+                        <!-- Module 1: Packet Tracer Explorer -->
+                        <div class="card">
+                            <h3>Module 1: Packet Tracer Explorer</h3>
+                            <div class="pt-explorer" id="pt-explorer">
+                                <div class="pt-menu-bar" data-info="Menu Bar: Contains options for File, Edit, Options, View, Tools, Extensions, Window, and Help.">File | Edit | Options | View | Tools | Help</div>
+                                <div class="pt-main-area">
+                                    <div class="pt-device-panel" data-info="Device Panel: Contains categories of network devices like Routers, Switches, Hubs, Wireless Devices, Connections, and End Devices.">
+                                        <br>Devices<br><br>Routers<br>Switches<br>PCs<br>Cables
+                                    </div>
+                                    <div class="pt-workspace" data-info="Workspace: The logical or physical layout area where you construct your network topology by dragging and dropping devices.">
+                                        Logical Workspace<br>(Click areas to learn more)
+                                    </div>
+                                </div>
+                                <div class="pt-bottom-bar">
+                                    <span class="pt-mode" data-info="Realtime Mode: Simulates the network running in real-time, just like real devices.">Realtime</span>
+                                    <span class="pt-mode" data-info="Simulation Mode: Allows you to view packets flowing through the network step-by-step for troubleshooting.">Simulation</span>
+                                </div>
+                            </div>
+                            <div class="info-panel" id="pt-info">
+                                Click on the different regions of the Packet Tracer window above to explore the UI.
+                            </div>
+                        </div>
+
+                        <!-- Module 2: Command Simulator -->
+                        <div class="card">
+                            <h3>Module 2: Command Simulator</h3>
+                            <p>Try running commands: <code>ping google.com</code>, <code>tracert google.com</code>, <code>arp -a</code>, <code>netstat</code>, <code>ssh user@host</code>, <code>nslookup example.com</code></p>
+                            <div class="terminal" id="terminal">
+                                <div class="terminal-output" id="terminal-output">Welcome to Virtual Lab Terminal Simulator. Type 'help' for commands.</div>
+                                <div class="terminal-input-line">
+                                    <span class="terminal-prompt">C:\&gt;</span>
+                                    <input type="text" class="terminal-input" id="terminal-input" autocomplete="off" spellcheck="false" autofocus>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Module 3: Cable Identification -->
+                        <div class="card">
+                            <h3>Module 3: Cable Identification</h3>
+                            
+                            <h4>Stage 1: Identification</h4>
+                            <p>Match the cable type to its correct description.</p>
+                            <div class="dnd-container">
+                                <div class="draggable-items" id="cable-drag-items">
+                                    <div class="draggable-item" draggable="true" id="cable-rj45" data-name="RJ-45 (UTP)">
+                                        <img src="assets/icons/rj45.svg" width="40" height="40" alt="RJ-45"><br>RJ-45 (UTP)
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="cable-fiber" data-name="Fiber Optic">
+                                        <img src="assets/icons/fiber.svg" width="40" height="40" alt="Fiber"><br>Fiber Optic
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="cable-coaxial" data-name="Coaxial Cable">
+                                        <img src="assets/icons/coaxial.svg" width="40" height="40" alt="Coaxial"><br>Coaxial Cable
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="cable-bnc" data-name="BNC Connector">
+                                        <img src="assets/icons/bnc.svg" width="40" height="40" alt="BNC"><br>BNC Connector
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="cable-rj11" data-name="RJ-11 Connector">
+                                        <img src="assets/icons/rj11.svg" width="40" height="40" alt="RJ-11"><br>RJ-11 Connector
+                                    </div>
+                                </div>
+                                <div class="drop-zones" id="cable-drop-zones">
+                                    <div class="drop-zone" data-target="cable-fiber">
+                                        <span>Uses light to transmit information. Core is made of glass.</span>
+                                        <div class="drop-target">Drop here</div>
+                                    </div>
+                                    <div class="drop-zone" data-target="cable-coaxial">
+                                        <span>Copper wire surrounded by plastic, metal mesh, and protective plastic.</span>
+                                        <div class="drop-target">Drop here</div>
+                                    </div>
+                                    <div class="drop-zone" data-target="cable-rj45">
+                                        <span>8-wire connector used to connect computers.</span>
+                                        <div class="drop-target">Drop here</div>
+                                    </div>
+                                    <div class="drop-zone" data-target="cable-bnc">
+                                        <span>British Naval Connector used with coaxial cables.</span>
+                                        <div class="drop-target">Drop here</div>
+                                    </div>
+                                    <div class="drop-zone" data-target="cable-rj11">
+                                        <span>Registered jack 11, used on modern telephone lines.</span>
+                                        <div class="drop-target">Drop here</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 style="margin-top: 2rem;">Stage 2: Pin Configuration</h4>
+                            <p>Which wiring standard uses Orange-White, Orange, Green-White, Blue, Blue-White, Green, Brown-White, Brown?</p>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <button class="btn pin-btn" data-correct="true">T568B</button>
+                                <button class="btn pin-btn" data-correct="false">T568A</button>
+                                <button class="btn pin-btn" data-correct="false">Crossover</button>
+                            </div>
+                            <p id="pin-feedback" style="margin-top: 0.5rem;"></p>
+
+                            <h4 style="margin-top: 2rem;">Stage 3: Device Connectivity</h4>
+                            <p>Select the correct cable to connect a <strong>PC</strong> directly to another <strong>PC</strong>:</p>
+                            <select id="connectivity-select" style="padding: 0.5rem; font-family: inherit; margin-top: 1rem;">
+                                <option value="">-- Select Cable --</option>
+                                <option value="straight">Straight-Through Cable</option>
+                                <option value="crossover">Crossover Cable</option>
+                                <option value="fiber">Fiber Optic</option>
+                            </select>
+                            <p id="connectivity-feedback" style="margin-top: 0.5rem;"></p>
+                        </div>
+
+                        <!-- Module 4: Device Topology Builder -->
+                        <div class="card">
+                            <h3>Module 4: Device Topology Builder</h3>
+                            <p>Drag devices into the workspace to build a simple topology.</p>
+                            <div class="dnd-container" style="flex-direction: column;">
+                                <div style="display: flex; gap: 1rem; align-items: center;" id="topo-tools">
+                                    <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc">
+                                        <img src="assets/icons/pc.svg" width="32" height="32" alt="PC"><br>PC
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-switch" data-type="Switch" data-icon="switch">
+                                        <img src="assets/icons/switch.svg" width="32" height="32" alt="Switch"><br>Switch
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router">
+                                        <img src="assets/icons/router.svg" width="32" height="32" alt="Router"><br>Router
+                                    </div>
+                                    <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 1rem;"></div>
+                                    <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color);">
+                                        <i data-lucide="link"></i> Enable Connect Mode
+                                    </button>
+                                    <select id="cable-type-select" style="padding: 0.5rem; font-family: inherit; margin-left: 0.5rem; display: none;">
+                                        <option value="straight">Straight-Through</option>
+                                        <option value="crossover">Crossover</option>
+                                    </select>
+                                </div>
+                                <div class="topology-canvas" id="topology-canvas">
+                                    <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    <!-- Nodes will be dropped here -->
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                    <button class="btn" id="check-topology">Check Topology</button>
+                                    <button class="btn" id="reset-topology" style="background-color: var(--secondary-color);">Reset</button>
+                                    <button class="btn" id="send-ping" style="background-color: #8B5CF6; display: none;"><i data-lucide="radio"></i> Send Ping</button>
+                                </div>
+                                <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
+                                
+                                <div id="ping-stats" style="display: none; margin-top: 1rem; padding: 1rem; background: #F1F5F9; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                    <h4 style="margin-bottom: 0.5rem;">Ping Statistics</h4>
+                                    <div style="display: flex; justify-content: space-between; font-family: monospace;">
+                                        <div>Packets Sent: <span id="stat-sent">0</span></div>
+                                        <div>Received: <span id="stat-received">0</span></div>
+                                        <div>Lost: <span id="stat-lost" style="color: #EF4444;">0</span></div>
+                                        <div>Success: <span id="stat-rate">0%</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <p id="result-text">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Questions</h2>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results"></div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Jashwanth B</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 1</h3>
+                <p style="margin-bottom: 2rem;">Introduction to Packet Tracer,<br>Networking Commands,<br>and Study of Network Cables</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/platform-manager.js"></script>
+    <script src="modules/timer.js"></script>
+    <script src="data/experiment1.js"></script>
+    <script src="modules/packet-tracer.js"></script>
+    <script src="modules/commands.js"></script>
+    <script src="modules/cables.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/packet-animation.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

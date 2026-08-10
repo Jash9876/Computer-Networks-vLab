@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             node.style.top = `${Math.max(0, Math.min(y, canvas.clientHeight - 60))}px`;
             node.id = id;
             
-            nodes[id] = { element: node, type: type, x: x+30, y: y+30 };
+            nodes[id] = { element: node, type: type, x: x+30, y: y+30, ip: '', subnet: '', gateway: '', dns: '' };
             
             makeNodeInteractive(node, id);
             canvas.appendChild(node);
@@ -149,17 +149,33 @@ document.addEventListener('DOMContentLoaded', () => {
         
         node.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            // Remove node
-            node.remove();
-            delete nodes[id];
-            
-            // Remove connected edges
-            for (let i = edges.length - 1; i >= 0; i--) {
-                if (edges[i].sourceId === id || edges[i].targetId === id) {
-                    edges.splice(i, 1);
+            if (document.title.includes('Exercise 2') && nodes[id].type === 'PC') {
+                // Open IP Config Modal
+                const modal = document.getElementById('ip-config-modal');
+                if (modal) {
+                    document.getElementById('ip-config-device-name').textContent = `Configuration for ${id}`;
+                    document.getElementById('ip-address-input').value = nodes[id].ip || '';
+                    document.getElementById('subnet-mask-input').value = nodes[id].subnet || '';
+                    document.getElementById('gateway-input').value = nodes[id].gateway || '';
+                    document.getElementById('dns-input').value = nodes[id].dns || '';
+                    document.getElementById('ip-config-error').textContent = '';
+                    
+                    document.getElementById('save-ip-config').setAttribute('data-node-id', id);
+                    modal.style.display = 'flex';
                 }
+            } else {
+                // Remove node
+                node.remove();
+                delete nodes[id];
+                
+                // Remove connected edges
+                for (let i = edges.length - 1; i >= 0; i--) {
+                    if (edges[i].sourceId === id || edges[i].targetId === id) {
+                        edges.splice(i, 1);
+                    }
+                }
+                drawConnections();
             }
-            drawConnections();
         });
 
         node.addEventListener('mouseup', (e) => {
@@ -248,55 +264,248 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if(checkBtn) {
-        checkBtn.addEventListener('click', () => {
-            // We need a PC connected to a Switch, and Switch connected to Router
-            let pcId = null, switchId = null, routerId = null;
-            Object.keys(nodes).forEach(k => {
-                if(nodes[k].type === 'PC') pcId = k;
-                if(nodes[k].type === 'Switch') switchId = k;
-                if(nodes[k].type === 'Router') routerId = k;
-            });
-
-            if (!pcId || !switchId || !routerId) {
-                feedback.style.color = 'var(--text-main)';
-                feedback.textContent = 'Please place at least a PC, a Switch, and a Router on the canvas.';
+    // IP Config Modal Logic
+    const ipModal = document.getElementById('ip-config-modal');
+    if (ipModal) {
+        document.getElementById('close-ip-config').addEventListener('click', () => {
+            ipModal.style.display = 'none';
+        });
+        document.getElementById('save-ip-config').addEventListener('click', () => {
+            const id = document.getElementById('save-ip-config').getAttribute('data-node-id');
+            const ip = document.getElementById('ip-address-input').value.trim();
+            const subnet = document.getElementById('subnet-mask-input').value.trim();
+            const gateway = document.getElementById('gateway-input').value.trim();
+            const dns = document.getElementById('dns-input').value.trim();
+            
+            const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (!ip || !ipRegex.test(ip)) {
+                document.getElementById('ip-config-error').textContent = 'Invalid IP Address format.';
                 return;
             }
+            if (!subnet || !ipRegex.test(subnet)) {
+                document.getElementById('ip-config-error').textContent = 'Invalid Subnet Mask format.';
+                return;
+            }
+            
+            nodes[id].ip = ip;
+            nodes[id].subnet = subnet;
+            nodes[id].gateway = gateway;
+            nodes[id].dns = dns;
+            
+            ipModal.style.display = 'none';
+            if (typeof addObservation === 'function') addObservation("IP Config", `Configured ${id} with IP ${ip}`, "Success");
+        });
+    }
 
-            const getEdge = (id1, id2) => {
-                return edges.find(e => (e.sourceId === id1 && e.targetId === id2) || (e.sourceId === id2 && e.targetId === id1));
-            };
+    if(checkBtn) {
+        checkBtn.addEventListener('click', () => {
+            feedback.style.color = 'var(--text-main)';
+            const pingBtn = document.getElementById('send-ping');
+            if (pingBtn) pingBtn.style.display = 'none';
 
-            const pcToSwitchEdge = getEdge(pcId, switchId);
-            const switchToRouterEdge = getEdge(switchId, routerId);
-            const pcToRouterEdge = getEdge(pcId, routerId);
-
-            if (pcToSwitchEdge && switchToRouterEdge && !pcToRouterEdge) {
-                // Verify cables
-                if (pcToSwitchEdge.cableType === 'straight' && switchToRouterEdge.cableType === 'straight') {
-                    feedback.style.color = '#059669';
-                    feedback.textContent = 'Excellent! You successfully cabled a basic LAN. (PC ↔ Switch ↔ Router) using correct Straight-through cables.';
-                    if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Success");
-                    
-                    // Reveal Send Ping button
-                    const pingBtn = document.getElementById('send-ping');
-                    if (pingBtn) pingBtn.style.display = 'inline-block';
-                    
-                    // Mark global completion for Exp 1
-                    if (typeof PlatformManager !== 'undefined' && !document.getElementById('crimp-pinout')) {
-                        PlatformManager.markCompleted(1, 100);
+            if (document.title.includes('Exercise 2')) {
+                // Exp 2 Validation (P2P or LAN)
+                let pcs = [], switches = [], routers = [];
+                Object.keys(nodes).forEach(k => {
+                    if (nodes[k].type === 'PC') pcs.push(k);
+                    if (nodes[k].type === 'Switch') switches.push(k);
+                    if (nodes[k].type === 'Router') routers.push(k);
+                });
+                
+                const getEdge = (id1, id2) => edges.find(e => (e.sourceId === id1 && e.targetId === id2) || (e.sourceId === id2 && e.targetId === id1));
+                
+                if (pcs.length === 2 && switches.length === 0 && routers.length === 0) {
+                    const edge = getEdge(pcs[0], pcs[1]);
+                    if (!edge) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Devices are not physically connected.';
+                        return;
                     }
+                    if (edge.cableType !== 'crossover') {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Incorrect cable selected for PC-to-PC connection. (Requires Crossover)';
+                        return;
+                    }
+                    if (!nodes[pcs[0]].ip || !nodes[pcs[1]].ip) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'IP addresses not configured. Double-click the PCs to set their IPs.';
+                        return;
+                    }
+                    if (nodes[pcs[0]].subnet !== nodes[pcs[1]].subnet) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Devices belong to different subnets.';
+                        return;
+                    }
+                    
+                    feedback.style.color = '#059669';
+                    feedback.textContent = 'Topology and IP Configuration Correct! Ready to ping.';
+                    if (pingBtn) pingBtn.style.display = 'inline-block';
+                    window.exp2PingData = { targetIp: nodes[pcs[1]].ip, sourceId: pcs[0], targetId: pcs[1] };
+                    
+                } else if (pcs.length === 2 && switches.length === 1 && routers.length === 0) {
+                    const edge1 = getEdge(pcs[0], switches[0]);
+                    const edge2 = getEdge(pcs[1], switches[0]);
+                    
+                    if (!edge1 || !edge2) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Devices are not physically connected correctly to the Switch.';
+                        return;
+                    }
+                    if (edge1.cableType !== 'straight' || edge2.cableType !== 'straight') {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Incorrect cable selected. Connecting a PC to a Switch requires a Straight-Through cable.';
+                        return;
+                    }
+                    if (!nodes[pcs[0]].ip || !nodes[pcs[1]].ip) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'IP addresses not configured. Double-click the PCs to set their IPs.';
+                        return;
+                    }
+                    if (nodes[pcs[0]].subnet !== nodes[pcs[1]].subnet) {
+                        feedback.style.color = '#EF4444';
+                        feedback.textContent = 'Devices belong to different subnets.';
+                        return;
+                    }
+                    
+                    feedback.style.color = '#059669';
+                    feedback.textContent = 'Topology and IP Configuration Correct! Ready to ping.';
+                    if (pingBtn) pingBtn.style.display = 'inline-block';
+                    window.exp2PingData = { targetIp: nodes[pcs[1]].ip, sourceId: pcs[0], targetId: pcs[1], switchId: switches[0] };
                 } else {
-                    feedback.style.color = '#D97706';
-                    feedback.textContent = 'Connections are correct, but wrong cable types used! PC to Switch and Switch to Router both require Straight-Through cables.';
-                    if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Wrong Cables");
+                    feedback.style.color = '#EF4444';
+                    feedback.textContent = 'Topology incorrect. Build either a P2P network (2 PCs) or a Simple LAN (2 PCs + 1 Switch).';
                 }
             } else {
-                feedback.style.color = '#EF4444';
-                feedback.textContent = 'Topology incorrect. Connect the PC to the Switch, and the Switch to the Router.';
-                if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Failed");
+                // Exp 1 Validation
+                let pcId = null, switchId = null, routerId = null;
+                Object.keys(nodes).forEach(k => {
+                    if(nodes[k].type === 'PC') pcId = k;
+                    if(nodes[k].type === 'Switch') switchId = k;
+                    if(nodes[k].type === 'Router') routerId = k;
+                });
+    
+                if (!pcId || !switchId || !routerId) {
+                    feedback.style.color = 'var(--text-main)';
+                    feedback.textContent = 'Please place at least a PC, a Switch, and a Router on the canvas.';
+                    return;
+                }
+    
+                const getEdge = (id1, id2) => {
+                    return edges.find(e => (e.sourceId === id1 && e.targetId === id2) || (e.sourceId === id2 && e.targetId === id1));
+                };
+    
+                const pcToSwitchEdge = getEdge(pcId, switchId);
+                const switchToRouterEdge = getEdge(switchId, routerId);
+                const pcToRouterEdge = getEdge(pcId, routerId);
+    
+                if (pcToSwitchEdge && switchToRouterEdge && !pcToRouterEdge) {
+                    if (pcToSwitchEdge.cableType === 'straight' && switchToRouterEdge.cableType === 'straight') {
+                        feedback.style.color = '#059669';
+                        feedback.textContent = 'Excellent! You successfully cabled a basic LAN. (PC ↔ Switch ↔ Router) using correct Straight-through cables.';
+                        if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Success");
+                        
+                        if (pingBtn) pingBtn.style.display = 'inline-block';
+                        
+                        if (typeof PlatformManager !== 'undefined' && !document.getElementById('crimp-pinout')) {
+                            PlatformManager.markCompleted(1, 100);
+                        }
+                    } else {
+                        feedback.style.color = '#D97706';
+                        feedback.textContent = 'Connections are correct, but wrong cable types used! PC to Switch and Switch to Router both require Straight-Through cables.';
+                        if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Wrong Cables");
+                    }
+                } else {
+                    feedback.style.color = '#EF4444';
+                    feedback.textContent = 'Topology incorrect. Connect the PC to the Switch, and the Switch to the Router.';
+                    if (typeof addObservation === 'function') addObservation("Topology Checker", "Verified connections", "Failed");
+                }
             }
+        });
+    }
+
+    // Realistic Ping simulation for Exp 2
+    const pingBtn = document.getElementById('send-ping');
+    if (pingBtn && document.title.includes('Exercise 2')) {
+        // Remove old listeners that might interfere (if packet-animation.js is removed, this handles it cleanly)
+        const newPingBtn = pingBtn.cloneNode(true);
+        pingBtn.parentNode.replaceChild(newPingBtn, pingBtn);
+        
+        function animatePingPacket(sourceNode, targetNode, switchNode = null) {
+            return new Promise((resolve) => {
+                const svgLayer = document.getElementById('connection-layer');
+                if (!svgLayer) { resolve(); return; }
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('r', '8');
+                circle.setAttribute('fill', '#EF4444'); 
+                circle.setAttribute('stroke', '#7F1D1D');
+                circle.setAttribute('stroke-width', '2');
+                svgLayer.appendChild(circle);
+
+                const duration = switchNode ? 400 : 800; // faster if it stops at switch
+                
+                function moveDot(start, end) {
+                    return new Promise(res => {
+                        const startTime = performance.now();
+                        function frame(time) {
+                            const elapsed = time - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+                            circle.setAttribute('cx', start.x + (end.x - start.x) * progress);
+                            circle.setAttribute('cy', start.y + (end.y - start.y) * progress);
+                            if (progress < 1) requestAnimationFrame(frame);
+                            else res();
+                        }
+                        requestAnimationFrame(frame);
+                    });
+                }
+                
+                (async function() {
+                    if (switchNode) {
+                        await moveDot(sourceNode, switchNode);
+                        await moveDot(switchNode, targetNode);
+                        // Return trip
+                        await moveDot(targetNode, switchNode);
+                        await moveDot(switchNode, sourceNode);
+                    } else {
+                        await moveDot(sourceNode, targetNode);
+                        // Return trip
+                        await moveDot(targetNode, sourceNode);
+                    }
+                    circle.remove();
+                    resolve();
+                })();
+            });
+        }
+
+        newPingBtn.addEventListener('click', async () => {
+            const pingStats = document.getElementById('ping-stats');
+            if (!pingStats) return;
+            
+            newPingBtn.disabled = true;
+            pingStats.style.display = 'block';
+            pingStats.innerHTML = `C:\\> ping ${window.exp2PingData.targetIp}\n\nPinging ${window.exp2PingData.targetIp} with 32 bytes of data:\n`;
+            
+            const sNode = nodes[window.exp2PingData.sourceId];
+            const tNode = nodes[window.exp2PingData.targetId];
+            const swNode = window.exp2PingData.switchId ? nodes[window.exp2PingData.switchId] : null;
+
+            for (let count = 1; count <= 4; count++) {
+                // Wait for the animation to complete
+                await animatePingPacket(sNode, tNode, swNode);
+                pingStats.innerHTML += `Reply from ${window.exp2PingData.targetIp}: bytes=32 time<1ms TTL=128\n`;
+                pingStats.scrollTop = pingStats.scrollHeight;
+            }
+            
+            setTimeout(() => {
+                pingStats.innerHTML += `\nPing statistics for ${window.exp2PingData.targetIp}:\n`;
+                pingStats.innerHTML += `    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),\n`;
+                pingStats.innerHTML += `Approximate round trip times in milli-seconds:\n`;
+                pingStats.innerHTML += `    Minimum = 0ms, Maximum = 0ms, Average = 0ms\n\nC:\\> `;
+                pingStats.scrollTop = pingStats.scrollHeight;
+                newPingBtn.disabled = false;
+                if (typeof PlatformManager !== 'undefined') PlatformManager.markCompleted(3, 100);
+                if (typeof addObservation === 'function') addObservation("Ping Simulation", "Ping Successful", "Success");
+            }, 500);
         });
     }
 

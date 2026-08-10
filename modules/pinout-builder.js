@@ -5,17 +5,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const pinSlots = document.querySelectorAll('.pin-slot');
     const crimpBtn = document.getElementById('crimp-pinout');
     const resetBtn = document.getElementById('reset-pinout');
+    const showCorrectBtn = document.getElementById('show-correct-pinout');
     const feedback = document.getElementById('pinout-feedback');
     const wireSource = document.getElementById('wire-source');
     const cableTester = document.getElementById('cable-tester');
     const runTestBtn = document.getElementById('run-test');
+    const modeSelect = document.getElementById('pinout-mode-select');
 
     if (!crimpBtn) return; // Not on Exp 2 page
 
     let isCrimped = false;
 
-    // T568B standard: OW, O, GW, BL, BLW, G, BRW, BR
+    // Standard pinouts
     const t568b = ['ow', 'o', 'gw', 'bl', 'blw', 'g', 'brw', 'br'];
+    const t568a = ['gw', 'g', 'ow', 'bl', 'blw', 'o', 'brw', 'br'];
+    
+    const colorNames = {
+        'ow': 'Orange-White', 'o': 'Orange', 'gw': 'Green-White', 'g': 'Green',
+        'bl': 'Blue', 'blw': 'Blue-White', 'brw': 'Brown-White', 'br': 'Brown'
+    };
+
+    if (showCorrectBtn) {
+        showCorrectBtn.addEventListener('click', () => {
+            const mode = modeSelect ? modeSelect.value : 'T568B';
+            const expected = (mode === 'T568A' || mode === 'Crossover') ? t568a : t568b;
+            const names = expected.map((c, i) => `Pin ${i+1}: ${colorNames[c]}`).join('\n');
+            alert(`Correct Pinout for ${mode}:\n\n${names}\n\nNote: A Crossover cable has T568A on one end and T568B on the other. For the "Crossover" option here, build the T568A end!`);
+        });
+    }
 
     // Setup draggable wires
     wireItems.forEach(wire => {
@@ -127,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Show tester
         cableTester.style.display = 'block';
+        if(showCorrectBtn) showCorrectBtn.style.display = 'none';
     });
 
     runTestBtn.addEventListener('click', async () => {
@@ -140,6 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let isCorrect = true;
+        const mode = modeSelect ? modeSelect.value : 'T568B';
+        const expectedPinout = (mode === 'T568A' || mode === 'Crossover') ? t568a : t568b;
         
         // Sequentially test each pin with a delay
         for (let i = 0; i < 8; i++) {
@@ -150,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             await new Promise(r => setTimeout(r, 400));
             
-            if (currentPinout[i] === t568b[i]) {
+            if (currentPinout[i] === expectedPinout[i]) {
                 led.style.backgroundColor = '#10B981'; // Green
                 led.style.boxShadow = '0 0 10px #10B981';
             } else {
@@ -162,13 +182,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isCorrect) {
             feedback.style.color = '#059669';
-            feedback.textContent = 'Test Passed! You have successfully built a T568B Straight-Through cable.';
+            feedback.textContent = `Test Passed! You have successfully built the ${mode} configuration.`;
             if (typeof PlatformManager !== 'undefined') PlatformManager.markCompleted(2, 100);
-            if (typeof addObservation === 'function') addObservation("Pinout Checker", "Tested T568B", "Success");
+            if (typeof addObservation === 'function') addObservation("Pinout Checker", `Tested ${mode}`, "Success");
         } else {
             feedback.style.color = '#EF4444';
             feedback.textContent = 'Test Failed! Incorrect wire order detected (Red LEDs). You must reset and try again.';
-            if (typeof addObservation === 'function') addObservation("Pinout Checker", "Tested T568B", "Failed");
+            if (showCorrectBtn) showCorrectBtn.style.display = 'block';
+            if (typeof addObservation === 'function') addObservation("Pinout Checker", `Tested ${mode}`, "Failed");
         }
         
         runTestBtn.disabled = false;
@@ -179,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         crimpBtn.disabled = false;
         crimpBtn.style.opacity = '1';
         cableTester.style.display = 'none';
+        if (showCorrectBtn) showCorrectBtn.style.display = 'none';
         const wires = document.querySelectorAll('.pin-slot .wire-item');
         wires.forEach(wireElement => {
             // Reset styles

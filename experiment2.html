@@ -88,10 +88,18 @@
                     <p>Select a module to interact with the virtual environment.</p>
                     
                     <div class="sim-container">
-                        <!-- Module 1: Interactive Cable Configuration (T568B) -->
+                        <!-- Module 1: Interactive Cable Configuration -->
                         <div class="card">
-                            <h3>Module 1: Cable Pin Configuration (T568B)</h3>
-                            <p>Drag and drop the colored wires into the correct RJ-45 pins to build a T568B Straight-Through cable.</p>
+                            <h3>Module 1: Cable Pin Configuration</h3>
+                            <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                                <label for="pinout-mode-select" style="font-weight: 500; margin-right: 0.5rem;">Select Cable Standard:</label>
+                                <select id="pinout-mode-select" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #CBD5E1;">
+                                    <option value="T568A">T568A (Straight-Through)</option>
+                                    <option value="T568B" selected>T568B (Straight-Through)</option>
+                                    <option value="Crossover">Crossover</option>
+                                </select>
+                            </div>
+                            <p>Drag and drop the colored wires into the correct RJ-45 pins to build the selected cable.</p>
                             
                             <div class="pinout-container" style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
                                 <!-- Wires Source -->
@@ -134,9 +142,10 @@
                                         <div class="pin-slot" data-pin="7" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 7</div>
                                         <div class="pin-slot" data-pin="8" style="flex: 1; height: 180px; background: white; border: 2px dashed #CBD5E1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.5rem; border-radius: 4px;">Pin 8</div>
                                     </div>
-                                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                                         <button class="btn" id="crimp-pinout" style="background-color: var(--primary-color);">Crimp Connector</button>
                                         <button class="btn" id="reset-pinout" style="background: var(--secondary-color);">Reset Wires</button>
+                                        <button class="btn" id="show-correct-pinout" style="background: #3B82F6; display: none;">Show Correct Pinout</button>
                                         <p id="pinout-feedback" style="font-weight: bold;"></p>
                                     </div>
                                     
@@ -233,14 +242,7 @@
                                 </div>
                                 <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
                                 
-                                <div id="ping-stats" style="display: none; margin-top: 1rem; padding: 1rem; background: #F1F5F9; border-radius: 8px; border: 1px solid #CBD5E1;">
-                                    <h4 style="margin-bottom: 0.5rem;">Ping Statistics</h4>
-                                    <div style="display: flex; justify-content: space-between; font-family: monospace;">
-                                        <div>Packets Sent: <span id="stat-sent">0</span></div>
-                                        <div>Received: <span id="stat-received">0</span></div>
-                                        <div>Lost: <span id="stat-lost" style="color: #EF4444;">0</span></div>
-                                        <div>Success: <span id="stat-rate">0%</span></div>
-                                    </div>
+                                <div id="ping-stats" style="display: none; margin-top: 1rem; padding: 1rem; background: black; color: #10B981; font-family: 'Courier New', Courier, monospace; border-radius: 4px; min-height: 150px; max-height: 300px; font-size: 0.9rem; white-space: pre-wrap; overflow-y: auto;">
                                 </div>
                             </div>
                         </div>
@@ -284,6 +286,37 @@
         </main>
     </div>
 
+    <!-- IP Config Modal -->
+    <div id="ip-config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90%; border: 1px solid #CBD5E1; position: relative;">
+            <button id="close-ip-config" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.5rem;">IP Configuration</h3>
+            <p style="margin-bottom: 1rem; font-weight: bold;" id="ip-config-device-name">Device Name</p>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 192.168.10.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.255.255.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Default Gateway (Optional)</label>
+                <input type="text" id="gateway-input" placeholder="0.0.0.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">DNS Server (Optional)</label>
+                <input type="text" id="dns-input" placeholder="0.0.0.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="save-ip-config" style="background-color: var(--primary-color);">Save</button>
+            </div>
+            <p id="ip-config-error" style="color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+
     <!-- Certificate Modal -->
     <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
         <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
@@ -317,8 +350,6 @@
     <script src="modules/timer.js"></script>
     <script src="data/experiment2.js"></script>
     <script src="modules/pinout-builder.js"></script>
-    <script src="modules/packet-tracer.js"></script>
-    <script src="modules/commands.js"></script>
     <script src="modules/cables.js"></script>
     <script src="modules/devices.js"></script>
     <script src="modules/packet-animation.js"></script>

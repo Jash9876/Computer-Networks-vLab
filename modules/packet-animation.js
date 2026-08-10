@@ -1,6 +1,10 @@
 // Packet Animation Simulator
 
 document.addEventListener('DOMContentLoaded', () => {
+    // This module handles ping animation for Exp 1.
+    // Exp 2 has its own ping animation built into devices.js
+    if (document.title.includes('Exercise 2')) return;
+
     const pingBtn = document.getElementById('send-ping');
     const pingStats = document.getElementById('ping-stats');
     const svgLayer = document.getElementById('connection-layer');

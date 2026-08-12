@@ -8,6 +8,10 @@ const PlatformManager = {
         completed: [] // Array of completed exp numbers, e.g. [1, 2]
     },
 
+    renderDifficultySelector() {
+        // The difficulty selector is already present in the HTML; this is a no-op.
+    },
+
     init() {
         this.loadState();
         this.renderDifficultySelector();

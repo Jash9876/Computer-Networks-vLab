@@ -133,6 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentCable === 'crossover') {
                     drawingLine.setAttribute('stroke-dasharray', '5,5');
                     drawingLine.setAttribute('stroke', '#D97706'); // Orange for crossover
+                } else if (currentCable === 'console') {
+                    drawingLine.setAttribute('stroke-dasharray', '8,4');
+                    drawingLine.setAttribute('stroke', '#7C3AED'); // Purple for console
                 }
                 
                 svgLayer.appendChild(drawingLine);
@@ -163,6 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('save-ip-config').setAttribute('data-node-id', id);
                     modal.style.display = 'flex';
                 }
+            } else if (document.title.includes('Exercise 3') && nodes[id].type === 'PC') {
+                // For Exp 3, double-clicking PC opens the terminal settings modal
+                const termBtn = document.getElementById('exp3-open-terminal-btn');
+                if (termBtn && termBtn.style.display !== 'none') {
+                    termBtn.click();
+                }
             } else {
                 // Remove node
                 node.remove();
@@ -184,9 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sourceNodeId !== id) {
                     // Valid connection created
                     const currentCable = cableTypeSelect ? cableTypeSelect.value : 'straight';
-                    edges.push({ sourceId: sourceNodeId, targetId: id, cableType: currentCable });
-                    if (typeof addObservation === 'function') {
-                        addObservation("Topology Cabling", "Connected " + nodes[sourceNodeId].type + " to " + nodes[id].type + " (" + currentCable + ")", "Success");
+
+                    // Exp 3: Console cable requires port selection
+                    if (document.title.includes('Exercise 3') && currentCable === 'console') {
+                        const portModal = document.getElementById('exp3-port-modal');
+                        if (portModal) {
+                            window.exp3PendingEdge = { sourceId: sourceNodeId, targetId: id, cableType: currentCable };
+                            portModal.style.display = 'flex';
+                            const errEl = document.getElementById('exp3-port-error');
+                            if (errEl) errEl.textContent = '';
+                        }
+                    } else {
+                        edges.push({ sourceId: sourceNodeId, targetId: id, cableType: currentCable });
+                        if (typeof addObservation === 'function') {
+                            addObservation("Topology Cabling", "Connected " + nodes[sourceNodeId].type + " to " + nodes[id].type + " (" + currentCable + ")", "Success");
+                        }
                     }
                 }
                 // Cleanup temp line and redraw all permanent edges
@@ -246,6 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (edge.cableType === 'crossover') {
                 line.setAttribute('stroke', '#D97706');
                 line.setAttribute('stroke-dasharray', '5,5');
+            } else if (edge.cableType === 'console') {
+                line.setAttribute('stroke', '#7C3AED');
+                line.setAttribute('stroke-dasharray', '8,4');
             } else {
                 line.setAttribute('stroke', '#005BAC');
             }
@@ -375,6 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedback.style.color = '#EF4444';
                     feedback.textContent = 'Topology incorrect. Build either a P2P network (2 PCs) or a Simple LAN (2 PCs + 1 Switch).';
                 }
+            } else if (document.title.includes('Exercise 3')) {
+                // Exp 3 Validation: PC + Router + Console Cable + Correct Ports
+                // (The detailed status rendering is handled by experiment3-cli.js listener)
+                // This block just prevents the Exp 1 fallback from running.
+                // Let the experiment3-cli.js handler take over (it listens to the same click).
+                return;
             } else {
                 // Exp 1 Validation
                 let pcId = null, switchId = null, routerId = null;

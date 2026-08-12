@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 3</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Virtual Laboratory</h1>
+            <div class="subtitle">Computer Networks Lab</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div>
+                <label for="global-difficulty" style="margin-right: 0.5rem; font-weight: 500;">Difficulty:</label>
+                <select id="global-difficulty" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #CBD5E1;">
+                    <option value="beginner">Beginner (Guided)</option>
+                    <option value="intermediate">Intermediate (No Hints)</option>
+                    <option value="advanced">Advanced (Timed)</option>
+                </select>
+            </div>
+            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 3</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Simulation</h2>
+                    <p>Build the console connection, configure terminal settings, and use the router CLI.</p>
+                    
+                    <div class="sim-container">
+                        <!-- Module 1: Console Network Setup -->
+                        <div class="card">
+                            <h3>Module 1: Console Network Setup</h3>
+                            <p>Drag a <strong>PC</strong> and a <strong>Router (1941)</strong> onto the canvas, then connect them with a <strong>Console Cable</strong>.</p>
+                            <div class="dnd-container" style="flex-direction: column;">
+                                <div style="display: flex; gap: 1rem; align-items: center;" id="topo-tools">
+                                    <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc">
+                                        <img src="assets/icons/pc.svg" width="32" height="32" alt="PC"><br>PC
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router">
+                                        <img src="assets/icons/router.svg" width="32" height="32" alt="Router"><br>Router (1941)
+                                    </div>
+                                    <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 1rem;"></div>
+                                    <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color);">
+                                        <i data-lucide="link"></i> Enable Connect Mode
+                                    </button>
+                                    <select id="cable-type-select" style="padding: 0.5rem; font-family: inherit; margin-left: 0.5rem; display: none;">
+                                        <option value="console">Console Cable</option>
+                                        <option value="straight">Straight-Through</option>
+                                        <option value="crossover">Crossover</option>
+                                    </select>
+                                </div>
+                                <div class="topology-canvas" id="topology-canvas">
+                                    <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    <!-- Nodes will be dropped here -->
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                    <button class="btn" id="check-topology">Check Topology</button>
+                                    <button class="btn" id="reset-topology" style="background-color: var(--secondary-color);">Reset</button>
+                                    <button class="btn" id="exp3-open-terminal-btn" style="background-color: #059669; display: none;">
+                                        <i data-lucide="terminal"></i> Open Terminal
+                                    </button>
+                                </div>
+                                <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
+                            </div>
+                        </div>
+
+                        <!-- Module 2 & 3: Router CLI Terminal (hidden until terminal settings accepted) -->
+                        <div class="card" id="exp3-cli-section" style="display: none;">
+                            <h3>Module 2: Router Console CLI</h3>
+                            <p>You are now connected to the router console. Use IOS commands to configure the router.</p>
+                            <p style="font-size:0.85rem; color:#6B7280;">Type <code>?</code> for available commands in the current mode. Use ↑/↓ arrows for command history.</p>
+                            <div class="terminal" id="exp3-terminal" style="height: 400px;">
+                                <div class="terminal-output" id="exp3-terminal-output"></div>
+                                <div class="terminal-input-line">
+                                    <span class="terminal-prompt" id="exp3-terminal-prompt">Router> </span>
+                                    <input type="text" class="terminal-input" id="exp3-terminal-input" autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+
+                            <!-- Interface Validation -->
+                            <div style="margin-top: 1.5rem;">
+                                <h4>Interface Configuration Validation</h4>
+                                <p style="font-size:0.85rem; color:#6B7280;">After configuring all three interfaces, click Validate to check your work.</p>
+                                <button class="btn" id="exp3-validate-interfaces" style="margin-top: 0.5rem;">Validate Interfaces</button>
+                                <div id="exp3-validation-output" style="margin-top: 1rem;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <p id="result-text">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Questions</h2>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results"></div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Port Selection Modal -->
+    <div id="exp3-port-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 420px; max-width: 90%; border: 1px solid #CBD5E1; position: relative;">
+            <button id="exp3-close-port-modal" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.5rem;">Select Connection Interfaces</h3>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #4B5563;">Choose the correct interface on each device for the console connection.</p>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem; font-weight:600;">PC0 Interface</label>
+                <select id="exp3-pc-port" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="">-- Select Interface --</option>
+                    <option value="RS232">RS232 (Serial)</option>
+                    <option value="FastEthernet0">FastEthernet0</option>
+                    <option value="USB">USB</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem; font-weight:600;">Router0 Interface</label>
+                <select id="exp3-router-port" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="">-- Select Interface --</option>
+                    <option value="Console">Console</option>
+                    <option value="AUX">AUX</option>
+                    <option value="GigabitEthernet0/0/0">GigabitEthernet0/0/0</option>
+                    <option value="GigabitEthernet0/0/1">GigabitEthernet0/0/1</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="exp3-port-cancel" style="background-color: var(--secondary-color);">Cancel</button>
+                <button class="btn" id="exp3-port-connect" style="background-color: var(--primary-color);">Connect</button>
+            </div>
+            <p id="exp3-port-error" style="color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+
+    <!-- Terminal Settings Modal -->
+    <div id="exp3-terminal-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 420px; max-width: 90%; border: 1px solid #CBD5E1; position: relative;">
+            <button id="exp3-close-terminal-settings" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <h3 style="margin-bottom: 0.5rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.5rem;">Terminal Configuration</h3>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: #4B5563;">Verify the terminal settings before connecting to the router console.</p>
+            
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Bits Per Second</label>
+                <select id="exp3-bps" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="4800">4800</option>
+                    <option value="9600" selected>9600</option>
+                    <option value="19200">19200</option>
+                    <option value="38400">38400</option>
+                    <option value="115200">115200</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Data Bits</label>
+                <select id="exp3-data-bits" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="7">7</option>
+                    <option value="8" selected>8</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Parity</label>
+                <select id="exp3-parity" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="None" selected>None</option>
+                    <option value="Odd">Odd</option>
+                    <option value="Even">Even</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 0.75rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Stop Bits</label>
+                <select id="exp3-stop-bits" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Flow Control</label>
+                <select id="exp3-flow-control" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                    <option value="None" selected>None</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software">Software</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="exp3-terminal-cancel" style="background-color: var(--secondary-color);">Cancel</button>
+                <button class="btn" id="exp3-terminal-ok" style="background-color: var(--primary-color);">OK</button>
+            </div>
+            <p id="exp3-terminal-settings-error" style="color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Jashwanth B</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 3</h3>
+                <p style="margin-bottom: 2rem;">Router Configuration Through a Console</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/platform-manager.js"></script>
+    <script src="modules/timer.js"></script>
+    <script src="data/experiment3.js"></script>
+    <script src="modules/experiment3-cli.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

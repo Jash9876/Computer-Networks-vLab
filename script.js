@@ -33,7 +33,10 @@ function loadData() {
     document.getElementById('procedure-content').innerHTML = experimentData.procedure;
 
     // Result (will be updated dynamically, but set initial)
-    document.getElementById('result-text').textContent = "Complete the simulations and quiz to view the final result.";
+    // For Exercise 3, the CLI module manages the Result tab
+    if (!document.title.includes('Exercise 3')) {
+        document.getElementById('result-text').textContent = "Complete the simulations and quiz to view the final result.";
+    }
 
     // Quiz
     setupQuiz();

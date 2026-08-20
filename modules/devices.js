@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedItemType = null;
     let draggedItemIcon = null;
     let nodeCount = 0;
+    const typeCounters = {}; // { PC: 0, Switch: 0, Router: 0 }
     
     // Graph state
     const nodes = {}; // { id: { element, type, x, y } }
@@ -69,14 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = e.clientY - rect.top - 30;
 
             const id = `node-${nodeCount++}`;
+            const typeIndex = typeCounters[type] || 0;
+            typeCounters[type] = typeIndex + 1;
+            const label = `${type}${typeIndex}`;
             const node = document.createElement('div');
             node.className = 'topology-node';
-            node.innerHTML = `<img src="assets/icons/${icon}.svg" width="24" height="24" style="margin-bottom: 2px; pointer-events: none;"><br><span style="pointer-events: none;">${type}</span>`;
+            node.innerHTML = `<img src="assets/icons/${icon}.svg" width="24" height="24" style="margin-bottom: 2px; pointer-events: none;"><br><span style="pointer-events: none;">${label}</span>`;
             node.style.left = `${Math.max(0, Math.min(x, canvas.clientWidth - 60))}px`;
             node.style.top = `${Math.max(0, Math.min(y, canvas.clientHeight - 60))}px`;
             node.id = id;
             
-            nodes[id] = { element: node, type: type, x: x+30, y: y+30, ip: '', subnet: '', gateway: '', dns: '' };
+            nodes[id] = { element: node, type: type, label: label, x: x+30, y: y+30, ip: '', subnet: '', gateway: '', dns: '' };
             
             makeNodeInteractive(node, id);
             canvas.appendChild(node);
@@ -152,15 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         node.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            if (document.title.includes('Exercise 2') && nodes[id].type === 'PC') {
+            if ((document.title.includes('Exercise 2') || document.title.includes('Exercise 4')) && nodes[id].type === 'PC') {
                 // Open IP Config Modal
                 const modal = document.getElementById('ip-config-modal');
                 if (modal) {
-                    document.getElementById('ip-config-device-name').textContent = `Configuration for ${id}`;
+                    document.getElementById('ip-config-device-name').textContent = `Configuration for ${nodes[id].label || id}`;
                     document.getElementById('ip-address-input').value = nodes[id].ip || '';
                     document.getElementById('subnet-mask-input').value = nodes[id].subnet || '';
                     document.getElementById('gateway-input').value = nodes[id].gateway || '';
-                    document.getElementById('dns-input').value = nodes[id].dns || '';
+                    const dnsEl = document.getElementById('dns-input');
+                    if (dnsEl) dnsEl.value = nodes[id].dns || '';
                     document.getElementById('ip-config-error').textContent = '';
                     
                     document.getElementById('save-ip-config').setAttribute('data-node-id', id);
@@ -299,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ip = document.getElementById('ip-address-input').value.trim();
             const subnet = document.getElementById('subnet-mask-input').value.trim();
             const gateway = document.getElementById('gateway-input').value.trim();
-            const dns = document.getElementById('dns-input').value.trim();
+            const dns = document.getElementById('dns-input') ? document.getElementById('dns-input').value.trim() : '';
             
             const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
             if (!ip || !ipRegex.test(ip)) {
@@ -399,11 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedback.style.color = '#EF4444';
                     feedback.textContent = 'Topology incorrect. Build either a P2P network (2 PCs) or a Simple LAN (2 PCs + 1 Switch).';
                 }
-            } else if (document.title.includes('Exercise 3')) {
-                // Exp 3 Validation: PC + Router + Console Cable + Correct Ports
-                // (The detailed status rendering is handled by experiment3-cli.js listener)
+            } else if (document.title.includes('Exercise 3') || document.title.includes('Exercise 4')) {
+                // Exp 3/4 Validation
                 // This block just prevents the Exp 1 fallback from running.
-                // Let the experiment3-cli.js handler take over (it listens to the same click).
+                // Let the experiment-specific handler take over (it listens to the same click).
                 return;
             } else {
                 // Exp 1 Validation

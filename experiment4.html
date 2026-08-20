@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 4</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Virtual Laboratory</h1>
+            <div class="subtitle">Computer Networks Lab</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div>
+                <label for="global-difficulty" style="margin-right: 0.5rem; font-weight: 500;">Difficulty:</label>
+                <select id="global-difficulty" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #CBD5E1;">
+                    <option value="beginner">Beginner (Guided)</option>
+                    <option value="intermediate">Intermediate (No Hints)</option>
+                    <option value="advanced">Advanced (Timed)</option>
+                </select>
+            </div>
+            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 4</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Simulation</h2>
+                    <p>Build the network topology and configure the IP addressing, subnetting, and static routing.</p>
+                    
+                    <div class="sim-container">
+                        <!-- Topology Area -->
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3>Network Topology</h3>
+                                <div>
+                                    <button class="btn active" id="mode-4a-btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Part 4-A</button>
+                                    <button class="btn" id="mode-4b-btn" style="padding: 0.25rem 0.75rem; font-size: 0.875rem; background-color: var(--secondary-color);">Part 4-B</button>
+                                </div>
+                            </div>
+                            <p id="topo-instructions">Drag <strong>2 PCs</strong> and <strong>1 Router</strong> onto the canvas, then connect them with <strong>Copper Cross-over</strong> cables.</p>
+                            <div class="dnd-container" style="flex-direction: column;">
+                                <div style="display: flex; gap: 1rem; align-items: center;" id="topo-tools">
+                                    <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc">
+                                        <img src="assets/icons/pc.svg" width="32" height="32" alt="PC"><br>PC
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router">
+                                        <img src="assets/icons/router.svg" width="32" height="32" alt="Router"><br>Router
+                                    </div>
+                                    <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 1rem;"></div>
+                                    <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color);">
+                                        <i data-lucide="link"></i> Enable Connect Mode
+                                    </button>
+                                    <select id="cable-type-select" style="padding: 0.5rem; font-family: inherit; margin-left: 0.5rem; display: none;">
+                                        <option value="crossover">Crossover</option>
+                                        <option value="serial">Serial DCE</option>
+                                    </select>
+                                </div>
+                                <div class="topology-canvas" id="topology-canvas" style="position: relative;">
+                                    <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    <!-- Nodes will be dropped here -->
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                    <button class="btn" id="check-topology">Check Topology</button>
+                                    <button class="btn" id="reset-topology" style="background-color: var(--secondary-color);">Reset</button>
+                                    <button class="btn" id="open-terminal-btn" style="background-color: #059669; display: none;">
+                                        <i data-lucide="terminal"></i> Router CLI
+                                    </button>
+                                    <button class="btn" id="open-ping-btn" style="background-color: #3B82F6; display: none;">
+                                        <i data-lucide="activity"></i> Ping Tool
+                                    </button>
+                                    <button class="btn" id="open-subnet-btn" style="background-color: #8B5CF6; display: none;">
+                                        <i data-lucide="layout-grid"></i> Subnet Analyzer
+                                    </button>
+                                </div>
+                                <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
+                            </div>
+                        </div>
+
+                        <!-- Subnet Analyzer (hidden by default) -->
+                        <div class="card" id="subnet-section" style="display: none; border-left: 4px solid #8B5CF6;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Subnet Analyzer: 192.168.10.0/24</h3>
+                                <button class="btn" id="close-subnet-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>
+                            </div>
+                            <p>Select a <strong>/27</strong> subnet block to view details and highlight associated devices on the topology.</p>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 0.5rem;" id="subnet-blocks">
+                                <button class="btn subnet-block-btn" data-subnet="0" style="background-color: var(--secondary-color);">.0/27</button>
+                                <button class="btn subnet-block-btn" data-subnet="32" style="background-color: var(--secondary-color);">.32/27</button>
+                                <button class="btn subnet-block-btn" data-subnet="64" style="background-color: var(--secondary-color);">.64/27</button>
+                                <button class="btn subnet-block-btn" data-subnet="96" style="background-color: var(--secondary-color);">.96/27</button>
+                                <button class="btn subnet-block-btn" data-subnet="128" style="background-color: var(--secondary-color);">.128/27</button>
+                            </div>
+                            <div id="subnet-details" style="background: #F3F4F6; padding: 1rem; border-radius: 6px; display: none;">
+                                <h4 id="subnet-title" style="margin-bottom: 0.5rem; color: #1F2937;">Subnet: 192.168.10.0/27</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.875rem;">
+                                    <div><strong>Network Address:</strong> <span id="subnet-network">192.168.10.0</span></div>
+                                    <div><strong>Broadcast Address:</strong> <span id="subnet-broadcast">192.168.10.31</span></div>
+                                    <div><strong>First Usable Host:</strong> <span id="subnet-first">192.168.10.1</span></div>
+                                    <div><strong>Last Usable Host:</strong> <span id="subnet-last">192.168.10.30</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Router CLI Terminal -->
+                        <div class="card" id="cli-section" style="display: none; border-left: 4px solid #059669;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 id="cli-title">Router0 CLI</h3>
+                                <button class="btn" id="close-cli-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>
+                            </div>
+                            <p style="font-size:0.85rem; color:#6B7280;">Configure interfaces and static routes (in Part 4-B). Type <code>?</code> for help.</p>
+                            <div class="terminal" id="terminal" style="height: 350px; display: flex; flex-direction: column; overflow: hidden;">
+                                <div class="terminal-output" id="terminal-output" style="flex: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 0;"></div>
+                                <div class="terminal-input-line" style="flex-shrink: 0;">
+                                    <span class="terminal-prompt" id="terminal-prompt">Router&gt; </span>
+                                    <input type="text" class="terminal-input" id="terminal-input" autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                                <button class="btn" id="validate-router-btn">Validate Router Config</button>
+                            </div>
+                            <div id="router-validation-output" style="margin-top: 1rem;"></div>
+                        </div>
+
+                        <!-- Ping Tool -->
+                        <div class="card" id="ping-section" style="display: none; border-left: 4px solid #3B82F6;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Ping Tool & Troubleshooter</h3>
+                                <button class="btn" id="close-ping-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>
+                            </div>
+                            <div style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Source PC</label>
+                                    <select id="ping-source" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;"></select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Destination IP</label>
+                                    <input type="text" id="ping-dest" placeholder="e.g. 192.168.10.2" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                </div>
+                                <button class="btn" id="send-ping-btn" style="background-color: #3B82F6;">Send Ping</button>
+                            </div>
+                            <div class="terminal" id="ping-terminal" style="height: 250px; background: #000; color: #0f0; padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+                                <div id="ping-output"></div>
+                            </div>
+                            <div id="troubleshooter-output" style="margin-top: 1rem; padding: 1rem; border-radius: 6px; display: none;"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <p id="result-text">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Questions</h2>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results"></div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- IP Config Modal -->
+    <div id="ip-config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; max-width: 90%; border: 1px solid #CBD5E1; position: relative;">
+            <button id="close-ip-config" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid #E5E7EB; padding-bottom: 0.5rem;">IP Configuration</h3>
+            <p style="margin-bottom: 1rem; font-weight: bold;" id="ip-config-device-name">Device Name</p>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 192.168.10.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.255.255.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Default Gateway</label>
+                <input type="text" id="gateway-input" placeholder="e.g. 192.168.10.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="save-ip-config" style="background-color: var(--primary-color);">Save</button>
+            </div>
+            <p id="ip-config-error" style="color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Jashwanth B</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 4</h3>
+                <p style="margin-bottom: 2rem;">Configuration of IP Address in Router and Subnetting in WAN</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/platform-manager.js"></script>
+    <script src="modules/timer.js"></script>
+    <script src="data/experiment4.js"></script>
+    <script src="modules/cables.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/packet-animation.js"></script>
+    <script src="modules/experiment4-logic.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

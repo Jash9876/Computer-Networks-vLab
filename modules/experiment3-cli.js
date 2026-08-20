@@ -107,8 +107,8 @@
     }
 
     function scrollToBottom() {
-        if (terminalContainer) {
-            terminalContainer.scrollTop = terminalContainer.scrollHeight;
+        if (terminalOutput) {
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
         }
     }
 

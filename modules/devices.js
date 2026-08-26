@@ -551,14 +551,22 @@ document.addEventListener('DOMContentLoaded', () => {
         resetBtn.addEventListener('click', () => {
             // Clear nodes
             Object.keys(nodes).forEach(id => {
-                nodes[id].element.remove();
+                if (nodes[id] && nodes[id].element) {
+                    nodes[id].element.remove();
+                }
                 delete nodes[id];
             });
             // Clear edges
             edges.length = 0;
             drawConnections();
             
-            feedback.textContent = '';
+            // Reset node counters
+            nodeCount = 0;
+            for (let k in typeCounters) {
+                typeCounters[k] = 0;
+            }
+            
+            if (feedback) feedback.textContent = '';
             
             const pingBtn = document.getElementById('send-ping');
             if (pingBtn) pingBtn.style.display = 'none';

@@ -351,14 +351,19 @@ document.addEventListener('DOMContentLoaded', function () {
             termOutput.innerHTML = '<div>Router con0 is now available</div><div><br></div><div>Press RETURN to get started.</div>';
         }
 
-        const subnetOutput = document.getElementById('subnet-output');
-        if (subnetOutput) subnetOutput.innerHTML = '';
-        const subnetInput = document.getElementById('subnet-input');
-        if (subnetInput) subnetInput.value = '';
+        // Clear Stage 1 & 2 inputs/feedback in 4A & 4B
+        const allSelects = document.querySelectorAll('.ip-match-select, .subnet-match-select, #match-r0-role, #match-r0-clock, #match-r1-role, #match-r1-clock, #route-r0-hop1, #route-r0-hop2');
+        allSelects.forEach(s => s.value = '');
         
-        const pingStats = document.getElementById('ping-stats');
-        if (pingStats) pingStats.innerHTML = '';
+        const allFillInputs = document.querySelectorAll('#cmd-fill-1, #cmd-fill-2, #cmd-fill-3, #cmd-fill-4, #cmd-fill-5, #calc-net, #calc-first, #calc-last, #calc-bcast, #ping-dest');
+        allFillInputs.forEach(inp => inp.value = '');
         
+        const allFeedbackSpans = document.querySelectorAll('#feedback-4a-ip-matching, #feedback-4a-cli-fill, #feedback-4b-subnet-matching, #feedback-4b-calc, #feedback-4b-dce, #feedback-4b-routes, #router-validation-output, #troubleshooter-output');
+        allFeedbackSpans.forEach(sp => {
+            sp.textContent = '';
+            sp.style.display = 'none';
+        });
+
         if (resultText) {
             resultText.innerHTML = 'Part 4-A: Pending.<br><br>Part 4-B: Pending.';
         }

@@ -1,68 +1,22 @@
-// Platform Manager: Handles Global State, Progression, and Difficulty
+// Platform Manager: Handles Global State and Progression
 
 const PlatformManager = {
-    settings: {
-        difficulty: 'beginner' // beginner, intermediate, advanced
-    },
     progression: {
         completed: [] // Array of completed exp numbers, e.g. [1, 2]
     },
 
-    renderDifficultySelector() {
-        // The difficulty selector is already present in the HTML; this is a no-op.
-    },
-
     init() {
         this.loadState();
-        this.renderDifficultySelector();
         this.applyProgressionUI();
-        
-        // Listen for changes
-        const diffSelect = document.getElementById('global-difficulty');
-        if (diffSelect) {
-            diffSelect.value = this.settings.difficulty;
-            diffSelect.addEventListener('change', (e) => {
-                this.setDifficulty(e.target.value);
-            });
-        }
-
-        // Apply initial difficulty rules
-        this.applyDifficultyRules();
     },
 
     loadState() {
-        const savedDiff = localStorage.getItem('vlab_difficulty');
-        if (savedDiff) this.settings.difficulty = savedDiff;
-
         const savedProg = localStorage.getItem('vlab_progression');
         if (savedProg) {
             try {
                 this.progression = JSON.parse(savedProg);
             } catch(e) {}
         }
-    },
-
-    setDifficulty(level) {
-        this.settings.difficulty = level;
-        localStorage.setItem('vlab_difficulty', level);
-        this.applyDifficultyRules();
-    },
-
-    applyDifficultyRules() {
-        // Broadcast event so other modules (timer, etc) can react
-        document.dispatchEvent(new CustomEvent('difficultyChanged', { detail: this.settings.difficulty }));
-
-        // Handle visual hints globally based on difficulty
-        const hints = document.querySelectorAll('.hint-text, [data-info]');
-        hints.forEach(hint => {
-            if (this.settings.difficulty === 'intermediate' || this.settings.difficulty === 'advanced') {
-                if(hint.classList.contains('hint-text')) hint.style.display = 'none';
-                if(hint.hasAttribute('data-info')) hint.removeAttribute('title'); // basic removal
-            } else {
-                if(hint.classList.contains('hint-text')) hint.style.display = 'block';
-                if(hint.hasAttribute('data-info')) hint.setAttribute('title', hint.getAttribute('data-info'));
-            }
-        });
     },
 
     markCompleted(expNumber, score) {

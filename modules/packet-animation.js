@@ -47,34 +47,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const switchNode = window.Topology.nodes[switchId];
         const routerNode = window.Topology.nodes[routerId];
 
-        // Fetch difficulty
-        const isAdvanced = typeof PlatformManager !== 'undefined' && PlatformManager.settings.difficulty === 'advanced';
-        
         // Send 5 Packets
         for (let i = 0; i < 5; i++) {
             totalSent++;
             updateStatsUI();
             
-            // Random packet loss in Advanced Mode (e.g. 20% chance)
-            const packetLoss = isAdvanced && Math.random() < 0.2;
-
-            if (packetLoss) {
-                // Packet drops halfway to switch
-                await animatePacket(pcNode, switchNode, true);
-                totalLost++;
-            } else {
-                // PC to Switch
-                await animatePacket(pcNode, switchNode, false);
-                // Switch to Router
-                await animatePacket(switchNode, routerNode, false);
-                
-                // For a true ping, we'd go back, but for visual brevity we count it as received at Router
-                totalReceived++;
-            }
+            // PC to Switch
+            await animatePacket(pcNode, switchNode, false);
+            // Switch to Router
+            await animatePacket(switchNode, routerNode, false);
+            
+            totalReceived++;
             updateStatsUI();
             
-            // Short delay between packets
-            await new Promise(r => setTimeout(r, 500));
+            // Short pause between packets
+            await new Promise(r => setTimeout(r, 400));
         }
 
         pingBtn.disabled = false;

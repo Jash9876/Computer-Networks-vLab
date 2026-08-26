@@ -323,26 +323,53 @@
                                 </div>
                             </div>
 
-                            <!-- Stage 4: Static Route Builder -->
+                            <!-- Stage 4: Static Route Builder (Bi-directional) -->
                             <div class="card">
-                                <h3>Stage 4: Static Route Formulation</h3>
-                                <p>Define the static routes required on Router0 to reach the remote networks behind Router1:</p>
-                                <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.875rem;">
-                                    <div style="margin-bottom: 0.5rem;">
-                                        Router0(config)# ip route <strong>192.168.10.96</strong> <strong>255.255.255.224</strong>
-                                        <select id="route-r0-hop1" style="padding: 0.2rem 0.5rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px;">
-                                            <option value="">-- Next Hop --</option>
-                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
-                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
-                                        </select>
+                                <h3>Stage 4: Static Route Formulation (Both Routers)</h3>
+                                <p>Define the static routes in both directions so packets can travel and return across the WAN serial link:</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #B45309; margin-bottom: 0.5rem;">Forward Routes (Router0):</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            R0(config)# ip route <strong>192.168.10.96</strong> (LAN 3)<br>
+                                            Next Hop: 
+                                            <select id="route-r0-hop1" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            R0(config)# ip route <strong>192.168.10.128</strong> (LAN 4)<br>
+                                            Next Hop: 
+                                            <select id="route-r0-hop2" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div>
-                                        Router0(config)# ip route <strong>192.168.10.128</strong> <strong>255.255.255.224</strong>
-                                        <select id="route-r0-hop2" style="padding: 0.2rem 0.5rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px;">
-                                            <option value="">-- Next Hop --</option>
-                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
-                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
-                                        </select>
+
+                                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #15803D; margin-bottom: 0.5rem;">Return Routes (Router1):</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            R1(config)# ip route <strong>192.168.10.0</strong> (LAN 1)<br>
+                                            Next Hop: 
+                                            <select id="route-r1-hop1" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            R1(config)# ip route <strong>192.168.10.32</strong> (LAN 2)<br>
+                                            Next Hop: 
+                                            <select id="route-r1-hop2" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">

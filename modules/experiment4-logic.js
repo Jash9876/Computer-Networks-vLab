@@ -271,20 +271,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 4-B Stage 4: Static Routes
+    // 4-B Stage 4: Static Routes (Forward and Return)
     const check4bRoutesBtn = document.getElementById('check-4b-routes');
     const fb4bRoutes = document.getElementById('feedback-4b-routes');
     if (check4bRoutesBtn) {
         check4bRoutesBtn.addEventListener('click', () => {
             const h1 = document.getElementById('route-r0-hop1').value;
             const h2 = document.getElementById('route-r0-hop2').value;
+            const r1h1 = document.getElementById('route-r1-hop1').value;
+            const r1h2 = document.getElementById('route-r1-hop2').value;
 
-            if (h1 === '192.168.10.66' && h2 === '192.168.10.66') {
+            if (h1 === '192.168.10.66' && h2 === '192.168.10.66' &&
+                r1h1 === '192.168.10.65' && r1h2 === '192.168.10.65') {
                 fb4bRoutes.style.color = '#059669';
-                fb4bRoutes.textContent = '✔ Correct! Router0 reaches remote networks behind Router1 via next hop 192.168.10.66.';
+                fb4bRoutes.textContent = '✔ Correct! Forward routes configured via 192.168.10.66 (R1) and return routes via 192.168.10.65 (R0).';
             } else {
                 fb4bRoutes.style.color = '#DC2626';
-                fb4bRoutes.textContent = '✘ Next hop must be Router1 Serial interface IP (192.168.10.66).';
+                fb4bRoutes.textContent = '✘ Check next hops: Router0 forwards via 192.168.10.66; Router1 returns via 192.168.10.65.';
             }
         });
     }
@@ -731,7 +734,11 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (cmd === 'no' && parts[1] === 'shutdown') {
                 rState.interfaces[cliInterface].state = 'up';
                 printLine(`%LINK-5-CHANGED: Interface ${cliInterface}, changed state to up`);
-                printLine(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${cliInterface}, changed state to up`);
+                if (cliInterface === 'Serial0/1/0' && rState.interfaces['Serial0/1/0'].role === 'DCE' && rState.interfaces['Serial0/1/0'].clockRate !== 64000) {
+                    printLine(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${cliInterface}, changed state to down (DCE clock missing)`);
+                } else {
+                    printLine(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${cliInterface}, changed state to up`);
+                }
                 updateDynamicTopologyLabels();
                 obs(`no shutdown on ${cliInterface}`, 'Interface up');
             } else if (cmd === 'shutdown') {

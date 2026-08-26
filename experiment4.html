@@ -83,7 +83,7 @@
                         <!-- Part 4-A Interactive Stages -->
                         <div id="part-4a-stages">
                             <!-- Stage 1: IP & Gateway Matching -->
-                            <div class="card" style="border-left: 4px solid var(--primary-color);">
+                            <div class="card">
                                 <h3>Stage 1: IP Address & Gateway Assignment</h3>
                                 <p>Match each device and interface with its corresponding /24 IP address and Default Gateway before cabling.</p>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
@@ -159,7 +159,7 @@
                             </div>
 
                             <!-- Stage 2: CLI Command Fill-in Practice -->
-                            <div class="card" style="border-left: 4px solid #059669;">
+                            <div class="card">
                                 <h3>Stage 2: Router CLI Command Practice</h3>
                                 <p>Fill in the missing commands and parameters required to configure Router0 GigabitEthernet0/0.</p>
                                 <div style="background: #1E293B; color: #E2E8F0; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; line-height: 1.8;">
@@ -179,7 +179,7 @@
                         <!-- Part 4-B Interactive Stages -->
                         <div id="part-4b-stages" style="display: none;">
                             <!-- Stage 1: /27 Subnet Matching -->
-                            <div class="card" style="border-left: 4px solid #8B5CF6;">
+                            <div class="card">
                                 <h3>Stage 1: /27 Subnet Block Matching</h3>
                                 <p>Match each subnet block (255.255.255.224 /27) to its associated network segment and devices.</p>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
@@ -246,7 +246,7 @@
                             </div>
 
                             <!-- Stage 2: Subnet Calculation Challenge -->
-                            <div class="card" style="border-left: 4px solid #3B82F6;">
+                            <div class="card">
                                 <h3>Stage 2: Subnet Calculation Challenge</h3>
                                 <p>Given IP Address <code>192.168.10.98</code> with Subnet Mask <code>255.255.255.224 (/27)</code>, calculate the boundary addresses:</p>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
@@ -274,7 +274,7 @@
                             </div>
 
                             <!-- Stage 3: DTE / DCE & Serial WAN Setup -->
-                            <div class="card" style="border-left: 4px solid #DC2626;">
+                            <div class="card">
                                 <h3>Stage 3: DTE / DCE Serial WAN Specification</h3>
                                 <p>Configure the serial interface clocking relationship between Router0 and Router1:</p>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
@@ -324,7 +324,7 @@
                             </div>
 
                             <!-- Stage 4: Static Route Builder -->
-                            <div class="card" style="border-left: 4px solid #D97706;">
+                            <div class="card">
                                 <h3>Stage 4: Static Route Formulation</h3>
                                 <p>Define the static routes required on Router0 to reach the remote networks behind Router1:</p>
                                 <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.875rem;">
@@ -401,7 +401,7 @@
                         </div>
 
                         <!-- Subnet Analyzer (hidden by default) -->
-                        <div class="card" id="subnet-section" style="display: none; border-left: 4px solid #8B5CF6;">
+                        <div class="card" id="subnet-section" style="display: none;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h3>Subnet Analyzer: 192.168.10.0/24</h3>
                                 <button class="btn" id="close-subnet-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>
@@ -426,7 +426,7 @@
                         </div>
 
                         <!-- Router CLI Terminal -->
-                        <div class="card" id="cli-section" style="display: none; border-left: 4px solid #059669;">
+                        <div class="card" id="cli-section" style="display: none;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h3 id="cli-title">Router0 CLI</h3>
                                 <button class="btn" id="close-cli-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>
@@ -446,7 +446,7 @@
                         </div>
 
                         <!-- Ping Tool -->
-                        <div class="card" id="ping-section" style="display: none; border-left: 4px solid #3B82F6;">
+                        <div class="card" id="ping-section" style="display: none;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <h3>Ping Tool & Troubleshooter</h3>
                                 <button class="btn" id="close-ping-btn" style="background: transparent; color: #4B5563; padding: 0.25rem;"><i data-lucide="x"></i></button>

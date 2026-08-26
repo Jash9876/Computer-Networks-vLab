@@ -80,6 +80,278 @@
                     <p>Build the network topology and configure the IP addressing, subnetting, and static routing.</p>
                     
                     <div class="sim-container">
+                        <!-- Part 4-A Interactive Stages -->
+                        <div id="part-4a-stages">
+                            <!-- Stage 1: IP & Gateway Matching -->
+                            <div class="card" style="border-left: 4px solid var(--primary-color);">
+                                <h3>Stage 1: IP Address & Gateway Assignment</h3>
+                                <p>Match each device and interface with its corresponding /24 IP address and Default Gateway before cabling.</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC0 (LAN 1)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc0-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /24</option>
+                                                <option value="192.168.11.2">192.168.11.2 /24</option>
+                                                <option value="192.168.10.1">192.168.10.1 /24</option>
+                                                <option value="192.168.11.1">192.168.11.1 /24</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc0-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1</option>
+                                                <option value="192.168.11.1">192.168.11.1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC1 (LAN 2)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc1-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /24</option>
+                                                <option value="192.168.11.2">192.168.11.2 /24</option>
+                                                <option value="192.168.10.1">192.168.10.1 /24</option>
+                                                <option value="192.168.11.1">192.168.11.1 /24</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc1-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1</option>
+                                                <option value="192.168.11.1">192.168.11.1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Router0 GigabitEthernet0/0</div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Assigned IP (Gateway for LAN 1):</label>
+                                            <select class="ip-match-select" id="match-r0-g00" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.1">192.168.10.1 /24</option>
+                                                <option value="192.168.11.1">192.168.11.1 /24</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Router0 GigabitEthernet0/1</div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Assigned IP (Gateway for LAN 2):</label>
+                                            <select class="ip-match-select" id="match-r0-g01" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.1">192.168.10.1 /24</option>
+                                                <option value="192.168.11.1">192.168.11.1 /24</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4a-ip-matching" style="padding: 0.4rem 1rem;">Verify Addressing Plan</button>
+                                    <span id="feedback-4a-ip-matching" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: CLI Command Fill-in Practice -->
+                            <div class="card" style="border-left: 4px solid #059669;">
+                                <h3>Stage 2: Router CLI Command Practice</h3>
+                                <p>Fill in the missing commands and parameters required to configure Router0 GigabitEthernet0/0.</p>
+                                <div style="background: #1E293B; color: #E2E8F0; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; line-height: 1.8;">
+                                    <div>Router&gt; <input type="text" id="cmd-fill-1" placeholder="command" style="background:#0F172A; color:#38BDF8; border:1px solid #475569; padding:2px 6px; font-family:inherit; border-radius:3px; width:90px;"></div>
+                                    <div>Router# <input type="text" id="cmd-fill-2" placeholder="command" style="background:#0F172A; color:#38BDF8; border:1px solid #475569; padding:2px 6px; font-family:inherit; border-radius:3px; width:170px;"></div>
+                                    <div>Router(config)# interface gigabitethernet 0/0</div>
+                                    <div>Router(config-if)# ip address <input type="text" id="cmd-fill-3" placeholder="IP" style="background:#0F172A; color:#38BDF8; border:1px solid #475569; padding:2px 6px; font-family:inherit; border-radius:3px; width:130px;"> <input type="text" id="cmd-fill-4" placeholder="Subnet Mask" style="background:#0F172A; color:#38BDF8; border:1px solid #475569; padding:2px 6px; font-family:inherit; border-radius:3px; width:130px;"></div>
+                                    <div>Router(config-if)# <input type="text" id="cmd-fill-5" placeholder="enable interface" style="background:#0F172A; color:#38BDF8; border:1px solid #475569; padding:2px 6px; font-family:inherit; border-radius:3px; width:120px;"></div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4a-cli-fill" style="padding: 0.4rem 1rem; background-color: #059669;">Verify Commands</button>
+                                    <span id="feedback-4a-cli-fill" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Part 4-B Interactive Stages -->
+                        <div id="part-4b-stages" style="display: none;">
+                            <!-- Stage 1: /27 Subnet Matching -->
+                            <div class="card" style="border-left: 4px solid #8B5CF6;">
+                                <h3>Stage 1: /27 Subnet Block Matching</h3>
+                                <p>Match each subnet block (255.255.255.224 /27) to its associated network segment and devices.</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600;">192.168.10.0/27 (Subnet 1)</div>
+                                        <select class="subnet-match-select" id="match-sub-0" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="">-- Match Devices --</option>
+                                            <option value="lan1">PC0 + Router0 G0/0 (LAN 1)</option>
+                                            <option value="lan2">PC1 + Router0 G0/1 (LAN 2)</option>
+                                            <option value="wan">Router0 S0/1/0 + Router1 S0/1/0 (WAN)</option>
+                                            <option value="lan3">PC2 + Router1 G0/0 (LAN 3)</option>
+                                            <option value="lan4">PC3 + Router1 G0/1 (LAN 4)</option>
+                                        </select>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600;">192.168.10.32/27 (Subnet 2)</div>
+                                        <select class="subnet-match-select" id="match-sub-32" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="">-- Match Devices --</option>
+                                            <option value="lan1">PC0 + Router0 G0/0 (LAN 1)</option>
+                                            <option value="lan2">PC1 + Router0 G0/1 (LAN 2)</option>
+                                            <option value="wan">Router0 S0/1/0 + Router1 S0/1/0 (WAN)</option>
+                                            <option value="lan3">PC2 + Router1 G0/0 (LAN 3)</option>
+                                            <option value="lan4">PC3 + Router1 G0/1 (LAN 4)</option>
+                                        </select>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600;">192.168.10.64/27 (Subnet 3)</div>
+                                        <select class="subnet-match-select" id="match-sub-64" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="">-- Match Devices --</option>
+                                            <option value="lan1">PC0 + Router0 G0/0 (LAN 1)</option>
+                                            <option value="lan2">PC1 + Router0 G0/1 (LAN 2)</option>
+                                            <option value="wan">Router0 S0/1/0 + Router1 S0/1/0 (WAN)</option>
+                                            <option value="lan3">PC2 + Router1 G0/0 (LAN 3)</option>
+                                            <option value="lan4">PC3 + Router1 G0/1 (LAN 4)</option>
+                                        </select>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600;">192.168.10.96/27 (Subnet 4)</div>
+                                        <select class="subnet-match-select" id="match-sub-96" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="">-- Match Devices --</option>
+                                            <option value="lan1">PC0 + Router0 G0/0 (LAN 1)</option>
+                                            <option value="lan2">PC1 + Router0 G0/1 (LAN 2)</option>
+                                            <option value="wan">Router0 S0/1/0 + Router1 S0/1/0 (WAN)</option>
+                                            <option value="lan3">PC2 + Router1 G0/0 (LAN 3)</option>
+                                            <option value="lan4">PC3 + Router1 G0/1 (LAN 4)</option>
+                                        </select>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600;">192.168.10.128/27 (Subnet 5)</div>
+                                        <select class="subnet-match-select" id="match-sub-128" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="">-- Match Devices --</option>
+                                            <option value="lan1">PC0 + Router0 G0/0 (LAN 1)</option>
+                                            <option value="lan2">PC1 + Router0 G0/1 (LAN 2)</option>
+                                            <option value="wan">Router0 S0/1/0 + Router1 S0/1/0 (WAN)</option>
+                                            <option value="lan3">PC2 + Router1 G0/0 (LAN 3)</option>
+                                            <option value="lan4">PC3 + Router1 G0/1 (LAN 4)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4b-subnet-matching" style="padding: 0.4rem 1rem; background-color: #8B5CF6;">Verify Subnet Plan</button>
+                                    <span id="feedback-4b-subnet-matching" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Subnet Calculation Challenge -->
+                            <div class="card" style="border-left: 4px solid #3B82F6;">
+                                <h3>Stage 2: Subnet Calculation Challenge</h3>
+                                <p>Given IP Address <code>192.168.10.98</code> with Subnet Mask <code>255.255.255.224 (/27)</code>, calculate the boundary addresses:</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">Network Address:</label>
+                                        <input type="text" id="calc-net" placeholder="e.g. 192.168.10.0" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">First Usable Host:</label>
+                                        <input type="text" id="calc-first" placeholder="e.g. 192.168.10.1" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">Last Usable Host:</label>
+                                        <input type="text" id="calc-last" placeholder="e.g. 192.168.10.30" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">Broadcast Address:</label>
+                                        <input type="text" id="calc-bcast" placeholder="e.g. 192.168.10.31" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4b-calc" style="padding: 0.4rem 1rem; background-color: #3B82F6;">Check Calculation</button>
+                                    <span id="feedback-4b-calc" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 3: DTE / DCE & Serial WAN Setup -->
+                            <div class="card" style="border-left: 4px solid #DC2626;">
+                                <h3>Stage 3: DTE / DCE Serial WAN Specification</h3>
+                                <p>Configure the serial interface clocking relationship between Router0 and Router1:</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: #DC2626;">Router0 Serial0/1/0</div>
+                                        <div style="margin-top: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">Cable End Role:</label>
+                                            <select id="match-r0-role" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Role --</option>
+                                                <option value="DCE">DCE (Provides Clocking)</option>
+                                                <option value="DTE">DTE (Receives Clocking)</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-top: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">Clock Rate Requirement:</label>
+                                            <select id="match-r0-clock" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Rate --</option>
+                                                <option value="64000">clock rate 64000 (Required on DCE)</option>
+                                                <option value="none">None (DTE does not set clock rate)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: #3B82F6;">Router1 Serial0/1/0</div>
+                                        <div style="margin-top: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">Cable End Role:</label>
+                                            <select id="match-r1-role" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Role --</option>
+                                                <option value="DCE">DCE (Provides Clocking)</option>
+                                                <option value="DTE">DTE (Receives Clocking)</option>
+                                            </select>
+                                        </div>
+                                        <div style="margin-top: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">Clock Rate Requirement:</label>
+                                            <select id="match-r1-clock" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Rate --</option>
+                                                <option value="64000">clock rate 64000 (Required on DCE)</option>
+                                                <option value="none">None (DTE does not set clock rate)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4b-dce" style="padding: 0.4rem 1rem; background-color: #DC2626;">Verify DTE/DCE Setup</button>
+                                    <span id="feedback-4b-dce" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 4: Static Route Builder -->
+                            <div class="card" style="border-left: 4px solid #D97706;">
+                                <h3>Stage 4: Static Route Formulation</h3>
+                                <p>Define the static routes required on Router0 to reach the remote networks behind Router1:</p>
+                                <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.875rem;">
+                                    <div style="margin-bottom: 0.5rem;">
+                                        Router0(config)# ip route <strong>192.168.10.96</strong> <strong>255.255.255.224</strong>
+                                        <select id="route-r0-hop1" style="padding: 0.2rem 0.5rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px;">
+                                            <option value="">-- Next Hop --</option>
+                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        Router0(config)# ip route <strong>192.168.10.128</strong> <strong>255.255.255.224</strong>
+                                        <select id="route-r0-hop2" style="padding: 0.2rem 0.5rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px;">
+                                            <option value="">-- Next Hop --</option>
+                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-4b-routes" style="padding: 0.4rem 1rem; background-color: #D97706;">Verify Static Routes</button>
+                                    <span id="feedback-4b-routes" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Topology Area -->
                         <div class="card">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">

@@ -275,6 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (edge.cableType === 'console') {
                 line.setAttribute('stroke', '#7C3AED');
                 line.setAttribute('stroke-dasharray', '8,4');
+            } else if (edge.cableType === 'serial') {
+                line.setAttribute('stroke', '#DC2626');
+                line.setAttribute('stroke-dasharray', '6,3');
+                line.setAttribute('stroke-width', '4');
             } else {
                 line.setAttribute('stroke', '#005BAC');
             }

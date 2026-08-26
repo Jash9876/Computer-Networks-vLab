@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 5</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Virtual Laboratory</h1>
+            <div class="subtitle">Computer Networks Lab</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 5</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h2 class="section-title" style="margin-bottom: 0.25rem;">Simulation: Static &amp; Default Routing</h2>
+                            <p style="color: #64748B; font-size: 0.9rem; margin: 0;">Learn how routers decide how to reach unknown remote subnets across a WAN link.</p>
+                        </div>
+                        <!-- Stage Navigation Bar -->
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn exp5-nav-btn active" data-part="A" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">Part A: Addressing</button>
+                            <button class="btn exp5-nav-btn" data-part="B" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--secondary-color);">Part B: Network Builder</button>
+                            <button class="btn exp5-nav-btn" data-part="C" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--secondary-color);">Part C: Static Routing</button>
+                            <button class="btn exp5-nav-btn" data-part="D" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--secondary-color);">Part D: Packet Journey</button>
+                            <button class="btn exp5-nav-btn" data-part="E" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--secondary-color);">Part E: Default Routing</button>
+                        </div>
+                    </div>
+
+                    <div class="sim-container">
+                        <!-- ========================================================= -->
+                        <!-- PART A: Addressing & Subnet Detective                     -->
+                        <!-- ========================================================= -->
+                        <div id="part-a-container" class="exp5-part-container">
+                            <!-- Stage 1: Addressing Match -->
+                            <div class="card">
+                                <h3>Stage 1: Addressing Table Matching</h3>
+                                <p>Match each device and interface to its assigned /27 IP address and Default Gateway from the manual's addressing plan.</p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC0 (LAN 1)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc0-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /27</option>
+                                                <option value="192.168.10.34">192.168.10.34 /27</option>
+                                                <option value="192.168.10.98">192.168.10.98 /27</option>
+                                                <option value="192.168.10.130">192.168.10.130 /27</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc0-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1 (R0 G0/0)</option>
+                                                <option value="192.168.10.33">192.168.10.33 (R0 G0/1)</option>
+                                                <option value="192.168.10.97">192.168.10.97 (R1 G0/0)</option>
+                                                <option value="192.168.10.129">192.168.10.129 (R1 G0/1)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC1 (LAN 2)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc1-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /27</option>
+                                                <option value="192.168.10.34">192.168.10.34 /27</option>
+                                                <option value="192.168.10.98">192.168.10.98 /27</option>
+                                                <option value="192.168.10.130">192.168.10.130 /27</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc1-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1 (R0 G0/0)</option>
+                                                <option value="192.168.10.33">192.168.10.33 (R0 G0/1)</option>
+                                                <option value="192.168.10.97">192.168.10.97 (R1 G0/0)</option>
+                                                <option value="192.168.10.129">192.168.10.129 (R1 G0/1)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC2 (LAN 3)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc2-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /27</option>
+                                                <option value="192.168.10.34">192.168.10.34 /27</option>
+                                                <option value="192.168.10.98">192.168.10.98 /27</option>
+                                                <option value="192.168.10.130">192.168.10.130 /27</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc2-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1 (R0 G0/0)</option>
+                                                <option value="192.168.10.33">192.168.10.33 (R0 G0/1)</option>
+                                                <option value="192.168.10.97">192.168.10.97 (R1 G0/0)</option>
+                                                <option value="192.168.10.129">192.168.10.129 (R1 G0/1)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">PC3 (LAN 4)</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            <label style="font-size: 0.8rem; color: #64748B;">IP Address:</label>
+                                            <select class="ip-match-select" id="match-pc3-ip" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select IP --</option>
+                                                <option value="192.168.10.2">192.168.10.2 /27</option>
+                                                <option value="192.168.10.34">192.168.10.34 /27</option>
+                                                <option value="192.168.10.98">192.168.10.98 /27</option>
+                                                <option value="192.168.10.130">192.168.10.130 /27</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.8rem; color: #64748B;">Default Gateway:</label>
+                                            <select class="ip-match-select" id="match-pc3-gw" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                                <option value="">-- Select Gateway --</option>
+                                                <option value="192.168.10.1">192.168.10.1 (R0 G0/0)</option>
+                                                <option value="192.168.10.33">192.168.10.33 (R0 G0/1)</option>
+                                                <option value="192.168.10.97">192.168.10.97 (R1 G0/0)</option>
+                                                <option value="192.168.10.129">192.168.10.129 (R1 G0/1)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-exp5-addressing" style="padding: 0.4rem 1rem;">Verify Addressing Match</button>
+                                    <span id="feedback-exp5-addressing" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Subnet Identification & Local vs Remote Detective -->
+                            <div class="card">
+                                <h3>Stage 2: Subnet Detective &amp; Local vs Remote Classification</h3>
+                                <p>Analyze host IP <code>192.168.10.98</code> with Subnet Mask <code>255.255.255.224 (/27)</code>:</p>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <label style="font-weight: 600; font-size: 0.875rem;">1. Which Subnet ID does 192.168.10.98 belong to?</label>
+                                        <select id="detect-subnet-choice" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px; margin-top: 0.5rem;">
+                                            <option value="">-- Select Subnet --</option>
+                                            <option value="0">192.168.10.0/27</option>
+                                            <option value="32">192.168.10.32/27</option>
+                                            <option value="64">192.168.10.64/27</option>
+                                            <option value="96">192.168.10.96/27</option>
+                                            <option value="128">192.168.10.128/27</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <label style="font-weight: 600; font-size: 0.875rem;">2. From the perspective of Router0, is 192.168.10.98 local or remote?</label>
+                                        <select id="detect-locality-choice" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px; margin-top: 0.5rem;">
+                                            <option value="">-- Select Classification --</option>
+                                            <option value="local">Directly Connected (Local to Router0)</option>
+                                            <option value="remote">Remote Network (Behind Router1, requires Routing)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-exp5-subnet-detective" style="padding: 0.4rem 1rem;">Verify Analysis</button>
+                                    <span id="feedback-exp5-subnet-detective" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART B: Network Builder & Hardware Module Installation    -->
+                        <!-- ========================================================= -->
+                        <div id="part-b-container" class="exp5-part-container" style="display: none;">
+                            <!-- Stage 1: Hardware Module Installation Challenge -->
+                            <div class="card">
+                                <h3>Stage 1: Router Hardware Module Installation</h3>
+                                <p>Cisco 1941/2811 routers do not have serial ports installed by default. Select and install the <strong>WIC-2T Serial Module</strong> into Slot 0 for both routers to enable WAN connectivity.</p>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">Router0 Hardware Slot:</div>
+                                        <label style="font-size: 0.8rem; color: #64748B;">Installed Interface Module:</label>
+                                        <select id="hw-module-r0" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px; margin-top: 0.25rem;">
+                                            <option value="">-- Select Module --</option>
+                                            <option value="empty">Empty Slot</option>
+                                            <option value="ethernet">1-Port FastEthernet (WIC-1ENET)</option>
+                                            <option value="serial">2-Port Serial WAN Interface Card (WIC-2T)</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: #3B82F6; margin-bottom: 0.5rem;">Router1 Hardware Slot:</div>
+                                        <label style="font-size: 0.8rem; color: #64748B;">Installed Interface Module:</label>
+                                        <select id="hw-module-r1" style="width: 100%; padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px; margin-top: 0.25rem;">
+                                            <option value="">-- Select Module --</option>
+                                            <option value="empty">Empty Slot</option>
+                                            <option value="ethernet">1-Port FastEthernet (WIC-1ENET)</option>
+                                            <option value="serial">2-Port Serial WAN Interface Card (WIC-2T)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-exp5-hardware" style="padding: 0.4rem 1rem;">Install &amp; Verify Modules</button>
+                                    <span id="feedback-exp5-hardware" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Topology Canvas Builder -->
+                            <div class="card">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h3>Physical Topology Builder</h3>
+                                </div>
+                                <p id="topo-instructions">Drag <strong>4 PCs (PC0..PC3)</strong> and <strong>2 Routers (Router0, Router1)</strong> onto the canvas. Connect PCs &rarr; Routers with <strong>Crossover</strong>, and Router0 &harr; Router1 with <strong>Serial DCE</strong>.</p>
+                                
+                                <div class="dnd-container" style="flex-direction: column;">
+                                    <div style="display: flex; gap: 1rem; align-items: center;" id="topo-tools">
+                                        <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc">
+                                            <img src="assets/icons/pc.svg" width="32" height="32" alt="PC"><br>PC
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router">
+                                            <img src="assets/icons/router.svg" width="32" height="32" alt="Router"><br>Router
+                                        </div>
+                                        <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 1rem;"></div>
+                                        <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color);">
+                                            <i data-lucide="link"></i> Enable Connect Mode
+                                        </button>
+                                        <select id="cable-type-select" style="padding: 0.5rem; font-family: inherit; margin-left: 0.5rem;">
+                                            <option value="crossover">Crossover</option>
+                                            <option value="serial">Serial DCE</option>
+                                        </select>
+                                    </div>
+                                    <div class="topology-canvas" id="topology-canvas" style="position: relative; min-height: 380px;">
+                                        <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    </div>
+                                    <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                        <button class="btn" id="check-topology">Check Topology</button>
+                                        <button class="btn" id="reset-topology" style="background-color: var(--secondary-color);">Reset</button>
+                                    </div>
+                                    <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold;"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART C: Static Routing Lab & Dual CLI                     -->
+                        <!-- ========================================================= -->
+                        <div id="part-c-container" class="exp5-part-container" style="display: none;">
+                            <!-- Stage 1: Unknown Network Detective & Next Hop Formulation -->
+                            <div class="card">
+                                <h3>Stage 1: Unknown Network Detective &amp; Static Route Builder</h3>
+                                <p>Formulate the static routes for both routers to teach them how to reach remote subnets across the serial link.</p>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #B45309; margin-bottom: 0.5rem;">Router0 Static Routes (Forward):</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            R0(config)# ip route <strong>192.168.10.96</strong> 255.255.255.224<br>
+                                            Next-Hop IP: 
+                                            <select id="route-r0-hop1" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            R0(config)# ip route <strong>192.168.10.128</strong> 255.255.255.224<br>
+                                            Next-Hop IP: 
+                                            <select id="route-r0-hop2" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #15803D; margin-bottom: 0.5rem;">Router1 Static Routes (Return Path):</div>
+                                        <div style="margin-bottom: 0.5rem;">
+                                            R1(config)# ip route <strong>192.168.10.0</strong> 255.255.255.224<br>
+                                            Next-Hop IP: 
+                                            <select id="route-r1-hop1" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            R1(config)# ip route <strong>192.168.10.32</strong> 255.255.255.224<br>
+                                            Next-Hop IP: 
+                                            <select id="route-r1-hop2" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 2px;">
+                                                <option value="">-- Next Hop --</option>
+                                                <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                                <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-exp5-static-routes" style="padding: 0.4rem 1rem; background-color: #D97706;">Verify Static Routes</button>
+                                    <span id="feedback-exp5-static-routes" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Dual Router CLI Terminal -->
+                            <div class="card" id="cli-section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <strong>Active Terminal:</strong>
+                                        <button class="btn" id="sw-r0" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--primary-color);">Router0</button>
+                                        <button class="btn" id="sw-r1" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--secondary-color);">Router1</button>
+                                    </div>
+                                    <span style="font-size: 0.8rem; color: #64748B;">Supported: <code>ip route</code>, <code>show ip route</code>, <code>clock rate 64000</code>, <code>no shutdown</code></span>
+                                </div>
+                                <div class="terminal" id="terminal" style="height: 320px; display: flex; flex-direction: column; overflow: hidden;">
+                                    <div class="terminal-output" id="terminal-output" style="flex: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 0;"></div>
+                                    <div class="terminal-input-line" style="flex-shrink: 0;">
+                                        <span class="terminal-prompt" id="terminal-prompt">Router0&gt; </span>
+                                        <input type="text" class="terminal-input" id="terminal-input" autocomplete="off" spellcheck="false">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 0.75rem; display: flex; gap: 1rem; align-items: center;">
+                                    <button class="btn" id="validate-router-btn">Validate Active Router Config</button>
+                                </div>
+                                <div id="router-validation-output" style="margin-top: 0.75rem; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART D: Packet Journey & ICMP Verification                -->
+                        <!-- ========================================================= -->
+                        <div id="part-d-container" class="exp5-part-container" style="display: none;">
+                            <!-- Stage 1: Step-by-Step Packet Forwarding Inspector -->
+                            <div class="card">
+                                <h3>Stage 1: Packet Journey Inspector</h3>
+                                <p>Observe how an IP packet is inspected, routed, and forwarded at each Layer 3 router hop:</p>
+                                
+                                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">Source Host:</label>
+                                        <select id="journey-src" style="padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="pc0">PC0 (192.168.10.2 /27)</option>
+                                            <option value="pc1">PC1 (192.168.10.34 /27)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.8rem; font-weight: 600;">Destination Host:</label>
+                                        <select id="journey-dest" style="padding: 0.4rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                            <option value="pc2">PC2 (192.168.10.98 /27)</option>
+                                            <option value="pc3">PC3 (192.168.10.130 /27)</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn" id="start-journey-btn" style="margin-top: 1.2rem; background-color: var(--primary-color);">Trace Packet Forwarding</button>
+                                </div>
+
+                                <div id="journey-steps-box" style="background: #1E293B; color: #E2E8F0; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; line-height: 1.7; min-height: 140px;">
+                                    <span style="color: #94A3B8;">Click "Trace Packet Forwarding" to inspect hop-by-hop forwarding decisions and static route lookups.</span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Ping Tool & Troubleshooter -->
+                            <div class="card">
+                                <h3>Stage 2: End-to-End Ping &amp; Diagnostic Troubleshooter</h3>
+                                <div style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Source PC</label>
+                                        <select id="ping-source" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;"></select>
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Destination IP</label>
+                                        <input type="text" id="ping-dest" placeholder="e.g. 192.168.10.98 or 192.168.10.130" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+                                    </div>
+                                    <button class="btn" id="send-ping-btn" style="background-color: #3B82F6;">Send Ping</button>
+                                </div>
+                                <div class="terminal" id="ping-terminal" style="height: 200px; background: #000; color: #0f0; padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.875rem;">
+                                    <div id="ping-output"></div>
+                                </div>
+                                <div id="troubleshooter-output" style="margin-top: 1rem; padding: 1rem; border-radius: 6px; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART E: Default Routing & Traceroute Verification         -->
+                        <!-- ========================================================= -->
+                        <div id="part-e-container" class="exp5-part-container" style="display: none;">
+                            <!-- Stage 1: Static vs Default Strategy Decision -->
+                            <div class="card">
+                                <h3>Stage 1: Routing Strategy Decision (Static vs Default)</h3>
+                                <p>Compare the two routing strategies for Router0 and Router1:</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: #B45309; margin-bottom: 0.5rem;">Strategy A: Individual Static Routes</div>
+                                        <code style="font-size: 0.8rem;">192.168.10.96/27 &rarr; 192.168.10.66<br>192.168.10.128/27 &rarr; 192.168.10.66</code>
+                                        <p style="font-size: 0.8rem; color: #64748B; margin-top: 0.5rem;">Specific destinations, but requires a separate routing entry for every new subnet.</p>
+                                    </div>
+
+                                    <div style="background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                        <div style="font-weight: 600; color: #15803D; margin-bottom: 0.5rem;">Strategy B: Default Route (0.0.0.0/0)</div>
+                                        <code style="font-size: 0.8rem;">0.0.0.0/0 &rarr; 192.168.10.66</code>
+                                        <p style="font-size: 0.8rem; color: #64748B; margin-top: 0.5rem;">Matches any unknown destination subnet exiting via the single upstream gateway.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stage 2: Default Route Builder -->
+                            <div class="card">
+                                <h3>Stage 2: Default Route Formulation (0.0.0.0 0.0.0.0)</h3>
+                                <p>Configure quad-zero default routes to replace the individual static route entries:</p>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #1D4ED8; margin-bottom: 0.5rem;">Router0 Default Route:</div>
+                                        Router0(config)# ip route <input type="text" id="def-r0-net" placeholder="0.0.0.0" style="width: 70px; padding: 2px 4px; font-family: inherit;"> <input type="text" id="def-r0-mask" placeholder="0.0.0.0" style="width: 70px; padding: 2px 4px; font-family: inherit;">
+                                        <select id="def-r0-hop" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 6px;">
+                                            <option value="">-- Next Hop --</option>
+                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem;">
+                                        <div style="font-weight: bold; color: #1D4ED8; margin-bottom: 0.5rem;">Router1 Default Route:</div>
+                                        Router1(config)# ip route <input type="text" id="def-r1-net" placeholder="0.0.0.0" style="width: 70px; padding: 2px 4px; font-family: inherit;"> <input type="text" id="def-r1-mask" placeholder="0.0.0.0" style="width: 70px; padding: 2px 4px; font-family: inherit;">
+                                        <select id="def-r1-hop" style="padding: 0.2rem; font-family: inherit; border: 1px solid #CBD5E1; border-radius: 3px; width: 100%; margin-top: 6px;">
+                                            <option value="">-- Next Hop --</option>
+                                            <option value="192.168.10.65">192.168.10.65 (R0 S0/1/0)</option>
+                                            <option value="192.168.10.66">192.168.10.66 (R1 S0/1/0)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                    <button class="btn" id="check-exp5-default-routes" style="padding: 0.4rem 1rem; background-color: #2563EB;">Apply &amp; Verify Default Routes</button>
+                                    <span id="feedback-exp5-default-routes" style="font-weight: 500; font-size: 0.9rem;"></span>
+                                </div>
+                            </div>
+
+                            <!-- Stage 3: Live Traceroute Challenge -->
+                            <div class="card">
+                                <h3>Stage 3: Interactive Traceroute Challenge (tracert 192.168.10.130)</h3>
+                                <p>Execute traceroute from PC0 to trace the hop-by-hop path to remote host PC3 (<code>192.168.10.130</code>) across the default routed network:</p>
+                                
+                                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                                    <button class="btn" id="run-tracert-btn" style="background-color: #059669;">
+                                        <i data-lucide="route"></i> Run tracert 192.168.10.130
+                                    </button>
+                                </div>
+
+                                <div class="terminal" id="tracert-terminal" style="height: 220px; background: #000; color: #38BDF8; padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.875rem;">
+                                    <div id="tracert-output">C:\&gt; <span style="color: #64748B;">Ready. Click "Run tracert 192.168.10.130".</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Stage 4: Final Mastery Checklist -->
+                            <div class="card" id="final-mastery-card" style="background: #F0FDF4; border: 1px solid #BBF7D0;">
+                                <h3 style="color: #166534; margin-bottom: 0.5rem;">🎉 Routing Mission Mastery Checklist</h3>
+                                <ul style="margin-left: 1.5rem; line-height: 1.8; color: #14532D; font-size: 0.9rem;">
+                                    <li>✔ Addressing &amp; /27 Subnet Planning Verified</li>
+                                    <li>✔ Hardware Serial WIC-2T Module Installed &amp; Connected via DCE</li>
+                                    <li>✔ Static Routing Formulated with Accurate Next-Hop IPs (.66 &amp; .65)</li>
+                                    <li>✔ Bidirectional Packet Forwarding Verified with ICMP Ping</li>
+                                    <li>✔ Quad-Zero (0.0.0.0/0) Default Routing Configured &amp; Verified via <code>tracert</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                            <thead>
+                                <tr style="background-color: var(--card-background); border-bottom: 2px solid var(--border-color);">
+                                    <th style="padding: 0.75rem; text-align: left;">Component</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Action / Event</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="observation-table-body">
+                                <tr>
+                                    <td colspan="3" style="padding: 0.75rem; text-align: center; color: #64748B;">Complete the simulation activities to record observations.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Post-Lab Quiz</h2>
+                    <div id="quiz-container">
+                        <!-- Questions will be dynamically loaded -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <div id="result-content">
+                        <p id="result-text" style="font-size: 1.1rem; line-height: 1.6;">
+                            Static and Default Routing: In Progress. Complete the simulation and verification steps to record results.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- IP Config Modal for PCs -->
+    <div id="ip-config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; width: 350px; max-width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="modal-device-name">PC Configuration</h3>
+                <button id="close-modal" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 192.168.10.2" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.255.255.224" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Default Gateway</label>
+                <input type="text" id="gateway-input" placeholder="e.g. 192.168.10.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="save-ip-config" style="background-color: var(--primary-color);">Save</button>
+            </div>
+            <p id="ip-config-error" style="color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem;"></p>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Jashwanth B</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 5</h3>
+                <p style="margin-bottom: 2rem;">Demonstration of Static and Default Routing</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/platform-manager.js"></script>
+    <script src="data/experiment5.js"></script>
+    <script src="modules/cables.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/packet-animation.js"></script>
+    <script src="modules/experiment5-logic.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

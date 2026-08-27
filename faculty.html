@@ -387,6 +387,8 @@
                 let expCells = '';
                 let compCount = 0;
 
+                const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
+
                 for (let expId = 1; expId <= 5; expId++) {
                     const p = pMap[expId];
                     if (p && p.status === 'completed') {
@@ -394,8 +396,21 @@
                         const scoreDisplay = typeof p.final_score === 'number' ? ` (${p.final_score}%)` : '';
                         expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100%${scoreDisplay}</td>`;
                     } else if (p && p.progress_percentage > 0) {
-                        const vivaNotice = (typeof p.final_score !== 'number' || p.final_score < 70) ? ' <span style="font-size: 0.75rem; color: #DC2626;">(Viva Req)</span>' : '';
-                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%${vivaNotice}</td>`;
+                        const mCount = (p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
+                        const reqCount = expTotalReq[expId] || 5;
+                        const isSimComplete = mCount >= reqCount;
+                        const isVivaPassed = typeof p.final_score === 'number' && p.final_score >= 70;
+
+                        let tag = '';
+                        if (!isSimComplete && isVivaPassed) {
+                            tag = ' <span style="font-size: 0.72rem; color: #D97706; font-weight: 600;">(Sim Req)</span>';
+                        } else if (isSimComplete && !isVivaPassed) {
+                            tag = ' <span style="font-size: 0.72rem; color: #DC2626; font-weight: 600;">(Viva Req)</span>';
+                        } else {
+                            tag = ' <span style="font-size: 0.72rem; color: #64748B;">(In Prog)</span>';
+                        }
+
+                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%${tag}</td>`;
                     } else {
                         expCells += `<td style="color: #94A3B8; font-size: 0.85rem;">—</td>`;
                     }

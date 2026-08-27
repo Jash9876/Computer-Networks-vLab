@@ -349,6 +349,7 @@
         // 3. Authoritative Progress Hydration from PostgreSQL
         async function loadAuthoritativeProgress() {
             let completed = [];
+            let inProgressExpIds = [];
 
             try {
                 const res = await fetch('/api/progress/get', { headers: authHeaders });
@@ -357,6 +358,13 @@
                     if (data && Array.isArray(data.completedExperiments)) {
                         completed = data.completedExperiments;
                         localStorage.setItem('vlab_progression', JSON.stringify({ completed }));
+                    }
+                    if (data && Array.isArray(data.experiments)) {
+                        data.experiments.forEach(e => {
+                            if (e.status !== 'completed' && (e.progress_percentage > 0 || (e.completed_milestones && e.completed_milestones.length > 0))) {
+                                inProgressExpIds.push(e.experiment_id);
+                            }
+                        });
                     }
                 }
             } catch (e) {
@@ -380,10 +388,16 @@
                 const badge = document.getElementById(`badge-exp${i}`);
                 if (!badge) continue;
                 const isCompleted = completed.includes(i);
+                const isInProgress = inProgressExpIds.includes(i);
                 
                 if (isCompleted) {
                     badge.className = 'badge completed';
                     badge.innerHTML = '✔ Completed';
+                } else if (isInProgress) {
+                    badge.className = 'badge inprogress';
+                    badge.style.background = '#FEF3C7';
+                    badge.style.color = '#D97706';
+                    badge.innerHTML = 'In Progress';
                 } else if (i === 1 || completed.includes(i - 1)) {
                     badge.className = 'badge inprogress';
                     badge.innerHTML = 'Ready to Start';

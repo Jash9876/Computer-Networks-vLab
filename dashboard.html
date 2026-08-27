@@ -359,8 +359,9 @@
                         completed = data.completedExperiments;
                         localStorage.setItem('vlab_progression', JSON.stringify({ completed }));
                     }
-                    if (data && Array.isArray(data.experiments)) {
-                        data.experiments.forEach(e => {
+                    const expList = data.experiments || data.detailedProgress || [];
+                    if (Array.isArray(expList)) {
+                        expList.forEach(e => {
                             if (e.status !== 'completed' && (e.progress_percentage > 0 || (e.completed_milestones && e.completed_milestones.length > 0))) {
                                 inProgressExpIds.push(e.experiment_id);
                             }

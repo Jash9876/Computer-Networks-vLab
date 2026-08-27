@@ -122,7 +122,7 @@
                     <button id="copy-code-btn" class="btn" style="background: #2563EB; color: white; padding: 0.35rem 0.65rem; font-size: 0.8rem; border-radius: 4px;">Copy</button>
                 </div>
 
-                <button id="create-class-modal-btn" class="btn" style="background: #059669; color: white; padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px;">
+                <button id="create-class-modal-btn" onclick="openCreateModal()" class="btn" style="background: #059669; color: white; padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px; cursor: pointer;">
                     + New Classroom
                 </button>
             </div>
@@ -195,9 +195,9 @@
     </main>
 
     <!-- Create Classroom Modal -->
-    <div id="create-class-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;">
+    <div id="create-class-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #E2E8F0; position: relative;">
-            <button id="close-create-modal" style="position: absolute; top: 1rem; right: 1rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #64748B;">&times;</button>
+            <button id="close-create-modal" onclick="closeCreateModal()" style="position: absolute; top: 1rem; right: 1rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #64748B;">&times;</button>
             <h3 style="margin-top: 0; color: #1E293B; font-size: 1.35rem;">Create New Laboratory Classroom</h3>
             <p style="font-size: 0.875rem; color: #64748B; margin-bottom: 1.5rem;">Classrooms are permanent course sections that remain active across the semester.</p>
 
@@ -413,13 +413,24 @@
         });
 
         // 5. Create Classroom Modal Controls
-        const createModal = document.getElementById('create-class-modal');
-        document.getElementById('create-class-modal-btn').addEventListener('click', () => {
-            createModal.style.display = 'flex';
-        });
-        document.getElementById('close-create-modal').addEventListener('click', () => {
-            createModal.style.display = 'none';
-        });
+        window.openCreateModal = function() {
+            const m = document.getElementById('create-class-modal');
+            if (m) m.style.display = 'flex';
+        };
+
+        window.closeCreateModal = function() {
+            const m = document.getElementById('create-class-modal');
+            if (m) m.style.display = 'none';
+        };
+
+        const createModalBtn = document.getElementById('create-class-modal-btn');
+        if (createModalBtn) {
+            createModalBtn.addEventListener('click', window.openCreateModal);
+        }
+        const closeCreateModalBtn = document.getElementById('close-create-modal');
+        if (closeCreateModalBtn) {
+            closeCreateModalBtn.addEventListener('click', window.closeCreateModal);
+        }
 
         document.getElementById('create-classroom-form').addEventListener('submit', async (e) => {
             e.preventDefault();

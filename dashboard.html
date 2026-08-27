@@ -166,15 +166,26 @@
     </footer>
 
     <script>
-        lucide.createIcons();
+        // Safe icon creation (never crash if CDN fails)
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            try { lucide.createIcons(); } catch(e) {}
+        }
 
         // 1. Instant Render from Local Cache
-        const cachedUser = localStorage.getItem('vlab_user');
-        if (cachedUser) {
+        function renderUser(u) {
+            if (!u) return;
+            const nameEl = document.getElementById('user-display-name');
+            const regEl = document.getElementById('user-display-reg');
+            if (nameEl && u.fullName) nameEl.textContent = u.fullName;
+            if (regEl && u.registerNumber) regEl.textContent = `Register No: ${u.registerNumber}`;
+        }
+
+        const cachedUserStr = localStorage.getItem('vlab_user');
+        let cachedUser = null;
+        if (cachedUserStr) {
             try {
-                const u = JSON.parse(cachedUser);
-                document.getElementById('user-display-name').textContent = u.fullName || 'Student';
-                document.getElementById('user-display-reg').textContent = `Register No: ${u.registerNumber || '-'}`;
+                cachedUser = JSON.parse(cachedUserStr);
+                renderUser(cachedUser);
             } catch(e) {}
         }
 
@@ -187,8 +198,7 @@
             .then(data => {
                 if (data && data.authenticated && data.user) {
                     localStorage.setItem('vlab_user', JSON.stringify(data.user));
-                    document.getElementById('user-display-name').textContent = data.user.fullName;
-                    document.getElementById('user-display-reg').textContent = `Register No: ${data.user.registerNumber}`;
+                    renderUser(data.user);
                     loadProgress();
                 } else if (!cachedUser) {
                     window.location.href = 'index.html';
@@ -229,12 +239,17 @@
             const completedCount = completed.length;
             const percent = Math.round((completedCount / totalExp) * 100);
 
-            document.getElementById('completed-count').textContent = completedCount;
-            document.getElementById('overall-percentage').textContent = `${percent}%`;
-            document.getElementById('overall-progress-bar').style.width = `${percent}%`;
+            const countEl = document.getElementById('completed-count');
+            const percentEl = document.getElementById('overall-percentage');
+            const barEl = document.getElementById('overall-progress-bar');
+
+            if (countEl) countEl.textContent = completedCount;
+            if (percentEl) percentEl.textContent = `${percent}%`;
+            if (barEl) barEl.style.width = `${percent}%`;
 
             for (let i = 1; i <= 5; i++) {
                 const badge = document.getElementById(`badge-exp${i}`);
+                if (!badge) continue;
                 const isCompleted = completed.includes(i);
                 
                 if (isCompleted) {
@@ -242,7 +257,7 @@
                     badge.innerHTML = '✔ Completed';
                 } else if (i === 1 || completed.includes(i - 1)) {
                     badge.className = 'badge inprogress';
-                    badge.innerHTML = '◐ Ready / In Progress';
+                    badge.innerHTML = 'Ready to Start';
                 } else {
                     badge.className = 'badge locked';
                     badge.innerHTML = '🔒 Locked';
@@ -250,15 +265,18 @@
             }
         }
 
-        // 3. Logout
+        // 4. Logout
         document.getElementById('logout-btn').addEventListener('click', async () => {
             try {
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders });
             } catch (e) {}
+            localStorage.removeItem('vlab_user');
+            localStorage.removeItem('vlab_token');
             sessionStorage.removeItem('vlab_user');
             window.location.href = 'index.html';
         });
 
+        // Trigger initial default badges rendering immediately
         loadProgress();
     </script>
 </body>

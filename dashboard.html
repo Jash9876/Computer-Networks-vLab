@@ -171,7 +171,7 @@
             try { lucide.createIcons(); } catch(e) {}
         }
 
-        // 1. Instant Render from Local Cache
+        // 1. Session & Identity Verification (Strict Server Authority)
         function renderUser(u) {
             if (!u) return;
             const nameEl = document.getElementById('user-display-name');
@@ -180,49 +180,42 @@
             if (regEl && u.registerNumber) regEl.textContent = `Register No: ${u.registerNumber}`;
         }
 
-        const cachedUserStr = localStorage.getItem('vlab_user');
-        let cachedUser = null;
-        if (cachedUserStr) {
-            try {
-                cachedUser = JSON.parse(cachedUserStr);
-                renderUser(cachedUser);
-            } catch(e) {}
+        const token = localStorage.getItem('vlab_token');
+        if (!token) {
+            window.location.href = 'index.html';
         }
 
-        const token = localStorage.getItem('vlab_token');
-        const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const authHeaders = { 'Authorization': `Bearer ${token}` };
 
-        // 2. Check User Session with Serverless API
+        // 2. Authoritative User Session Verification
         fetch('/api/auth/me', { headers: authHeaders })
-            .then(res => res.ok ? res.json() : null)
+            .then(res => {
+                if (!res.ok) throw new Error('Session invalid or expired');
+                return res.json();
+            })
             .then(data => {
                 if (data && data.authenticated && data.user) {
                     localStorage.setItem('vlab_user', JSON.stringify(data.user));
                     renderUser(data.user);
-                    loadProgress();
-                } else if (!cachedUser) {
-                    window.location.href = 'index.html';
+                    loadAuthoritativeProgress();
                 } else {
-                    loadProgress();
+                    // Invalid session -> Force sign-in
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = 'index.html';
                 }
             })
-            .catch(() => {
-                loadProgress();
+            .catch(err => {
+                console.error('[Auth Guard]', err);
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = 'index.html';
             });
 
-        // 3. Load Progress from API or localStorage
-        async function loadProgress() {
+        // 3. Authoritative Progress Hydration from PostgreSQL
+        async function loadAuthoritativeProgress() {
             let completed = [];
 
-            // Try loading from localStorage first for instant response
-            try {
-                const local = JSON.parse(localStorage.getItem('vlab_progression') || '{}');
-                if (local && Array.isArray(local.completed)) {
-                    completed = local.completed;
-                }
-            } catch (e) {}
-
-            // Try fetching from server API if online
             try {
                 const res = await fetch('/api/progress/get', { headers: authHeaders });
                 if (res.ok) {
@@ -232,7 +225,9 @@
                         localStorage.setItem('vlab_progression', JSON.stringify({ completed }));
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[Dashboard] Could not fetch server progress.');
+            }
 
             // Update UI
             const totalExp = 5;

@@ -5,12 +5,16 @@ const PlatformManager = {
         completed: [] // Array of completed exp numbers, e.g. [1, 2]
     },
 
-    init() {
-        this.loadState();
+    async init() {
+        // 1. Initial immediate paint from localStorage cache
+        this.loadLocalCache();
         this.applyProgressionUI();
+
+        // 2. Fetch authoritative state from PostgreSQL API
+        await this.syncFromServer();
     },
 
-    loadState() {
+    loadLocalCache() {
         const savedProg = localStorage.getItem('vlab_progression');
         if (savedProg) {
             try {
@@ -19,14 +23,51 @@ const PlatformManager = {
         }
     },
 
-    markCompleted(expNumber, score) {
-        if (!this.progression.completed.includes(expNumber)) {
-            this.progression.completed.push(expNumber);
-            localStorage.setItem('vlab_progression', JSON.stringify(this.progression));
-            this.applyProgressionUI();
+    async syncFromServer() {
+        try {
+            const token = localStorage.getItem('vlab_token');
+            const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const res = await fetch('/api/progress/get', { headers: authHeaders });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && Array.isArray(data.completedExperiments)) {
+                    this.progression.completed = data.completedExperiments;
+                    localStorage.setItem('vlab_progression', JSON.stringify(this.progression));
+                    this.applyProgressionUI();
+                }
+            }
+        } catch (e) {
+            console.warn('[PlatformManager] Using local progress cache.');
         }
-        // Save score if needed
-        localStorage.setItem(`vlab_score_exp${expNumber}`, score);
+    },
+
+    async markCompleted(expNumber, score = 100) {
+        // Strict Institutional Rule: Browser NEVER marks completion independently.
+        // Server validation (PostgreSQL) is the sole authority for completion.
+        try {
+            const token = localStorage.getItem('vlab_token');
+            const authHeaders = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+            
+            // Sync milestone event to server
+            await fetch('/api/events/log', {
+                method: 'POST',
+                headers: authHeaders,
+                body: JSON.stringify({
+                    experimentId: expNumber,
+                    stage: 'EXPERIMENT_COMPLETED',
+                    eventType: 'LAB_COMPLETED',
+                    payload: { score, timestamp: new Date().toISOString() }
+                })
+            });
+
+            // Re-sync authoritative state from PostgreSQL
+            await this.syncFromServer();
+        } catch (e) {
+            console.warn('[VLab Platform] Server validation pending reconnection.');
+        }
     },
 
     applyProgressionUI() {

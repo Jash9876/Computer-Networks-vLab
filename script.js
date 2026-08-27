@@ -38,6 +38,10 @@ function loadData() {
         document.getElementById('result-text').textContent = "Complete the simulations and quiz to view the final result.";
     }
 
+    // Hydrate existing observations & result on page load
+    updateObservationTable();
+    updateResultFromObservations();
+
     // Quiz
     setupQuiz();
 }
@@ -60,16 +64,54 @@ function setupNavigation() {
     });
 }
 
-// Global Observation Tracker
-const observations = [];
+// Global Observation Tracker with LocalStorage Persistence
+function getExpKey() {
+    let expId = 1;
+    if (window.location.pathname.includes('experiment2')) expId = 2;
+    else if (window.location.pathname.includes('experiment3')) expId = 3;
+    else if (window.location.pathname.includes('experiment4')) expId = 4;
+    else if (window.location.pathname.includes('experiment5')) expId = 5;
+    return `vlab_obs_exp_${expId}`;
+}
+
+const observations = (function() {
+    try {
+        const saved = localStorage.getItem(getExpKey());
+        return saved ? JSON.parse(saved) : [];
+    } catch(e) {
+        return [];
+    }
+})();
 
 function addObservation(moduleName, action, result) {
     observations.push({ time: new Date().toLocaleTimeString(), moduleName, action, result });
+    try {
+        localStorage.setItem(getExpKey(), JSON.stringify(observations));
+    } catch(e) {}
     updateObservationTable();
+    updateResultFromObservations();
+}
+
+function updateResultFromObservations() {
+    const resTextEl = document.getElementById('result-text');
+    if (!resTextEl || document.title.includes('Exercise 3') || document.title.includes('Exercise 4') || document.title.includes('Exercise 5')) return;
+    
+    const count = observations.length;
+    if (count > 0) {
+        const quizObs = observations.find(o => o.moduleName === 'Quiz');
+        const scoreInfo = quizObs ? ` (${quizObs.result})` : '';
+        resTextEl.innerHTML = `
+            <strong>Exercise Progress Recorded:</strong><br><br>
+            • <strong>Total Observation Events:</strong> ${count}<br>
+            • <strong>Modules Interacted:</strong> ${new Set(observations.map(o => o.moduleName)).size} module(s)<br>
+            • <strong>Status:</strong> ${quizObs ? 'Quiz Completed' + scoreInfo : 'Simulations in progress. Complete the Quiz to view final score.'}
+        `;
+    }
 }
 
 function updateObservationTable() {
     const container = document.getElementById('observation-content');
+    if (!container) return;
     if (observations.length === 0) {
         container.innerHTML = "<p>No observations recorded yet. Start interacting with the Simulation.</p>";
         return;
@@ -102,32 +144,35 @@ function updateObservationTable() {
     container.innerHTML = html;
     
     // Show export button
-    document.getElementById('export-csv').style.display = 'inline-block';
+    const exportBtn = document.getElementById('export-csv');
+    if (exportBtn) exportBtn.style.display = 'inline-block';
 }
 
 // CSV Export Logic
-document.getElementById('export-csv').addEventListener('click', () => {
-    if (observations.length === 0) return;
-    
-    let csv = 'Time,Module,Action,Result\n';
-    observations.forEach(obs => {
-        // Escape quotes and commas
-        const mod = `"${obs.moduleName.replace(/"/g, '""')}"`;
-        const act = `"${obs.action.replace(/"/g, '""')}"`;
-        const res = `"${obs.result.replace(/"/g, '""')}"`;
-        csv += `${obs.time},${mod},${act},${res}\n`;
+const exportCsvBtn = document.getElementById('export-csv');
+if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', () => {
+        if (observations.length === 0) return;
+        
+        let csv = 'Time,Module,Action,Result\n';
+        observations.forEach(obs => {
+            const mod = `"${(obs.moduleName || '').replace(/"/g, '""')}"`;
+            const act = `"${(obs.action || '').replace(/"/g, '""')}"`;
+            const res = `"${(obs.result || '').replace(/"/g, '""')}"`;
+            csv += `${obs.time},${mod},${act},${res}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'observations.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     });
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'observations.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-});
+}
 
 // Quiz System
 let currentAttempt = 0;
@@ -225,17 +270,24 @@ function evaluateQuiz() {
 
     // Collect user answers for secure server-side evaluation
     const userAnswers = [];
-    quizData.forEach((q, idx) => {
+    const quizList = (typeof experimentData !== 'undefined' && experimentData.quiz) ? experimentData.quiz : [];
+    quizList.forEach((q, idx) => {
         const selected = document.querySelector(`input[name="q${idx}"]:checked`);
         if (selected) {
             userAnswers.push({ questionIndex: idx, selectedIndex: parseInt(selected.value) });
         }
     });
 
+    const token = localStorage.getItem('vlab_token');
+    const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+
     // Server-Side Secure Sync
     fetch('/api/quiz/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({
             experimentId: currentExpId,
             userAnswers,
@@ -270,28 +322,38 @@ function evaluateQuiz() {
 }
 
 // Certificate Modal Logic
-document.getElementById('view-cert-btn').addEventListener('click', () => {
-    document.getElementById('cert-modal').style.display = 'flex';
-});
+const viewCertBtn = document.getElementById('view-cert-btn');
+if (viewCertBtn) {
+    viewCertBtn.addEventListener('click', () => {
+        const modal = document.getElementById('cert-modal');
+        if (modal) modal.style.display = 'flex';
+    });
+}
 
-document.getElementById('close-cert').addEventListener('click', () => {
-    document.getElementById('cert-modal').style.display = 'none';
-});
+const closeCertBtn = document.getElementById('close-cert');
+if (closeCertBtn) {
+    closeCertBtn.addEventListener('click', () => {
+        const modal = document.getElementById('cert-modal');
+        if (modal) modal.style.display = 'none';
+    });
+}
 
-document.getElementById('print-cert').addEventListener('click', () => {
-    // Hide everything except cert-content for printing
-    const originalContents = document.body.innerHTML;
-    const printContents = document.getElementById('cert-content').outerHTML;
-    
-    document.body.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; height:100vh;">
-            ${printContents}
-        </div>
-    `;
-    
-    window.print();
-    
-    // Restore
-    document.body.innerHTML = originalContents;
-    window.location.reload(); // Quickest way to restore event listeners after innerHTML swap
-});
+const printCertBtn = document.getElementById('print-cert');
+if (printCertBtn) {
+    printCertBtn.addEventListener('click', () => {
+        const certEl = document.getElementById('cert-content');
+        if (!certEl) return;
+        const originalContents = document.body.innerHTML;
+        const printContents = certEl.outerHTML;
+        
+        document.body.innerHTML = `
+            <div style="display:flex; justify-content:center; align-items:center; height:100vh;">
+                ${printContents}
+            </div>
+        `;
+        
+        window.print();
+        document.body.innerHTML = originalContents;
+        window.location.reload();
+    });
+}

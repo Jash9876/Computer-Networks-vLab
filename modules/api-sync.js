@@ -16,13 +16,16 @@
 
         // 1. Hydrate User Details from API or Session Cache
         async hydrateUser() {
+            const token = localStorage.getItem('vlab_token');
+            const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
             try {
-                const res = await fetch('/api/auth/me');
+                const res = await fetch('/api/auth/me', { headers: authHeaders });
                 if (res.ok) {
                     const data = await res.json();
                     if (data && data.authenticated && data.user) {
                         this.user = data.user;
-                        sessionStorage.setItem('vlab_user', JSON.stringify(this.user));
+                        localStorage.setItem('vlab_user', JSON.stringify(this.user));
                         this.applyUserToDOM();
                         return;
                     }
@@ -31,7 +34,7 @@
 
             // Fallback to local session storage
             try {
-                this.user = JSON.parse(sessionStorage.getItem('vlab_user'));
+                this.user = JSON.parse(localStorage.getItem('vlab_user') || sessionStorage.getItem('vlab_user'));
                 this.applyUserToDOM();
             } catch (e) {}
         },
@@ -47,9 +50,14 @@
         // 2. Log Educational Event to Serverless API
         async logEvent(stage, eventType, payload = {}) {
             try {
+                const token = localStorage.getItem('vlab_token');
+                const authHeaders = {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                };
                 const res = await fetch('/api/events/log', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders,
                     body: JSON.stringify({
                         experimentId: this.experimentId,
                         stage,

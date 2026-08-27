@@ -366,10 +366,11 @@
                             const mCount = Array.isArray(p.completed_milestones) ? p.completed_milestones.length : 0;
                             const reqCount = expTotalReq[i] || 5;
                             const isSimComplete = mCount >= reqCount;
-                            const vivaScore = Number(p.score) || 0;
+                            const vivaScore = Number(p.final_score ?? p.score) || 0;
                             const isVivaPassed = vivaScore >= 70;
 
-                            const isAcademicComplete = (isSimComplete && isVivaPassed) || (p.isAcademicComplete === true && p.status === 'completed');
+                            // Strict Authoritative Invariant: Completed ONLY when dual requirements pass
+                            const isAcademicComplete = isSimComplete && isVivaPassed;
 
                             if (isAcademicComplete) {
                                 validatedCompleted.push(i);

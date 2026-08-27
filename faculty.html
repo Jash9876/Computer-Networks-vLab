@@ -364,7 +364,7 @@
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = '';
 
-            if (students.length === 0) {
+            if (!students || students.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="9" style="text-align: center; color: #64748B; padding: 2.5rem;">
@@ -372,8 +372,14 @@
                         </td>
                     </tr>
                 `;
+                document.getElementById('total-students').textContent = '0';
+                document.getElementById('class-completion-rate').textContent = '0%';
+                document.getElementById('total-completions').textContent = '0';
                 return;
             }
+
+            const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
+            let liveTotalCompletedExps = 0;
 
             students.forEach(st => {
                 const tr = document.createElement('tr');
@@ -387,20 +393,20 @@
                 let expCells = '';
                 let compCount = 0;
 
-                const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
-
                 for (let expId = 1; expId <= 5; expId++) {
                     const p = pMap[expId];
                     const mCount = (p && p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
                     const reqCount = expTotalReq[expId] || 5;
                     const isSimComplete = mCount >= reqCount;
-                    const vivaScore = p ? (Number(p.final_score) || 0) : 0;
+                    const vivaScore = p ? (Number(p.final_score ?? p.score) || 0) : 0;
                     const isVivaPassed = vivaScore >= 70;
 
-                    const isAcademicComplete = p && ((isSimComplete && isVivaPassed) || (p.isAcademicComplete === true && p.status === 'completed'));
+                    // Strict Authoritative Invariant: Completed ONLY when dual conditions are met
+                    const isAcademicComplete = !!p && isSimComplete && isVivaPassed;
 
                     if (isAcademicComplete) {
                         compCount++;
+                        liveTotalCompletedExps++;
                         expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100% (${vivaScore}%)</td>`;
                     } else if (p && (p.progress_percentage > 0 || mCount > 0 || vivaScore > 0)) {
                         let tag = '';
@@ -430,6 +436,14 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Synchronize Overview Cards with authoritative matrix calculation
+            const maxPossible = students.length * 5;
+            const liveCompletionRate = maxPossible > 0 ? Math.round((liveTotalCompletedExps / maxPossible) * 100) : 0;
+
+            document.getElementById('total-students').textContent = students.length;
+            document.getElementById('total-completions').textContent = liveTotalCompletedExps;
+            document.getElementById('class-completion-rate').textContent = `${liveCompletionRate}%`;
 
             document.querySelectorAll('.student-link, .view-btn').forEach(btn => {
                 btn.addEventListener('click', () => openStudentModal(btn.dataset.id));

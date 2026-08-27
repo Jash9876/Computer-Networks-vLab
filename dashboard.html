@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Computer Networks Virtual Lab</title>
     <link rel="stylesheet" href="style.css">
+    <script src="modules/device-gate.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
     <style>
         .dash-container {
@@ -36,13 +37,41 @@
             align-items: center;
             transition: all 0.2s ease;
             margin-bottom: 1rem;
+            gap: 1.5rem;
         }
         .exp-card:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             border-color: #CBD5E1;
         }
+        .exp-card > div:first-child {
+            flex: 1;
+        }
+        .exp-card > div:last-child {
+            min-width: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+        .exp-card .badge {
+            width: 120px;
+            min-width: 120px;
+            text-align: center;
+            box-sizing: border-box;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .exp-card .btn {
+            width: 110px;
+            min-width: 110px;
+            text-align: center;
+            white-space: nowrap;
+            box-sizing: border-box;
+            display: inline-block;
+        }
         .badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.35rem 0.75rem;
             border-radius: 999px;
             font-size: 0.8rem;
             font-weight: 600;
@@ -101,9 +130,9 @@
                     <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Study of Network Cables, Network Commands &amp; PT UI</h4>
                     <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Identify network hardware cables, test core IP utilities, and explore Cisco Packet Tracer.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
                     <span class="badge" id="badge-exp1">Loading...</span>
-                    <a href="experiment1.html" class="btn" id="btn-exp1" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                    <a href="experiment1.html" class="btn" id="btn-exp1" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
 
@@ -114,9 +143,9 @@
                     <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Study of IP Addressing &amp; Cable Pinout Construction</h4>
                     <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Construct T568A / T568B pinout standards and build Peer-to-Peer &amp; LAN topologies.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
                     <span class="badge" id="badge-exp2">Loading...</span>
-                    <a href="experiment2.html" class="btn" id="btn-exp2" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                    <a href="experiment2.html" class="btn" id="btn-exp2" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
 
@@ -127,9 +156,9 @@
                     <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Router Configuration Through a Console</h4>
                     <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Establish RS-232 console communication, configure Cisco IOS CLI passwords and dual Gigabit + Serial interfaces.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
                     <span class="badge" id="badge-exp3">Loading...</span>
-                    <a href="experiment3.html" class="btn" id="btn-exp3" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                    <a href="experiment3.html" class="btn" id="btn-exp3" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
 
@@ -140,9 +169,9 @@
                     <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Design of Subnet IP Addressing in Packet Tracer</h4>
                     <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Design /27 IPv4 subnet allocation across dual Cisco 1941 routers connected via V.35 DCE Serial WAN.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
                     <span class="badge" id="badge-exp4">Loading...</span>
-                    <a href="experiment4.html" class="btn" id="btn-exp4" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                    <a href="experiment4.html" class="btn" id="btn-exp4" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
 
@@ -153,9 +182,9 @@
                     <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Demonstration of Static and Default Routing</h4>
                     <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure bi-directional static routes, transition to 0.0.0.0/0 default routing, and trace hop-by-hop forwarding.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
                     <span class="badge" id="badge-exp5">Loading...</span>
-                    <a href="experiment5.html" class="btn" id="btn-exp5" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                    <a href="experiment5.html" class="btn" id="btn-exp5" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
         </div>

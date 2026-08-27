@@ -204,7 +204,18 @@ function setupQuiz() {
     document.getElementById('submit-quiz').addEventListener('click', evaluateQuiz);
 }
 
+let isQuizSubmitting = false;
+
 function evaluateQuiz() {
+    if (isQuizSubmitting) return;
+
+    const submitBtn = document.getElementById('submit-quiz');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Evaluating...';
+    }
+    isQuizSubmitting = true;
+
     currentAttempt++;
     let score = 0;
     const total = experimentData.quiz.length;
@@ -284,7 +295,7 @@ function evaluateQuiz() {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
 
-    // Server-Side Secure Sync
+    // Server-Side Secure Sync with Button State Release & Server-Authoritative Rendering
     fetch('/api/quiz/submit', {
         method: 'POST',
         headers: authHeaders,
@@ -296,28 +307,57 @@ function evaluateQuiz() {
     })
     .then(res => res.ok ? res.json() : null)
     .then(data => {
-        if (data && data.certificateCode) {
-            const certCodeEl = document.getElementById('cert-code');
-            if (certCodeEl) certCodeEl.textContent = data.certificateCode;
-            if (typeof PlatformManager !== 'undefined' && typeof PlatformManager.markCompleted === 'function') {
-                PlatformManager.markCompleted(currentExpId, percentage);
+        if (data && data.success) {
+            const officialPercentage = typeof data.percentage === 'number' ? data.percentage : percentage;
+            const officialScore = typeof data.score === 'number' ? data.score : score;
+
+            // 1. Authoritative Quiz Results display
+            resultsEl.innerHTML = `
+                <h3>Quiz Evaluation</h3>
+                <p><strong>Attempt:</strong> ${currentAttempt}</p>
+                <p><strong>Official Verified Score:</strong> ${officialScore} / ${data.totalQuestions || total} (${officialPercentage}%)</p>
+                <p style="font-size:0.9rem; color:#4B5563;">${data.passed ? '🎉 Great job! You have passed the institutional quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
+            `;
+
+            // 2. Authoritative Certificate Data
+            if (data.certificateCode) {
+                const certCodeEl = document.getElementById('cert-code');
+                if (certCodeEl) certCodeEl.textContent = data.certificateCode;
+                const certScoreEl = document.getElementById('cert-score');
+                if (certScoreEl) certScoreEl.textContent = `${officialPercentage}%`;
+                const certBtn = document.getElementById('view-cert-btn');
+                if (certBtn) certBtn.style.display = 'inline-block';
+            }
+
+            // 3. Authoritative Result Tab update
+            const resTextEl = document.getElementById('result-text');
+            if (resTextEl) {
+                resTextEl.innerHTML = `
+                    <strong>Academic Lab Evaluation:</strong><br><br>
+                    • <strong>Status:</strong> ${data.passed ? '<span style="color:#059669; font-weight:bold;">Completed ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress (Quiz Retry Required)</span>'}<br>
+                    • <strong>Official Score:</strong> ${officialPercentage}% (Attempt ${currentAttempt})<br>
+                    • <strong>Certificate Code:</strong> ${data.certificateCode ? `<span style="font-family:monospace; color:#2563EB;">${data.certificateCode}</span>` : 'Requires &ge; 70%'}<br>
+                    • <strong>Interactive Modules Completed:</strong> ${new Set(observations.map(o => o.moduleName)).size} module(s).
+                `;
+            }
+
+            // 4. Trigger platform server progression sync
+            if (typeof PlatformManager !== 'undefined' && typeof PlatformManager.markCompleted === 'function' && data.passed) {
+                PlatformManager.markCompleted(currentExpId, officialPercentage);
             }
         }
     })
-    .catch(() => {});
+    .catch(() => {})
+    .finally(() => {
+        isQuizSubmitting = false;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Quiz';
+        }
+    });
 
-    // Update Result tab
-    const resTextEl = document.getElementById('result-text');
-    if (resTextEl) {
-        resTextEl.innerHTML = `
-            You have completed the virtual lab exercise.<br><br>
-            <strong>Final Quiz Score:</strong> ${percentage}% (Attempt ${currentAttempt})<br>
-            <strong>Simulations Interacted:</strong> ${new Set(observations.map(o => o.moduleName)).size} modules.
-        `;
-    }
-    
     if(typeof addObservation === 'function') {
-        addObservation("Quiz", "Submitted Quiz", `Score: ${percentage}%`);
+        addObservation("Quiz", "Submitted Quiz", `Attempt ${currentAttempt}`);
     }
 }
 

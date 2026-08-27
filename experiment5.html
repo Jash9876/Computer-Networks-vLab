@@ -542,33 +542,9 @@
                     <h2 class="section-title">Observation</h2>
                     <p>Based on the simulation modules, the following observations were recorded:</p>
                     <div id="observation-content">
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                            <thead>
-                                <tr style="background-color: var(--card-background); border-bottom: 2px solid var(--border-color);">
-                                    <th style="padding: 0.75rem; text-align: left;">Component</th>
-                                    <th style="padding: 0.75rem; text-align: left;">Action / Event</th>
-                                    <th style="padding: 0.75rem; text-align: left;">Result</th>
-                                </tr>
-                            </thead>
-                            <tbody id="observation-table-body">
-                                <tr>
-                                    <td colspan="3" style="padding: 0.75rem; text-align: center; color: #64748B;">Complete the simulation activities to record observations.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <!-- Populated by JS -->
                     </div>
-                </div>
-            </section>
-
-            <!-- Quiz Section -->
-            <section id="quiz" class="section">
-                <div class="card">
-                    <h2 class="section-title">Post-Lab Quiz</h2>
-                    <div id="quiz-container">
-                        <!-- Questions will be dynamically loaded -->
-                    </div>
-                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
-                    <div id="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
                 </div>
             </section>
 
@@ -576,11 +552,20 @@
             <section id="result" class="section">
                 <div class="card">
                     <h2 class="section-title">Result</h2>
-                    <div id="result-content">
-                        <p id="result-text" style="font-size: 1.1rem; line-height: 1.6;">
-                            Static and Default Routing: In Progress. Complete the simulation and verification steps to record results.
-                        </p>
+                    <p id="result-text">Loading...</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Questions</h2>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
                     </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results"></div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
                 </div>
             </section>
         </main>

@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 obs('Addressing Match', 'Matched 4 PCs to /27 subnets', 'Passed');
             } else {
                 fbAddr.style.color = '#DC2626';
-                fbAddr.textContent = '✘ Incorrect mapping. Check: PC0(.2/GW.1), PC1(.34/GW.33), PC2(.98/GW.97), PC3(.130/GW.129).';
+                fbAddr.textContent = '💡 Hint: Each PC host IP must belong to its respective LAN subnet range, and its Default Gateway must match the local GigabitEthernet interface of its connected router.';
             }
         });
     }
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 obs('Subnet Detective', 'Classified 192.168.10.98/27', 'Remote Network behind Router1');
             } else {
                 fbSubDet.style.color = '#DC2626';
-                fbSubDet.textContent = '✘ Incorrect. 192.168.10.98 belongs to 192.168.10.96/27 (Subnet 4) and is REMOTE to Router0.';
+                fbSubDet.textContent = '💡 Hint: A /27 mask creates blocks of 32 (0, 32, 64, 96, 128...). Where does .98 fall? Also check if that LAN is directly connected to Router0 or separated by the WAN link.';
             }
         });
     }
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 obs('Static Routing', 'Formulated bi-directional static routes', 'Applied via .66 and .65');
             } else {
                 fbStaticRoutes.style.color = '#DC2626';
-                fbStaticRoutes.textContent = '✘ Incorrect next-hop. Router0 forwards via 192.168.10.66; Router1 returns via 192.168.10.65.';
+                fbStaticRoutes.textContent = '💡 Hint: The Next-Hop IP must always be the neighboring router interface on the WAN serial link (Router1 S0/1/0 is .66, Router0 S0/1/0 is .65).';
             }
         });
     }
@@ -422,9 +422,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     const hop = orig[4];
 
                     if (net === '0.0.0.0' && mask === '0.0.0.0') {
+                        rState.staticRoutes = [];
                         rState.defaultRoute = { nextHop: hop };
+                        if (exp5State.routerStates.R0.defaultRoute && exp5State.routerStates.R1.defaultRoute) {
+                            exp5State.defaultRoutesConfigured = true;
+                        }
                         printCliLine('');
-                        obs('CLI Default Route', `ip route 0.0.0.0 0.0.0.0 ${hop}`, 'Success');
+                        obs('CLI Default Route', `ip route 0.0.0.0 0.0.0.0 ${hop}`, 'Success (Replaced Static Routes)');
                     } else {
                         rState.staticRoutes = rState.staticRoutes.filter(r => !(r.network === net && r.mask === mask));
                         rState.staticRoutes.push({ network: net, mask: mask, nextHop: hop });
@@ -491,26 +495,84 @@ document.addEventListener('DOMContentLoaded', function () {
         printCliLine(`Cable type: ${role === 'DCE' ? 'V.35 DCE cable (clock rate 64000)' : 'V.35 DTE cable'}`);
     }
 
+    // Helper to extract /27 subnet base IP
+    function getSubnet27(ip) {
+        if (!ip) return null;
+        const parts = ip.trim().split('.').map(Number);
+        if (parts.length !== 4 || parts.some(isNaN)) return null;
+        const last = parts[3] & 224;
+        return `${parts[0]}.${parts[1]}.${parts[2]}.${last}`;
+    }
+
+    // Strict Layer 3 route lookup function for a given router
+    function lookupRoute(routerKey, destIp) {
+        const rState = exp5State.routerStates[routerKey];
+        if (!rState) return null;
+        const targetSubnet = getSubnet27(destIp);
+        if (!targetSubnet) return null;
+
+        // 1. Check directly connected interfaces
+        for (const ifName in rState.interfaces) {
+            const iface = rState.interfaces[ifName];
+            if (iface.state === 'up' && getSubnet27(iface.ip) === targetSubnet) {
+                return { type: 'connected', ifName, nextHop: 'direct' };
+            }
+        }
+
+        // 2. Check specific static routes
+        const matchedStatic = rState.staticRoutes.find(r => r.network === targetSubnet);
+        if (matchedStatic) {
+            // Check next-hop validity (must point to valid serial neighbor)
+            const validNextHop = (routerKey === 'R0') ? '192.168.10.66' : '192.168.10.65';
+            if (matchedStatic.nextHop === validNextHop) {
+                return { type: 'static', nextHop: matchedStatic.nextHop, ifName: 'Serial0/1/0' };
+            }
+        }
+
+        // 3. Check candidate default route (Gateway of Last Resort)
+        if (rState.defaultRoute) {
+            const validNextHop = (routerKey === 'R0') ? '192.168.10.66' : '192.168.10.65';
+            if (rState.defaultRoute.nextHop === validNextHop) {
+                return { type: 'default', nextHop: rState.defaultRoute.nextHop, ifName: 'Serial0/1/0' };
+            }
+        }
+
+        return null; // No route to destination (unreachable)
+    }
+
     if (validateRouterBtn) {
         validateRouterBtn.addEventListener('click', () => {
-            const rState = exp5State.routerStates[exp5State.activeRouterKey];
-            const hasStatic = rState.staticRoutes.length > 0;
-            const hasDef = rState.defaultRoute !== null;
+            const rKey = exp5State.activeRouterKey;
+            const rState = exp5State.routerStates[rKey];
 
             routerValidationOutput.style.display = 'block';
             routerValidationOutput.style.padding = '0.75rem';
             routerValidationOutput.style.borderRadius = '6px';
 
-            if (hasStatic || hasDef) {
+            const expectedStatic = (rKey === 'R0')
+                ? [{ net: '192.168.10.96', hop: '192.168.10.66' }, { net: '192.168.10.128', hop: '192.168.10.66' }]
+                : [{ net: '192.168.10.0', hop: '192.168.10.65' }, { net: '192.168.10.32', hop: '192.168.10.65' }];
+
+            const validStaticCount = expectedStatic.filter(exp => 
+                rState.staticRoutes.some(r => r.network === exp.net && r.nextHop === exp.hop)
+            ).length;
+
+            const hasValidDef = (rState.defaultRoute && rState.defaultRoute.nextHop === ((rKey === 'R0') ? '192.168.10.66' : '192.168.10.65'));
+
+            if (validStaticCount === 2 || hasValidDef) {
                 routerValidationOutput.style.background = '#D1FAE5';
                 routerValidationOutput.style.color = '#065F46';
                 routerValidationOutput.style.border = '1px solid #34D399';
-                routerValidationOutput.innerHTML = `<strong>${rState.hostname} Validation Passed ✔</strong><br>Routing entries active: ${hasStatic ? `${rState.staticRoutes.length} static route(s)` : ''} ${hasDef ? '1 default route (0.0.0.0/0)' : ''}`;
+                routerValidationOutput.innerHTML = `<strong>${rState.hostname} Routing Validation Passed ✔</strong><br>` +
+                    (hasValidDef 
+                        ? `Default Route Active: <code>0.0.0.0/0 &rarr; ${rState.defaultRoute.nextHop}</code>`
+                        : `Static Routes Active: 2 /27 remote networks mapped via <code>${expectedStatic[0].hop}</code>`);
             } else {
                 routerValidationOutput.style.background = '#FEF3C7';
                 routerValidationOutput.style.color = '#92400E';
                 routerValidationOutput.style.border = '1px solid #FCD34D';
-                routerValidationOutput.innerHTML = `<strong>${rState.hostname} Notice ⚠</strong><br>No static or default routes configured yet. Add routes via "ip route ...".`;
+                routerValidationOutput.innerHTML = `<strong>${rState.hostname} Configuration Incomplete ⚠</strong><br>` +
+                    `Missing routes to remote LANs. Ensure you run: <code>ip route &lt;remote-net&gt; 255.255.255.224 ${(rKey === 'R0') ? '192.168.10.66' : '192.168.10.65'}</code> or a default route.`;
             }
         });
     }
@@ -521,40 +583,92 @@ document.addEventListener('DOMContentLoaded', function () {
     const startJourneyBtn = document.getElementById('start-journey-btn');
     const journeyStepsBox = document.getElementById('journey-steps-box');
 
+    const hostIpMap = {
+        'pc0': '192.168.10.2',
+        'pc1': '192.168.10.34',
+        'pc2': '192.168.10.98',
+        'pc3': '192.168.10.130'
+    };
+
+    const hostGwMap = {
+        'pc0': { gw: '192.168.10.1', ifName: 'GigabitEthernet0/0 (Router0)', router: 'R0' },
+        'pc1': { gw: '192.168.10.33', ifName: 'GigabitEthernet0/1 (Router0)', router: 'R0' },
+        'pc2': { gw: '192.168.10.97', ifName: 'GigabitEthernet0/0 (Router1)', router: 'R1' },
+        'pc3': { gw: '192.168.10.129', ifName: 'GigabitEthernet0/1 (Router1)', router: 'R1' }
+    };
+
+    const subnetRouter = {
+        '192.168.10.0': 'R0',
+        '192.168.10.32': 'R0',
+        '192.168.10.96': 'R1',
+        '192.168.10.128': 'R1'
+    };
+
     if (startJourneyBtn) {
         startJourneyBtn.addEventListener('click', () => {
             const src = journeySrc.value;
             const dest = journeyDest.value;
+            const srcIp = hostIpMap[src] || '192.168.10.2';
+            const destIp = hostIpMap[dest] || '192.168.10.98';
+            const srcGwInfo = hostGwMap[src] || hostGwMap['pc0'];
+            const destGwInfo = hostGwMap[dest] || hostGwMap['pc2'];
 
-            const r0HasRoute = (exp5State.routerStates.R0.staticRoutes.length > 0 || exp5State.routerStates.R0.defaultRoute !== null || exp5State.staticRoutesConfigured || exp5State.defaultRoutesConfigured);
-            const r1HasReturn = (exp5State.routerStates.R1.staticRoutes.length > 0 || exp5State.routerStates.R1.defaultRoute !== null || exp5State.staticRoutesConfigured || exp5State.defaultRoutesConfigured);
+            const srcSubnet = getSubnet27(srcIp);
+            const destSubnet = getSubnet27(destIp);
+            const srcRouter = srcGwInfo.router;
+            const destRouter = destGwInfo.router;
+            const isSameRouter = (srcRouter === destRouter);
+
+            const fwdLookup = lookupRoute(srcRouter, destIp);
+            const retLookup = lookupRoute(destRouter, srcIp);
 
             journeyStepsBox.innerHTML = '';
+            const steps = [];
 
-            const steps = [
-                `[1] SOURCE HOST: ${src.toUpperCase()} generates ICMP Echo Request for Destination ${dest === 'pc2' ? '192.168.10.98 (PC2)' : '192.168.10.130 (PC3)'}`,
-                `[2] DEFAULT GATEWAY: Packet sent to Local Gateway 192.168.10.1 (Router0 GigabitEthernet0/0)`,
-                `[3] ROUTER0 LOOKUP: Destination ${dest === 'pc2' ? '192.168.10.98' : '192.168.10.130'} is a Remote Subnet (/27)`,
-                r0HasRoute 
-                    ? `[4] ROUTE MATCH: Matched Static/Default Route -> Next Hop 192.168.10.66 via Serial0/1/0` 
-                    : `[4] ROUTE FAILED: No route to remote network. Router0 drops packet (ICMP Destination Unreachable)`,
-                r0HasRoute ? `[5] WAN TRANSIT: Packet traverses Serial WAN link (V.35 DCE clock 64000) -> Router1` : null,
-                r0HasRoute ? `[6] ROUTER1 FORWARD: Router1 delivers packet to directly connected interface -> ${dest.toUpperCase()}` : null,
-                (r0HasRoute && r1HasReturn)
-                    ? `[7] RETURN PATH: ${dest.toUpperCase()} replies via Gateway -> Router1 -> Next Hop 192.168.10.65 -> Router0 -> ${src.toUpperCase()} (ROUND TRIP COMPLETE ✔)`
-                    : (r0HasRoute ? `[7] RETURN FAILED: Router1 has no return route back to source subnet. Echo Reply dropped at Router1 ✘` : null)
-            ].filter(Boolean);
+            steps.push(`[1] SOURCE HOST (${src.toUpperCase()} - ${srcIp}): Generates ICMP Echo Request for Destination ${destIp} (${dest.toUpperCase()})`);
+            steps.push(`[2] DEFAULT GATEWAY: Packet forwarded to Local Gateway ${srcGwInfo.gw} on ${srcGwInfo.ifName}`);
+            steps.push(`[3] ${srcRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'} TABLE LOOKUP: Searching route table for destination subnet ${destSubnet}/27...`);
+
+            if (isSameRouter) {
+                // Same Router Local Switching
+                steps.push(`[4] ✔ DIRECTLY CONNECTED: ${srcRouter === 'R0' ? 'Router0' : 'Router1'} recognizes ${destSubnet}/27 on local interface ${destGwInfo.ifName}`);
+                steps.push(`[5] LOCAL DELIVERY: Packet switched directly to ${dest.toUpperCase()} (${destIp}) without traversing WAN link`);
+                steps.push(`[6] RETURN PATH: ${dest.toUpperCase()} replies via Gateway ${destGwInfo.gw} &rarr; local interface &rarr; ${src.toUpperCase()} (ROUND TRIP COMPLETE ✔)`);
+            } else {
+                // Inter-Router WAN Routing
+                const expectedFwdNextHop = (srcRouter === 'R0') ? '192.168.10.66' : '192.168.10.65';
+                const expectedRetNextHop = (destRouter === 'R0') ? '192.168.10.66' : '192.168.10.65';
+
+                if (!fwdLookup || fwdLookup.nextHop !== expectedFwdNextHop) {
+                    steps.push(`[4] ❌ FORWARD ROUTE FAILED AT ${srcRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'}: No static or default route matching remote subnet ${destSubnet}/27. Packet dropped (ICMP Destination Network Unreachable).`);
+                } else {
+                    steps.push(`[4] ✔ ${srcRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'} MATCH: Found ${fwdLookup.type.toUpperCase()} route via Next-Hop ${fwdLookup.nextHop} (Serial0/1/0)`);
+                    steps.push(`[5] WAN SERIAL TRANSIT: Packet traverses V.35 Serial Link (DCE clock 64000) &rarr; ${destRouter === 'R0' ? 'Router0' : 'Router1'} Serial0/1/0`);
+                    steps.push(`[6] ${destRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'} DELIVERY: Router recognizes ${destSubnet}/27 as directly connected on ${destGwInfo.ifName} &rarr; delivers packet to ${dest.toUpperCase()} (${destIp})`);
+                    
+                    steps.push(`[7] DESTINATION HOST (${dest.toUpperCase()}): Generates ICMP Echo Reply for ${srcIp}`);
+                    steps.push(`[8] ${destRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'} RETURN LOOKUP: Searching route table for return subnet ${srcSubnet}/27...`);
+
+                    if (!retLookup || retLookup.nextHop !== expectedRetNextHop) {
+                        steps.push(`[9] ❌ RETURN ROUTE FAILED AT ${destRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'}: No static or default route to return to LAN ${srcSubnet}/27. Echo Reply dropped at ${destRouter === 'R0' ? 'Router0' : 'Router1'}.`);
+                    } else {
+                        steps.push(`[9] ✔ ${destRouter === 'R0' ? 'ROUTER0' : 'ROUTER1'} RETURN MATCH: Found ${retLookup.type.toUpperCase()} return route via Next-Hop ${retLookup.nextHop} (Serial0/1/0)`);
+                        steps.push(`[10] WAN RETURN TRANSIT: Reply traverses Serial link &rarr; ${srcRouter === 'R0' ? 'Router0' : 'Router1'} &rarr; delivered to ${src.toUpperCase()} (ROUND TRIP COMPLETE ✔)`);
+                    }
+                }
+            }
 
             let i = 0;
             const interval = setInterval(() => {
                 if (i >= steps.length) {
                     clearInterval(interval);
-                    obs('Packet Journey Inspector', `Traced ${src.toUpperCase()} to ${dest.toUpperCase()}`, (r0HasRoute && r1HasReturn) ? 'Success' : 'Route Missing');
+                    const fullySuccess = isSameRouter || (fwdLookup && fwdLookup.nextHop && retLookup && retLookup.nextHop);
+                    obs('Packet Journey Inspector', `Traced ${src.toUpperCase()} (${srcIp}) to ${dest.toUpperCase()} (${destIp})`, fullySuccess ? 'Success' : 'Dropped at Router');
                     return;
                 }
                 journeyStepsBox.innerHTML += `<div>${steps[i]}</div>`;
                 i++;
-            }, 600);
+            }, 550);
         });
     }
 
@@ -567,40 +681,68 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function populatePingSources() {
         if (!pingSource) return;
-        pingSource.innerHTML = '<option value="">-- Select Source PC --</option>';
-        for (const id in nodes()) {
-            const n = nodes()[id];
-            if (n.type === 'PC') {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = `${n.label || id} (IP: ${n.ip || 'not set'})`;
-                pingSource.appendChild(opt);
-            }
-        }
-        if (pingSource.options.length <= 1) {
-            // Default choices if canvas not yet built
-            pingSource.innerHTML += '<option value="pc0">PC0 (192.168.10.2 /27)</option>';
-            pingSource.innerHTML += '<option value="pc1">PC1 (192.168.10.34 /27)</option>';
-        }
+        pingSource.innerHTML = '';
+        const defaultOptions = [
+            { id: 'pc0', label: 'PC0 (192.168.10.2 /27)' },
+            { id: 'pc1', label: 'PC1 (192.168.10.34 /27)' },
+            { id: 'pc2', label: 'PC2 (192.168.10.98 /27)' },
+            { id: 'pc3', label: 'PC3 (192.168.10.130 /27)' }
+        ];
+
+        defaultOptions.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt.id;
+            el.textContent = opt.label;
+            pingSource.appendChild(el);
+        });
     }
 
     if (sendPingBtn) {
         sendPingBtn.addEventListener('click', () => {
             const destIp = (pingDest ? pingDest.value.trim() : '');
             if (!destIp) {
-                pingOutput.innerHTML = '<span style="color:#F87171">Enter destination IP (e.g. 192.168.10.98).</span>';
+                pingOutput.innerHTML = '<span style="color:#F87171">Enter destination IP (e.g. 192.168.10.98 or 192.168.10.130).</span>';
                 return;
             }
 
-            const r0HasRoute = (exp5State.routerStates.R0.staticRoutes.length > 0 || exp5State.routerStates.R0.defaultRoute !== null || exp5State.staticRoutesConfigured || exp5State.defaultRoutesConfigured);
-            const r1HasReturn = (exp5State.routerStates.R1.staticRoutes.length > 0 || exp5State.routerStates.R1.defaultRoute !== null || exp5State.staticRoutesConfigured || exp5State.defaultRoutesConfigured);
+            const srcId = pingSource.value || 'pc0';
+            const srcIp = hostIpMap[srcId] || '192.168.10.2';
+            const srcSubnet = getSubnet27(srcIp);
+            const destSubnet = getSubnet27(destIp);
 
-            pingOutput.innerHTML = `Pinging ${destIp} with 32 bytes of data:<br><br>`;
+            const srcRouter = subnetRouter[srcSubnet] || 'R0';
+            const destRouter = destSubnet ? subnetRouter[destSubnet] : null;
+
+            pingOutput.innerHTML = `Pinging ${destIp} from ${srcIp} with 32 bytes of data:<br><br>`;
             troubleshooterOutput.style.display = 'none';
+
+            if (!destSubnet || !destRouter) {
+                // Unknown / out-of-topology subnet
+                const fwdLookup = lookupRoute(srcRouter, destIp);
+                let count = 0;
+                const interval = setInterval(() => {
+                    if (count >= 4) {
+                        clearInterval(interval);
+                        pingOutput.innerHTML += `<br>Ping statistics for ${destIp}:<br>&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = 4, Received = 0, Lost = 4 (100% loss)<br>`;
+                        troubleshooterOutput.style.display = 'block';
+                        troubleshooterOutput.style.background = '#FEE2E2';
+                        troubleshooterOutput.style.color = '#991B1B';
+                        troubleshooterOutput.style.border = '1px solid #F87171';
+                        troubleshooterOutput.innerHTML = `<strong>✘ Ping Failed (Destination Host Unreachable):</strong> IP ${destIp} does not belong to any active /27 subnet in the lab topology.`;
+                        return;
+                    }
+                    pingOutput.innerHTML += `Request timed out.<br>`;
+                    count++;
+                }, 400);
+                return;
+            }
+
+            const fwdLookup = lookupRoute(srcRouter, destIp);
+            const retLookup = lookupRoute(destRouter, srcIp);
 
             let count = 0;
             const total = 4;
-            const success = (r0HasRoute && r1HasReturn);
+            const success = (fwdLookup && retLookup && (srcRouter === destRouter || (fwdLookup.nextHop && retLookup.nextHop)));
 
             const interval = setInterval(() => {
                 if (count >= total) {
@@ -613,13 +755,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         troubleshooterOutput.style.background = '#D1FAE5';
                         troubleshooterOutput.style.color = '#065F46';
                         troubleshooterOutput.style.border = '1px solid #34D399';
-                        troubleshooterOutput.innerHTML = '<strong>✔ Ping Successful!</strong> End-to-end Layer 3 reachability verified across WAN serial link.';
+                        troubleshooterOutput.innerHTML = `<strong>✔ Ping Successful!</strong> Layer 3 reachability validated between ${srcIp} and ${destIp} across the WAN link.`;
                         updateExp5Result();
                     } else {
                         troubleshooterOutput.style.background = '#FEE2E2';
                         troubleshooterOutput.style.color = '#991B1B';
                         troubleshooterOutput.style.border = '1px solid #F87171';
-                        troubleshooterOutput.innerHTML = '<strong>✘ Ping Failed (Destination Host Unreachable):</strong> Missing forward static route on Router0 (via 192.168.10.66) or return route on Router1 (via 192.168.10.65).';
+                        
+                        let failureDetail = '';
+                        if (!fwdLookup) {
+                            failureDetail = `Forward route missing on ${srcRouter} for target subnet ${destSubnet}/27.`;
+                        } else if (!retLookup) {
+                            failureDetail = `Return route missing on ${destRouter} to return packets back to ${srcSubnet}/27.`;
+                        } else {
+                            failureDetail = `Next-hop misconfigured on serial link.`;
+                        }
+                        troubleshooterOutput.innerHTML = `<strong>✘ Ping Failed (Destination Host Unreachable):</strong> ${failureDetail}`;
                     }
                     return;
                 }
@@ -655,46 +806,57 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isCorrect) {
                 fbDef.style.color = '#059669';
-                fbDef.textContent = '✔ Default routes verified & applied! Gateway of last resort active on both routers.';
+                fbDef.textContent = '✔ Default routes verified & applied! Individual static routes replaced with Gateway of Last Resort.';
                 
+                // Genuine replacement: clear individual static routes and set default route
+                exp5State.routerStates.R0.staticRoutes = [];
+                exp5State.routerStates.R1.staticRoutes = [];
                 exp5State.routerStates.R0.defaultRoute = { nextHop: '192.168.10.66' };
                 exp5State.routerStates.R1.defaultRoute = { nextHop: '192.168.10.65' };
                 exp5State.defaultRoutesConfigured = true;
-                obs('Default Routing', 'Configured quad-zero routes (0.0.0.0/0)', 'Active via .66 and .65');
+                
+                obs('Default Routing', 'Replaced individual static routes with quad-zero (0.0.0.0/0)', 'Active on R0 (.66) & R1 (.65)');
             } else {
                 fbDef.style.color = '#DC2626';
-                fbDef.textContent = '✘ Check syntax: Network=0.0.0.0, Mask=0.0.0.0, R0 next-hop=192.168.10.66, R1 next-hop=192.168.10.65.';
+                fbDef.textContent = '💡 Hint: A quad-zero default route specifies Network "0.0.0.0" and Mask "0.0.0.0". Ensure Next-Hop points to the neighboring router serial IP (R0->.66, R1->.65).';
             }
         });
     }
 
-    // Traceroute Challenge
+    // Traceroute Challenge (strictly requires defaultRoute to be configured)
     const runTracertBtn = document.getElementById('run-tracert-btn');
     const tracertOutput = document.getElementById('tracert-output');
 
     if (runTracertBtn) {
         runTracertBtn.addEventListener('click', () => {
-            const hasDefault = (exp5State.routerStates.R0.defaultRoute !== null || exp5State.defaultRoutesConfigured || exp5State.staticRoutesConfigured);
+            // Strict check: Must have genuine default route on R0 and return path on R1
+            const r0Def = (exp5State.routerStates.R0.defaultRoute && exp5State.routerStates.R0.defaultRoute.nextHop === '192.168.10.66');
+            const r1Def = (exp5State.routerStates.R1.defaultRoute && exp5State.routerStates.R1.defaultRoute.nextHop === '192.168.10.65');
+            const hasDefaultRouteActive = (r0Def && r1Def);
 
             tracertOutput.innerHTML = 'Tracing route to 192.168.10.130 over a maximum of 30 hops:<br><br>';
 
             const traceSteps = [
                 '  1    &lt;1 ms    &lt;1 ms    &lt;1 ms  192.168.10.1  (Router0 GigabitEthernet0/0 - Gateway)',
-                hasDefault 
-                    ? '  2     1 ms     1 ms     1 ms  192.168.10.66 (Router1 Serial0/1/0 - WAN Link)' 
-                    : '  2     *        *        *     Request timed out. (No route to destination)',
-                hasDefault 
-                    ? '  3    &lt;1 ms    &lt;1 ms    &lt;1 ms  192.168.10.130 (PC3 - LAN 4 Destination)' 
+                hasDefaultRouteActive 
+                    ? '  2     1 ms     1 ms     1 ms  192.168.10.66 (Router1 Serial0/1/0 - Default Route Next-Hop)' 
+                    : '  2     *        *        *     Request timed out. (Default route 0.0.0.0/0 not active on Router0)',
+                hasDefaultRouteActive 
+                    ? '  3    &lt;1 ms    &lt;1 ms    &lt;1 ms  192.168.10.130 (PC3 - LAN 4 Destination Host)' 
                     : null,
-                hasDefault ? '<br>Trace complete.' : '<br>Trace stopped.'
+                hasDefaultRouteActive 
+                    ? '<br>Trace complete. (Successfully routed using Gateway of Last Resort 0.0.0.0/0)' 
+                    : '<br>Trace halted. Configure and apply the quad-zero default routes in Stage 2 to complete traceroute.'
             ].filter(Boolean);
 
             let i = 0;
             const interval = setInterval(() => {
                 if (i >= traceSteps.length) {
                     clearInterval(interval);
-                    obs('Traceroute (tracert)', 'tracert 192.168.10.130 from PC0', hasDefault ? '3 Hops Resolved' : 'Halted at Hop 2');
-                    updateExp5Result();
+                    obs('Traceroute (tracert)', 'tracert 192.168.10.130 from PC0', hasDefaultRouteActive ? '3 Hops Resolved via 0.0.0.0/0' : 'Halted at Hop 2 (Default Route Missing)');
+                    if (hasDefaultRouteActive) {
+                        updateExp5Result();
+                    }
                     return;
                 }
                 tracertOutput.innerHTML += `<div>${traceSteps[i]}</div>`;

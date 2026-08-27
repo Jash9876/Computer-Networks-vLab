@@ -137,6 +137,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "192.168.10.128"
             ],
             answer: 1,
+            hint: "Calculate the block size (32). Subnets start at .0, .32, .64, .96, .128. What is the last address of the .96 block?",
             explanation: "The subnet is 192.168.10.96/27. Block size is 32. The broadcast address is 96 + 31 = 192.168.10.127."
         },
         {
@@ -148,6 +149,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "Serial cables cannot transmit IP packets"
             ],
             answer: 1,
+            hint: "Think about what entries a router automatically builds into its routing table when interfaces come up without routing protocols.",
             explanation: "Routers only know directly connected networks by default. Remote networks require static, default, or dynamic routes."
         },
         {
@@ -159,6 +161,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "192.168.10.97"
             ],
             answer: 2,
+            hint: "Next-hop must be the IP address of the neighboring router interface on the WAN serial link (Router1's side), not Router0's own IP.",
             explanation: "The next hop is the IP address of the neighboring router interface on the shared link (Router1's Serial0/1/0: 192.168.10.66)."
         },
         {
@@ -170,6 +173,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "Default route of last resort"
             ],
             answer: 1,
+            hint: "Look at the prefix code 'S'. What does 'S' stand for compared to 'C' (connected) or 'R' (RIP)?",
             explanation: "The code 'S' denotes a static route. [1/0] represents an administrative distance of 1 and metric of 0."
         },
         {
@@ -181,6 +185,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "PC0 default gateway will crash"
             ],
             answer: 1,
+            hint: "Remember that IP communication is bidirectional: sending an ICMP request is only half the journey. What does the return reply need?",
             explanation: "Routing must be bidirectional. Without a return route on Router1, the ICMP echo reply cannot find a path back to LAN 1."
         },
         {
@@ -192,6 +197,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "route add 0.0.0.0 mask 0.0.0.0 192.168.10.66"
             ],
             answer: 1,
+            hint: "A default route in Cisco IOS uses quad-zero for both the destination network and the mask.",
             explanation: "The quad-zero static route syntax in Cisco IOS is 'ip route 0.0.0.0 0.0.0.0 <next-hop>'."
         },
         {
@@ -203,6 +209,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "When routing loops are intentionally desired"
             ],
             answer: 0,
+            hint: "Consider network topology simplicity when all unknown destinations must exit through the exact same neighboring router interface.",
             explanation: "In stub network environments with a single upstream neighbor, a default route simplifies routing tables and management."
         },
         {
@@ -214,6 +221,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "Ping requires root privileges on routers"
             ],
             answer: 1,
+            hint: "One measures simple round-trip reachability, while the other reveals the exact IP addresses of every gateway along the path.",
             explanation: "Ping tests simple reachability and latency, while traceroute maps the entire hop-by-hop layer 3 route using TTL expiry."
         },
         {
@@ -225,6 +233,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "To assign an IP address automatically"
             ],
             answer: 1,
+            hint: "Serial cables require hardware timing signals between the DTE and DCE ends to synchronize bits.",
             explanation: "The DCE side of a serial link is responsible for generating the clocking signal to synchronize data bits across the WAN link."
         },
         {
@@ -236,6 +245,7 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
                 "R*"
             ],
             answer: 1,
+            hint: "Static is 'S'. What special symbol is appended to candidate default routes in Cisco IOS?",
             explanation: "The asterisk (*) denotes a candidate default, so 'S*' indicates a static default route (Gateway of Last Resort)."
         }
     ]

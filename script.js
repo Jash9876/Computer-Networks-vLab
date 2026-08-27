@@ -171,7 +171,7 @@ function evaluateQuiz() {
 
         if (!selected) {
             feedbackEl.className = 'quiz-feedback incorrect';
-            feedbackEl.textContent = `Please select an answer.`;
+            feedbackEl.textContent = `Please select an option.`;
             return;
         }
 
@@ -179,20 +179,27 @@ function evaluateQuiz() {
         if (selectedVal === q.answer) {
             score++;
             feedbackEl.className = 'quiz-feedback correct';
-            feedbackEl.textContent = `Correct! ${q.explanation}`;
+            feedbackEl.textContent = `✔ Correct! ${q.explanation || ''}`;
         } else {
             feedbackEl.className = 'quiz-feedback incorrect';
-            feedbackEl.textContent = `Incorrect. The correct answer was "${q.options[q.answer]}". ${q.explanation}`;
+            if (currentAttempt === 1 && q.hint) {
+                feedbackEl.innerHTML = `❌ <strong>Not quite. Hint:</strong> ${q.hint} <br><em>Re-evaluate your choice and click Submit Quiz again.</em>`;
+            } else if (q.explanation) {
+                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> ${q.explanation}`;
+            } else {
+                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> The correct answer was: <em>${q.options[q.answer]}</em>`;
+            }
         }
     });
 
-    const percentage = (score / total) * 100;
+    const percentage = Math.round((score / total) * 100);
     const resultsEl = document.getElementById('quiz-results');
     resultsEl.style.display = 'block';
     resultsEl.innerHTML = `
-        <h3>Quiz Complete!</h3>
+        <h3>Quiz Evaluation</h3>
         <p><strong>Attempt:</strong> ${currentAttempt}</p>
         <p><strong>Score:</strong> ${score} / ${total} (${percentage}%)</p>
+        <p style="font-size:0.9rem; color:#4B5563;">${percentage >= 70 ? '🎉 Great job! You have passed the quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
     `;
 
     // Show View Certificate Button if passed (or just finished)

@@ -265,14 +265,24 @@
             }
         }
 
-        // 4. Logout
+        // 4. Thorough Multi-Student Logout Cleanup
         document.getElementById('logout-btn').addEventListener('click', async () => {
             try {
                 await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders });
             } catch (e) {}
+
+            // Comprehensive session wipe: remove all student-specific data
             localStorage.removeItem('vlab_user');
             localStorage.removeItem('vlab_token');
-            sessionStorage.removeItem('vlab_user');
+            localStorage.removeItem('vlab_progression');
+            sessionStorage.clear();
+
+            // Clear all experiment observation caches (1 to 5)
+            for (let i = 1; i <= 5; i++) {
+                localStorage.removeItem(`vlab_obs_exp_${i}`);
+                localStorage.removeItem(`vlab_score_exp${i}`);
+            }
+
             window.location.href = 'index.html';
         });
 

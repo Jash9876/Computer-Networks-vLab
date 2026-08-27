@@ -83,6 +83,18 @@ const observations = (function() {
     }
 })();
 
+window.setObservations = function(newObs) {
+    if (Array.isArray(newObs) && newObs.length > 0) {
+        observations.length = 0;
+        newObs.forEach(o => observations.push(o));
+        try {
+            localStorage.setItem(getExpKey(), JSON.stringify(observations));
+        } catch(e) {}
+        updateObservationTable();
+        updateResultFromObservations();
+    }
+};
+
 function addObservation(moduleName, action, result) {
     observations.push({ time: new Date().toLocaleTimeString(), moduleName, action, result });
     try {
@@ -94,7 +106,7 @@ function addObservation(moduleName, action, result) {
 
 function updateResultFromObservations() {
     const resTextEl = document.getElementById('result-text');
-    if (!resTextEl || document.title.includes('Exercise 3') || document.title.includes('Exercise 4') || document.title.includes('Exercise 5')) return;
+    if (!resTextEl) return;
     
     const count = observations.length;
     if (count > 0) {

@@ -49,8 +49,8 @@
                 const res = await fetch(`/api/events/history?experimentId=${this.experimentId}`, { headers: authHeaders });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data && Array.isArray(data.observations)) {
-                        // Server is the authority: replace local cache with server records
+                    if (data && Array.isArray(data.observations) && data.observations.length > 0) {
+                        // Server has recorded observations: populate authoritative history
                         if (typeof window.setObservations === 'function') {
                             window.setObservations(data.observations);
                         } else if (typeof observations !== 'undefined' && Array.isArray(observations)) {

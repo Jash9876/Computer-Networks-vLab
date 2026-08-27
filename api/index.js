@@ -1,19 +1,19 @@
-// Unified Single Serverless API Gateway for Vercel Hobby Plan (1 Serverless Function)
+// Unified Single Serverless API Gateway for Vercel Hobby Plan (Exactly 1 Serverless Function)
 const url = require('url');
 
-// Handlers
-const healthHandler = require('./health');
-const registerHandler = require('./auth/register');
-const loginHandler = require('./auth/login');
-const meHandler = require('./auth/me');
-const logoutHandler = require('./auth/logout');
-const progressGetHandler = require('./progress/get');
-const eventsLogHandler = require('./events/log');
-const quizSubmitHandler = require('./quiz/submit');
-const certificateVerifyHandler = require('./certificate/verify');
-const facultyStatsHandler = require('./faculty/stats');
-const facultyStudentsHandler = require('./faculty/students');
-const facultyStudentDetailHandler = require('./faculty/student-detail');
+// Handlers imported from lib/ (so Vercel does not scan them as separate serverless functions)
+const healthHandler = require('../lib/health');
+const registerHandler = require('../lib/auth/register');
+const loginHandler = require('../lib/auth/login');
+const meHandler = require('../lib/auth/me');
+const logoutHandler = require('../lib/auth/logout');
+const progressGetHandler = require('../lib/progress/get');
+const eventsLogHandler = require('../lib/events/log');
+const quizSubmitHandler = require('../lib/quiz/submit');
+const certificateVerifyHandler = require('../lib/certificate/verify');
+const facultyStatsHandler = require('../lib/faculty/stats');
+const facultyStudentsHandler = require('../lib/faculty/students');
+const facultyStudentDetailHandler = require('../lib/faculty/student-detail');
 
 module.exports = async function handler(req, res) {
     const parsedUrl = url.parse(req.url, true);

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard - SRMIST Computer Networks Virtual Lab</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        .fac-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.25rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-num {
+            font-size: 1.85rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        th {
+            background: #F8FAFC;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background: #F1F5F9;
+        }
+        .student-link {
+            font-weight: 600;
+            color: var(--accent-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .student-link:hover {
+            text-decoration: underline;
+        }
+        .timeline-item {
+            border-left: 2px solid #CBD5E1;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+    </style>
+</head>
+<body style="background: #F8FAFC; min-height: 100vh; display: flex; flex-direction: column;">
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 48px; object-fit: contain;">
+            <div style="background: #B91C1C; color: white; padding: 0.35rem 0.65rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">
+                FACULTY
+            </div>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.25rem; margin: 0; color: #1E293B;">Virtual Laboratory Portal</h1>
+                <div style="font-size: 0.8rem; color: #64748B;">Faculty Administration &amp; Academic Learning Analytics</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="text-align: right;">
+                <div id="faculty-name" style="font-weight: 600; color: #1E293B; font-size: 0.95rem;">Faculty Session</div>
+                <div id="faculty-role" style="font-size: 0.8rem; color: #64748B;">Role: Faculty Instructor</div>
+            </div>
+            <button class="btn" id="logout-btn" style="background-color: var(--secondary-color); padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                <i data-lucide="log-out"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <main class="fac-container" style="flex: 1;">
+        <!-- Analytics Stat Overview Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="stat-card">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">ENROLLED STUDENTS</div>
+                    <div class="stat-num" id="total-students">0</div>
+                </div>
+                <i data-lucide="users" style="color: #64748B; width: 32px; height: 32px;"></i>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">EXPERIMENTS ACTIVE</div>
+                    <div class="stat-num">5</div>
+                </div>
+                <i data-lucide="book-open" style="color: #64748B; width: 32px; height: 32px;"></i>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">TOTAL COMPLETIONS</div>
+                    <div class="stat-num" id="total-completions">0</div>
+                </div>
+                <i data-lucide="check-circle" style="color: #059669; width: 32px; height: 32px;"></i>
+            </div>
+            <div class="stat-card">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">AVERAGE QUIZ SCORE</div>
+                    <div class="stat-num" id="avg-quiz">84%</div>
+                </div>
+                <i data-lucide="award" style="color: #D97706; width: 32px; height: 32px;"></i>
+            </div>
+        </div>
+
+        <!-- Class Experiment Completion Breakdown -->
+        <div class="card" style="margin-bottom: 1.5rem; background: white;">
+            <h3 style="margin-top: 0; color: #1E293B;">Exercise Completion Breakdown</h3>
+            <div id="exp-breakdown-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+
+        <!-- Student Roster Table -->
+        <div class="card" style="background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h3 style="margin: 0; color: #1E293B;">Registered Student Roster</h3>
+                <input type="text" id="search-student" placeholder="Search by name, reg number or section..." style="padding: 0.5rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; min-width: 280px; font-family: inherit;">
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Register Number</th>
+                            <th>Student Name</th>
+                            <th>Email ID</th>
+                            <th>Department / Sec</th>
+                            <th>Completed Exercises</th>
+                            <th>Last Lab Activity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #64748B; padding: 2rem;">Loading student records from PostgreSQL database...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Detail Modal -->
+    <div id="student-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; width: 800px; max-width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+            <button id="close-modal-btn" style="position: absolute; top: 1rem; right: 1rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <div id="student-modal-content">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        let allStudents = [];
+
+        // 1. Authenticate Faculty Session
+        fetch('/api/auth/me')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.authenticated || (data.user.role !== 'faculty' && data.user.role !== 'admin')) {
+                    alert('Access Restricted. You must sign in with a Faculty or Administrator account.');
+                    window.location.href = 'index.html';
+                } else {
+                    document.getElementById('faculty-name').textContent = data.user.fullName;
+                    document.getElementById('faculty-role').textContent = `Role: ${data.user.role.toUpperCase()}`;
+                    loadDashboardData();
+                }
+            })
+            .catch(() => {
+                window.location.href = 'index.html';
+            });
+
+        // 2. Load Stats & Roster
+        async function loadDashboardData() {
+            try {
+                // Fetch Stats
+                const statsRes = await fetch('/api/faculty/stats');
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    document.getElementById('total-students').textContent = stats.overview.totalStudents;
+                    
+                    let totalComp = 0;
+                    const breakdownBox = document.getElementById('exp-breakdown-list');
+                    breakdownBox.innerHTML = '';
+
+                    stats.experimentCompletions.forEach(exp => {
+                        const count = parseInt(exp.completed_count) || 0;
+                        totalComp += count;
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid #E2E8F0;';
+                        card.innerHTML = `
+                            <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXP ${exp.experiment_id}</div>
+                            <div style="font-weight: 600; font-size: 0.9rem; margin: 0.25rem 0;">${exp.title}</div>
+                            <div style="font-size: 1.25rem; font-weight: bold; color: #059669; margin-top: 0.5rem;">${count} <span style="font-size: 0.8rem; color: #64748B; font-weight: normal;">completed</span></div>
+                        `;
+                        breakdownBox.appendChild(card);
+                    });
+
+                    document.getElementById('total-completions').textContent = totalComp;
+                }
+
+                // Fetch Students
+                const studentsRes = await fetch('/api/faculty/students');
+                if (studentsRes.ok) {
+                    const data = await studentsRes.json();
+                    allStudents = data.students || [];
+                    renderStudentTable(allStudents);
+                }
+            } catch (err) {
+                console.error('Error loading faculty dashboard:', err);
+            }
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748B;">No students found matching search.</td></tr>';
+                return;
+            }
+
+            students.forEach(st => {
+                const tr = document.createElement('tr');
+                const lastAct = st.last_lab_activity ? new Date(st.last_lab_activity).toLocaleString() : 'No activity yet';
+                tr.innerHTML = `
+                    <td><strong>${st.register_number}</strong></td>
+                    <td><a class="student-link" data-id="${st.id}">${st.full_name}</a></td>
+                    <td>${st.email}</td>
+                    <td>${st.department || 'CSE'} - ${st.section || 'A'}</td>
+                    <td><span style="font-weight: bold; color: #059669;">${st.completed_experiments_count || 0}</span> / 5</td>
+                    <td style="font-size: 0.85rem; color: #64748B;">${lastAct}</td>
+                    <td><button class="btn view-btn" data-id="${st.id}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">View Profile</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.querySelectorAll('.student-link, .view-btn').forEach(btn => {
+                btn.addEventListener('click', () => openStudentModal(btn.dataset.id));
+            });
+        }
+
+        // 3. Search Filter
+        document.getElementById('search-student').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            const filtered = allStudents.filter(s => 
+                s.full_name.toLowerCase().includes(q) ||
+                s.register_number.toLowerCase().includes(q) ||
+                (s.section && s.section.toLowerCase().includes(q))
+            );
+            renderStudentTable(filtered);
+        });
+
+        // 4. Student Detail & Activity History Modal
+        async function openStudentModal(studentId) {
+            const modal = document.getElementById('student-modal');
+            const content = document.getElementById('student-modal-content');
+            content.innerHTML = '<p>Loading student activity history from database...</p>';
+            modal.style.display = 'flex';
+
+            try {
+                const res = await fetch(`/api/faculty/student-detail?id=${studentId}`);
+                if (!res.ok) throw new Error('Failed to load student details.');
+                const data = await res.json();
+                const st = data.student;
+
+                let progressRows = '';
+                data.progress.forEach(p => {
+                    progressRows += `
+                        <tr>
+                            <td><strong>Exp ${p.experiment_id}</strong></td>
+                            <td>${p.title}</td>
+                            <td><span style="font-weight: bold; color: ${p.status === 'completed' ? '#059669' : '#D97706'};">${p.status.toUpperCase()}</span></td>
+                            <td>${p.progress_percentage}%</td>
+                            <td style="font-size: 0.8rem; color: #64748B;">${p.completed_at ? new Date(p.completed_at).toLocaleDateString() : '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                let timelineHtml = '';
+                if (data.activityTimeline.length === 0) {
+                    timelineHtml = '<p style="color: #64748B;">No recorded simulation milestones yet.</p>';
+                } else {
+                    data.activityTimeline.forEach(ev => {
+                        timelineHtml += `
+                            <div class="timeline-item">
+                                <div style="font-size: 0.8rem; color: #64748B;">${new Date(ev.created_at).toLocaleString()} | Exp ${ev.experiment_id}</div>
+                                <div style="font-weight: 600; color: #1E293B;">${ev.stage}: <span style="color: var(--accent-color);">${ev.event_type}</span></div>
+                            </div>
+                        `;
+                    });
+                }
+
+                content.innerHTML = `
+                    <div style="border-bottom: 1px solid #E2E8F0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0; color: #1E293B;">${st.full_name}</h2>
+                        <div style="color: #64748B; font-size: 0.9rem; margin-top: 0.25rem;">
+                            Register No: <strong>${st.register_number}</strong> | Email: ${st.email} | Dept: ${st.department} - Sec ${st.section}
+                        </div>
+                    </div>
+
+                    <h3 style="color: #1E293B; margin-bottom: 0.5rem;">Experiment Completion Summary</h3>
+                    <table style="margin-bottom: 1.5rem;">
+                        <thead>
+                            <tr><th>Exp #</th><th>Title</th><th>Status</th><th>Progress</th><th>Completed Date</th></tr>
+                        </thead>
+                        <tbody>${progressRows}</tbody>
+                    </table>
+
+                    <h3 style="color: #1E293B; margin-bottom: 0.75rem;">Educational Activity Timeline (Simulation Events)</h3>
+                    <div style="max-height: 240px; overflow-y: auto; background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid #E2E8F0;">
+                        ${timelineHtml}
+                    </div>
+                `;
+            } catch (err) {
+                content.innerHTML = `<p style="color: #EF4444;">${err.message}</p>`;
+            }
+        }
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('student-modal').style.display = 'none';
+        });
+
+        // 5. Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {}
+            sessionStorage.removeItem('vlab_user');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

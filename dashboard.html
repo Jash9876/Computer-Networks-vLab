@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Computer Networks Virtual Lab</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        .dash-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .progress-bar-bg {
+            background: #E2E8F0;
+            border-radius: 999px;
+            height: 12px;
+            overflow: hidden;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        .progress-bar-fill {
+            background: var(--accent-color);
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+        .exp-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+        .exp-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #CBD5E1;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge.completed { background: #D1FAE5; color: #065F46; }
+        .badge.inprogress { background: #FEF3C7; color: #92400E; }
+        .badge.locked { background: #F1F5F9; color: #94A3B8; }
+    </style>
+</head>
+<body style="background: #F8FAFC; min-height: 100vh; display: flex; flex-direction: column;">
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 48px; object-fit: contain;">
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.25rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div style="font-size: 0.8rem; color: #64748B;">Computer Networks Laboratory (15CS304J)</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="text-align: right;">
+                <div id="user-display-name" style="font-weight: 600; color: #1E293B; font-size: 0.95rem;">Loading User...</div>
+                <div id="user-display-reg" style="font-size: 0.8rem; color: #64748B;">Register No: Loading...</div>
+            </div>
+            <button class="btn" id="logout-btn" style="background-color: var(--secondary-color); padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                <i data-lucide="log-out"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <main class="dash-container" style="flex: 1;">
+        <!-- Overall Progress Overview Card -->
+        <div class="card" style="margin-bottom: 1.5rem; background: white;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                <div>
+                    <h2 style="font-size: 1.3rem; margin: 0 0 0.25rem; color: #1E293B;">Laboratory Course Progress</h2>
+                    <p style="margin: 0; color: #64748B; font-size: 0.875rem;">Complete all virtual exercises and viva quizzes to earn your institutional completion certificate.</p>
+                </div>
+                <span id="overall-percentage" style="font-size: 1.75rem; font-weight: bold; color: var(--primary-color);">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="overall-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; color: #64748B;">
+                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 5</span>
+                <span>Active Semester: 2025–26</span>
+            </div>
+        </div>
+
+        <!-- Experiment List -->
+        <h3 style="margin-bottom: 1rem; color: #1E293B;">Virtual Exercises Catalog</h3>
+        <div id="experiments-list">
+            <!-- Exp 1 -->
+            <div class="exp-card" id="card-exp1">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 1</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Study of Network Cables, Network Commands &amp; PT UI</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Identify network hardware cables, test core IP utilities, and explore Cisco Packet Tracer.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge" id="badge-exp1">Loading...</span>
+                    <a href="experiment1.html" class="btn" id="btn-exp1" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 2 -->
+            <div class="exp-card" id="card-exp2">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 2</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Study of IP Addressing &amp; Cable Pinout Construction</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Construct T568A / T568B pinout standards and build Peer-to-Peer &amp; LAN topologies.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge" id="badge-exp2">Loading...</span>
+                    <a href="experiment2.html" class="btn" id="btn-exp2" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 3 -->
+            <div class="exp-card" id="card-exp3">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 3</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Router Configuration Through a Console</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Establish RS-232 console communication, configure Cisco IOS CLI passwords and dual Gigabit + Serial interfaces.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge" id="badge-exp3">Loading...</span>
+                    <a href="experiment3.html" class="btn" id="btn-exp3" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 4 -->
+            <div class="exp-card" id="card-exp4">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 4</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Design of Subnet IP Addressing in Packet Tracer</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Design /27 IPv4 subnet allocation across dual Cisco 1941 routers connected via V.35 DCE Serial WAN.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge" id="badge-exp4">Loading...</span>
+                    <a href="experiment4.html" class="btn" id="btn-exp4" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 5 -->
+            <div class="exp-card" id="card-exp5">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 5</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Demonstration of Static and Default Routing</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure bi-directional static routes, transition to 0.0.0.0/0 default routing, and trace hop-by-hop forwarding.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="badge" id="badge-exp5">Loading...</span>
+                    <a href="experiment5.html" class="btn" id="btn-exp5" style="text-decoration: none; padding: 0.5rem 1.25rem;">Open Lab</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 1rem; color: #94A3B8; font-size: 0.8rem; border-top: 1px solid var(--border-color); background: white;">
+        &copy; 2026 SRM Institute of Science and Technology. All rights reserved. | Virtual Laboratory Platform
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // 1. Check User Session (Strict Authentication Guard)
+        fetch('/api/auth/me')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data && data.authenticated && data.user) {
+                    sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                    document.getElementById('user-display-name').textContent = data.user.fullName;
+                    document.getElementById('user-display-reg').textContent = `Register No: ${data.user.registerNumber}`;
+                    loadProgress();
+                } else {
+                    // Not authenticated -> Redirect to Portal Login
+                    window.location.href = 'index.html';
+                }
+            })
+            .catch(() => {
+                // If API fails or user is offline, check session cache
+                const cached = sessionStorage.getItem('vlab_user');
+                if (cached) {
+                    const u = JSON.parse(cached);
+                    document.getElementById('user-display-name').textContent = u.fullName;
+                    document.getElementById('user-display-reg').textContent = `Register No: ${u.registerNumber}`;
+                    loadProgress();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+
+        // 2. Load Progress from API or localStorage
+        async function loadProgress() {
+            let completed = [];
+
+            // Try loading from localStorage first for instant response
+            try {
+                const local = JSON.parse(localStorage.getItem('vlab_progression') || '{}');
+                if (local && Array.isArray(local.completed)) {
+                    completed = local.completed;
+                }
+            } catch (e) {}
+
+            // Try fetching from server API if online
+            try {
+                const res = await fetch('/api/progress/get');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.completedExperiments)) {
+                        completed = data.completedExperiments;
+                        // Update local cache
+                        localStorage.setItem('vlab_progression', JSON.stringify({ completed }));
+                    }
+                }
+            } catch (e) {}
+
+            // Update UI
+            const totalExp = 5;
+            const completedCount = completed.length;
+            const percent = Math.round((completedCount / totalExp) * 100);
+
+            document.getElementById('completed-count').textContent = completedCount;
+            document.getElementById('overall-percentage').textContent = `${percent}%`;
+            document.getElementById('overall-progress-bar').style.width = `${percent}%`;
+
+            for (let i = 1; i <= 5; i++) {
+                const badge = document.getElementById(`badge-exp${i}`);
+                const isCompleted = completed.includes(i);
+                
+                if (isCompleted) {
+                    badge.className = 'badge completed';
+                    badge.innerHTML = '✔ Completed';
+                } else if (i === 1 || completed.includes(i - 1)) {
+                    badge.className = 'badge inprogress';
+                    badge.innerHTML = '◐ Ready / In Progress';
+                } else {
+                    badge.className = 'badge locked';
+                    badge.innerHTML = '🔒 Locked';
+                }
+            }
+        }
+
+        // 3. Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {}
+            sessionStorage.removeItem('vlab_user');
+            window.location.href = 'index.html';
+        });
+
+        loadProgress();
+    </script>
+</body>
+</html>

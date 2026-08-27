@@ -202,21 +202,67 @@ function evaluateQuiz() {
         <p style="font-size:0.9rem; color:#4B5563;">${percentage >= 70 ? '🎉 Great job! You have passed the quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
     `;
 
-    // Show View Certificate Button if passed (or just finished)
+    // Show View Certificate Button if passed
     const certBtn = document.getElementById('view-cert-btn');
-    certBtn.style.display = 'inline-block';
+    if (certBtn) {
+        certBtn.style.display = percentage >= 70 ? 'inline-block' : 'none';
+    }
     
     // Setup Certificate Data
-    document.getElementById('cert-score').textContent = `${percentage}%`;
-    document.getElementById('cert-attempt').textContent = currentAttempt;
-    document.getElementById('cert-date').textContent = new Date().toLocaleDateString();
+    const certScoreEl = document.getElementById('cert-score');
+    if (certScoreEl) certScoreEl.textContent = `${percentage}%`;
+    const certAttemptEl = document.getElementById('cert-attempt');
+    if (certAttemptEl) certAttemptEl.textContent = currentAttempt;
+    const certDateEl = document.getElementById('cert-date');
+    if (certDateEl) certDateEl.textContent = new Date().toLocaleDateString();
+
+    // Determine current experiment number
+    let currentExpId = 1;
+    if (window.location.pathname.includes('experiment2')) currentExpId = 2;
+    else if (window.location.pathname.includes('experiment3')) currentExpId = 3;
+    else if (window.location.pathname.includes('experiment4')) currentExpId = 4;
+    else if (window.location.pathname.includes('experiment5')) currentExpId = 5;
+
+    // Collect user answers for secure server-side evaluation
+    const userAnswers = [];
+    quizData.forEach((q, idx) => {
+        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+        if (selected) {
+            userAnswers.push({ questionIndex: idx, selectedIndex: parseInt(selected.value) });
+        }
+    });
+
+    // Server-Side Secure Sync
+    fetch('/api/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            experimentId: currentExpId,
+            userAnswers,
+            attemptNumber: currentAttempt
+        })
+    })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+        if (data && data.certificateCode) {
+            const certCodeEl = document.getElementById('cert-code');
+            if (certCodeEl) certCodeEl.textContent = data.certificateCode;
+            if (typeof PlatformManager !== 'undefined' && typeof PlatformManager.markCompleted === 'function') {
+                PlatformManager.markCompleted(currentExpId, percentage);
+            }
+        }
+    })
+    .catch(() => {});
 
     // Update Result tab
-    document.getElementById('result-text').innerHTML = `
-        You have completed the virtual lab exercise.<br><br>
-        <strong>Final Quiz Score:</strong> ${percentage}% (Attempt ${currentAttempt})<br>
-        <strong>Simulations Interacted:</strong> ${new Set(observations.map(o => o.moduleName)).size} modules.
-    `;
+    const resTextEl = document.getElementById('result-text');
+    if (resTextEl) {
+        resTextEl.innerHTML = `
+            You have completed the virtual lab exercise.<br><br>
+            <strong>Final Quiz Score:</strong> ${percentage}% (Attempt ${currentAttempt})<br>
+            <strong>Simulations Interacted:</strong> ${new Set(observations.map(o => o.moduleName)).size} modules.
+        `;
+    }
     
     if(typeof addObservation === 'function') {
         addObservation("Quiz", "Submitted Quiz", `Score: ${percentage}%`);

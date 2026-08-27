@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification - SRMIST Virtual Laboratory</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        .cert-card {
+            max-width: 600px;
+            margin: 3rem auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #D1FAE5;
+            color: #065F46;
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+        .cert-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.95rem;
+        }
+        .cert-field strong {
+            color: #1E293B;
+        }
+        .cert-field span {
+            color: #475569;
+        }
+    </style>
+</head>
+<body style="background: #F8FAFC; min-height: 100vh; display: flex; flex-direction: column;">
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 48px; object-fit: contain;">
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.25rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div style="font-size: 0.8rem; color: #64748B;">Official Certificate Verification Registry</div>
+            </div>
+        </div>
+        <a href="index.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Return to Lab</a>
+    </header>
+
+    <main style="flex: 1; padding: 1.5rem;">
+        <div class="cert-card" id="cert-box">
+            <div style="text-align: center;" id="loading-state">
+                <p style="color: #64748B;">Verifying certificate code against SRMIST database registry...</p>
+            </div>
+            <div id="verified-state" style="display: none;">
+                <div style="text-align: center;">
+                    <div class="verified-badge">
+                        <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
+                        OFFICIALLY VERIFIED CERTIFICATE
+                    </div>
+                </div>
+
+                <div class="cert-field">
+                    <span>Certificate Code:</span>
+                    <strong id="v-code">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Student Name:</span>
+                    <strong id="v-name">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Register Number:</span>
+                    <strong id="v-reg">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Department:</span>
+                    <strong id="v-dept">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Exercise Completed:</span>
+                    <strong id="v-exp">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Viva Score Earned:</span>
+                    <strong id="v-score" style="color: #059669;">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Issue Date:</span>
+                    <strong id="v-date">-</strong>
+                </div>
+                <div class="cert-field">
+                    <span>Awarding Institution:</span>
+                    <strong>SRM Institute of Science and Technology</strong>
+                </div>
+            </div>
+            <div id="invalid-state" style="display: none; text-align: center;">
+                <div style="color: #DC2626; font-size: 2.5rem; margin-bottom: 0.5rem;">✕</div>
+                <h3 style="color: #991B1B; margin: 0 0 0.5rem;">Invalid Certificate</h3>
+                <p style="color: #64748B; font-size: 0.9rem;" id="error-msg">No certificate record was found matching this code.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 1rem; color: #94A3B8; font-size: 0.8rem; border-top: 1px solid var(--border-color); background: white;">
+        &copy; 2026 SRM Institute of Science and Technology. Verified Virtual Laboratory Credential Registry.
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+
+        if (!code) {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('invalid-state').style.display = 'block';
+            document.getElementById('error-msg').textContent = 'Please provide a valid certificate code (?code=CNVL-...) in the URL.';
+        } else {
+            fetch(`/api/certificate/verify?code=${encodeURIComponent(code)}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loading-state').style.display = 'none';
+                    if (data.valid && data.certificate) {
+                        const c = data.certificate;
+                        document.getElementById('v-code').textContent = c.code;
+                        document.getElementById('v-name').textContent = c.studentName;
+                        document.getElementById('v-reg').textContent = c.registerNumber;
+                        document.getElementById('v-dept').textContent = c.department;
+                        document.getElementById('v-exp').textContent = `Exp ${c.experimentId}: ${c.experimentTitle}`;
+                        document.getElementById('v-score').textContent = `${c.score}%`;
+                        document.getElementById('v-date').textContent = new Date(c.issuedDate).toLocaleDateString();
+                        document.getElementById('verified-state').style.display = 'block';
+                    } else {
+                        document.getElementById('invalid-state').style.display = 'block';
+                        document.getElementById('error-msg').textContent = data.message || 'No matching record found in registry.';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('loading-state').style.display = 'none';
+                    document.getElementById('invalid-state').style.display = 'block';
+                });
+        }
+    </script>
+</body>
+</html>

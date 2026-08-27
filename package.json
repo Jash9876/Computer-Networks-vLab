@@ -1,0 +1,16 @@
+{
+  "name": "computer-networks-vlab",
+  "version": "1.0.0",
+  "description": "Virtual Laboratory for Computer Networks - SRMIST",
+  "main": "api/health.js",
+  "scripts": {
+    "start": "vercel dev",
+    "test": "node test-db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie": "^0.6.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  }
+}

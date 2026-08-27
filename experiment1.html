@@ -8,13 +8,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
 </head>
 <body>
-    <header>
-        <div>
-            <h1>Virtual Laboratory</h1>
-            <div class="subtitle">Computer Networks Lab</div>
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <a href="dashboard.html"><img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 46px; object-fit: contain;"></a>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.2rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Computer Networks Lab &bull; Exercise 1</div>
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <span style="font-size: 1.25rem; font-weight: bold; color: var(--primary-color);">Exercise 1</span>
+            <a href="dashboard.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Dashboard</a>
+            <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); background: #EFF6FF; padding: 0.3rem 0.8rem; border-radius: 6px;">Exercise 1</span>
         </div>
     </header>
 
@@ -299,6 +303,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="modules/api-sync.js"></script>
     <script src="modules/platform-manager.js"></script>
     <script src="data/experiment1.js"></script>
     <script src="modules/packet-tracer.js"></script>

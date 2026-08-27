@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRMIST - Computer Networks Virtual Laboratory</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        .auth-container {
+            max-width: 440px;
+            margin: 3rem auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: #F1F5F9;
+            color: #64748B;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.4rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+        .auth-alert {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .auth-alert.error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #F87171;
+        }
+        .auth-alert.success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #34D399;
+        }
+    </style>
+</head>
+<body style="background: #F8FAFC; min-height: 100vh; display: flex; flex-direction: column;">
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 52px; object-fit: contain;">
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.25rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div style="font-size: 0.85rem; color: #64748B;">Department of Computer Science &amp; Engineering</div>
+            </div>
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 600; color: var(--primary-color);">
+            Computer Networks Lab (15CS304J / 18CSC302J)
+        </div>
+    </header>
+
+    <main style="flex: 1; padding: 1.5rem;">
+        <div class="auth-container">
+            <div style="text-align: center; margin-bottom: 1.75rem;">
+                <h2 style="font-size: 1.5rem; color: #1E293B; margin-bottom: 0.25rem;">Student &amp; Faculty Portal</h2>
+                <p style="font-size: 0.875rem; color: #64748B; margin: 0;">Sign in to access virtual simulations, track lab progress, and submit assignments.</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <button class="tab-btn active" id="tab-login-btn">Sign In</button>
+                <button class="tab-btn" id="tab-register-btn">Register</button>
+            </div>
+
+            <div id="auth-alert" class="auth-alert"></div>
+
+            <!-- Sign In Form -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-id">Register Number / Official Email</label>
+                    <input type="text" id="login-id" placeholder="e.g. RA2211003010001 or email" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn auth-btn" id="login-submit-btn" style="background-color: var(--primary-color);">
+                    Sign In to Virtual Lab
+                </button>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="dashboard.html" style="font-size: 0.85rem; color: #64748B; text-decoration: none;">Continue as Guest &rarr;</a>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label for="reg-no">Register Number</label>
+                    <input type="text" id="reg-no" placeholder="e.g. RA2211003010001" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-name">Full Name</label>
+                    <input type="text" id="reg-name" placeholder="Enter your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">College Email ID</label>
+                    <input type="email" id="reg-email" placeholder="e.g. ab1234@srmap.edu.in" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label for="reg-dept">Department</label>
+                        <select id="reg-dept">
+                            <option value="CSE">CSE</option>
+                            <option value="IT">IT</option>
+                            <option value="ECE">ECE</option>
+                            <option value="AIDS">AI &amp; DS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-section">Section</label>
+                        <input type="text" id="reg-section" placeholder="e.g. A" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password (min 6 chars)</label>
+                    <input type="password" id="reg-password" placeholder="Create password" minlength="6" required>
+                </div>
+                <button type="submit" class="btn auth-btn" id="register-submit-btn" style="background-color: #059669;">
+                    Create Student Account
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 1rem; color: #94A3B8; font-size: 0.8rem; border-top: 1px solid var(--border-color); background: white;">
+        &copy; 2026 SRM Institute of Science and Technology. All rights reserved. | Virtual Laboratory Platform
+    </footer>
+
+    <script>
+        const tabLogin = document.getElementById('tab-login-btn');
+        const tabRegister = document.getElementById('tab-register-btn');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const alertBox = document.getElementById('auth-alert');
+
+        function showAlert(msg, isError = true) {
+            alertBox.style.display = 'block';
+            alertBox.className = `auth-alert ${isError ? 'error' : 'success'}`;
+            alertBox.textContent = msg;
+        }
+
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            alertBox.style.display = 'none';
+        });
+
+        tabRegister.addEventListener('click', () => {
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            registerForm.style.display = 'block';
+            loginForm.style.display = 'none';
+            alertBox.style.display = 'none';
+        });
+
+        // Handle Login Submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('login-id').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-submit-btn');
+
+            btn.textContent = 'Signing in...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Login failed.');
+                }
+
+                showAlert('Login successful! Redirecting...', false);
+                sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                setTimeout(() => {
+                    window.location.href = data.user.role === 'faculty' ? 'faculty.html' : 'dashboard.html';
+                }, 800);
+            } catch (err) {
+                showAlert(err.message);
+                btn.textContent = 'Sign In to Virtual Lab';
+                btn.disabled = false;
+            }
+        });
+
+        // Handle Registration Submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const registerNumber = document.getElementById('reg-no').value;
+            const fullName = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const department = document.getElementById('reg-dept').value;
+            const section = document.getElementById('reg-section').value;
+            const password = document.getElementById('reg-password').value;
+            const btn = document.getElementById('register-submit-btn');
+
+            btn.textContent = 'Creating account...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registerNumber, fullName, email, department, section, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Registration failed.');
+                }
+
+                showAlert('Account created successfully! Redirecting to Dashboard...', false);
+                sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            } catch (err) {
+                showAlert(err.message);
+                btn.textContent = 'Create Student Account';
+                btn.disabled = false;
+            }
+        });
+
+        // Check if already authenticated
+        fetch('/api/auth/me')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data && data.authenticated && data.user) {
+                    sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                    window.location.href = data.user.role === 'faculty' ? 'faculty.html' : 'dashboard.html';
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>

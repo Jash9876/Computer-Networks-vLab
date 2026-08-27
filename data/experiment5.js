@@ -187,66 +187,6 @@ Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
             answer: 1,
             hint: "Remember that IP communication is bidirectional: sending an ICMP request is only half the journey. What does the return reply need?",
             explanation: "Routing must be bidirectional. Without a return route on Router1, the ICMP echo reply cannot find a path back to LAN 1."
-        },
-        {
-            question: "Which Cisco IOS command defines a default route to next-hop 192.168.10.66?",
-            options: [
-                "ip route default 192.168.10.66",
-                "ip route 0.0.0.0 0.0.0.0 192.168.10.66",
-                "ip default-gateway 192.168.10.66",
-                "route add 0.0.0.0 mask 0.0.0.0 192.168.10.66"
-            ],
-            answer: 1,
-            hint: "A default route in Cisco IOS uses quad-zero for both the destination network and the mask.",
-            explanation: "The quad-zero static route syntax in Cisco IOS is 'ip route 0.0.0.0 0.0.0.0 <next-hop>'."
-        },
-        {
-            question: "When is a default route preferred over multiple individual static routes?",
-            options: [
-                "When a router has a single exit path (stub router) to reach many remote networks",
-                "When the network uses no IP addresses",
-                "When all devices are on the same Ethernet switch",
-                "When routing loops are intentionally desired"
-            ],
-            answer: 0,
-            hint: "Consider network topology simplicity when all unknown destinations must exit through the exact same neighboring router interface.",
-            explanation: "In stub network environments with a single upstream neighbor, a default route simplifies routing tables and management."
-        },
-        {
-            question: "What is the primary difference between ping and traceroute?",
-            options: [
-                "Ping uses TCP while traceroute uses UDP only",
-                "Ping tests end-to-end reachability; traceroute displays each intermediate router hop along the path",
-                "Traceroute only works on local LANs",
-                "Ping requires root privileges on routers"
-            ],
-            answer: 1,
-            hint: "One measures simple round-trip reachability, while the other reveals the exact IP addresses of every gateway along the path.",
-            explanation: "Ping tests simple reachability and latency, while traceroute maps the entire hop-by-hop layer 3 route using TTL expiry."
-        },
-        {
-            question: "On a Cisco router serial interface, why is the 'clock rate 64000' command required on the DCE end?",
-            options: [
-                "To set the system real-time clock",
-                "To synchronize and provide the physical layer timing signal for data transmission across the serial cable",
-                "To prevent MAC address spoofing",
-                "To assign an IP address automatically"
-            ],
-            answer: 1,
-            hint: "Serial cables require hardware timing signals between the DTE and DCE ends to synchronize bits.",
-            explanation: "The DCE side of a serial link is responsible for generating the clocking signal to synchronize data bits across the WAN link."
-        },
-        {
-            question: "In the routing table, what code indicates a default route?",
-            options: [
-                "C*",
-                "S*",
-                "D*",
-                "R*"
-            ],
-            answer: 1,
-            hint: "Static is 'S'. What special symbol is appended to candidate default routes in Cisco IOS?",
-            explanation: "The asterisk (*) denotes a candidate default, so 'S*' indicates a static default route (Gateway of Last Resort)."
         }
     ]
 };

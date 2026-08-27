@@ -32,13 +32,20 @@ function loadData() {
     // Procedure
     document.getElementById('procedure-content').innerHTML = experimentData.procedure;
 
-    // Hydrate existing observations & result on page load
-    updateObservationTable();
+    // Set loading placeholder for observation table and result
+    const obsContainer = document.getElementById('observation-content');
+    if (obsContainer) {
+        obsContainer.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: #64748B;">⏳ <em>Restoring your academic observation record from database...</em></div>';
+    }
+    const resEl = document.getElementById('result-text');
+    if (resEl && !document.title.includes('Exercise 3')) {
+        resEl.innerHTML = '⏳ <em>Restoring your academic record from institutional database...</em>';
+    }
+
+    // Hydrate existing offline cache as fallback
     if (observations.length > 0) {
+        updateObservationTable();
         updateResultFromObservations();
-    } else if (!document.title.includes('Exercise 3')) {
-        const resEl = document.getElementById('result-text');
-        if (resEl) resEl.textContent = "Complete the simulations and quiz to view the final result.";
     }
 
     // Quiz
@@ -82,27 +89,22 @@ const observations = (function() {
     }
 })();
 
-window.setObservations = function(newObs) {
-    if (Array.isArray(newObs) && newObs.length > 0) {
-        // Union & deduplicate: keep all distinct observations by moduleName + action
-        const existingKeys = new Set(observations.map(o => `${o.moduleName}::${o.action}`));
-        newObs.forEach(o => {
-            const k = `${o.moduleName}::${o.action}`;
-            if (!existingKeys.has(k)) {
-                observations.push(o);
-                existingKeys.add(k);
-            }
-        });
+window.isHydrated = false;
 
+window.setObservations = function(newObs) {
+    if (Array.isArray(newObs)) {
+        observations.length = 0;
+        newObs.forEach(o => observations.push(o));
         try {
             localStorage.setItem(getExpKey(), JSON.stringify(observations));
         } catch(e) {}
         updateObservationTable();
     }
+    window.isHydrated = true;
 };
 
 window.setQuizAttempt = function(num) {
-    if (typeof num === 'number' && num > currentAttempt) {
+    if (typeof num === 'number') {
         currentAttempt = num;
     }
 };
@@ -225,8 +227,24 @@ function setupQuiz() {
         container.appendChild(qDiv);
     });
 
-    document.getElementById('submit-quiz').addEventListener('click', evaluateQuiz);
+    const submitBtn = document.getElementById('submit-quiz');
+    if (submitBtn) {
+        if (!window.isHydrated) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Syncing record...';
+        }
+        submitBtn.addEventListener('click', evaluateQuiz);
+    }
 }
+
+window.setHydrated = function() {
+    window.isHydrated = true;
+    const submitBtn = document.getElementById('submit-quiz');
+    if (submitBtn && !isQuizSubmitting) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Quiz';
+    }
+};
 
 let isQuizSubmitting = false;
 
@@ -371,9 +389,12 @@ function evaluateQuiz() {
                 `;
             }
 
-            // 4. Trigger platform server progression sync
+            // 4. Trigger platform server progression sync & re-sync authoritative history
             if (typeof PlatformManager !== 'undefined' && typeof PlatformManager.markCompleted === 'function' && data.passed) {
                 PlatformManager.markCompleted(currentExpId, officialPercentage);
+            }
+            if (window.VLabSync && typeof window.VLabSync.restoreAuthoritativeHistory === 'function') {
+                window.VLabSync.restoreAuthoritativeHistory();
             }
         }
     })

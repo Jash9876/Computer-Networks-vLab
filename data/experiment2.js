@@ -295,17 +295,6 @@ C:\\></pre>
             ],
             answer: 1,
             explanation: "The cable is correct (Crossover for PC-to-PC). The problem is the IPs: 192.168.10.x and 192.168.20.x are different subnets. Both PCs must share the same network prefix (e.g., both on 192.168.10.x) to communicate directly."
-        },
-        {
-            question: "A ping reply shows 'TTL=128'. What does this tell you about the target device?",
-            options: [
-                "The packet was lost and retried 128 times",
-                "The connection travels through 128 routers",
-                "The target is likely a Windows device (Windows default TTL is 128)",
-                "The connection speed is 128 Mbps"
-            ],
-            answer: 2,
-            explanation: "TTL (Time To Live) is a counter that decreases by 1 at each router hop. Windows devices start with TTL=128 by default. Linux/Mac start at 64. If the reply shows TTL=128, the target hasn't passed through any routers — confirming it's a Windows device on the same local network."
         }
     ]
 };

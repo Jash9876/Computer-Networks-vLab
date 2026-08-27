@@ -79,6 +79,12 @@ const experimentData = {
             options: ["Layer 1 (Physical)", "Layer 2 (Data Link)", "Layer 3 (Network)", "Layer 4 (Transport)"],
             answer: 2,
             explanation: "A router operates at Layer 3 (Network Layer), using IP addresses to route packets between networks."
+        },
+        {
+            question: "Which command displays the current IP-to-MAC address mapping table on a device?",
+            options: ["ipconfig /all", "arp -a", "tracert 8.8.8.8", "netstat -r"],
+            answer: 1,
+            explanation: "The 'arp -a' command displays the Address Resolution Protocol (ARP) table, which maps Layer 3 IP addresses to Layer 2 physical MAC addresses."
         }
     ]
 };

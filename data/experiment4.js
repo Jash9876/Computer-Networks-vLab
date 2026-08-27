@@ -330,17 +330,6 @@ ping 192.168.10.130</pre>
             ],
             answer: 0,
             explanation: "A static route requires the remote destination network address, its subnet mask, and the IP address of the next-hop router that will receive the packet."
-        },
-        {
-            question: "If a ping from PC0 to PC3 fails and the troubleshooter shows 'Return path missing', what is the most likely cause?",
-            options: [
-                "PC0 has the wrong IP address",
-                "Router0 has no route to PC3",
-                "Router1 has no static route back to PC0's network",
-                "The physical cable is broken"
-            ],
-            answer: 2,
-            explanation: "Routing must be bidirectional. If the packet reached the destination, Router0 had the route, but Router1 lacked the return route to send the ICMP Reply back."
         }
     ]
 };

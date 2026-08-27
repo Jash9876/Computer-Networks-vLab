@@ -195,17 +195,6 @@ Router(config-if)# no shutdown</pre>
             ],
             answer: 1,
             explanation: "All Cisco router interfaces are in a 'shutdown' (administratively disabled) state by default. The 'no shutdown' command enables the interface so it can send and receive traffic."
-        },
-        {
-            question: "What does 'copy running-config startup-config' do?",
-            options: [
-                "Copies the startup configuration into RAM for editing",
-                "Saves the active configuration from RAM to NVRAM so it persists after a reboot",
-                "Resets the router to factory defaults",
-                "Copies the configuration to a TFTP server"
-            ],
-            answer: 1,
-            explanation: "This command copies the current active configuration (in RAM) to the startup-config file (in NVRAM). Without this step, all configuration changes would be lost when the router is rebooted or powered off."
         }
     ]
 };

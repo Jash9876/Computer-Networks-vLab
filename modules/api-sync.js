@@ -49,15 +49,14 @@
                 const res = await fetch(`/api/events/history?experimentId=${this.experimentId}`, { headers: authHeaders });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data && Array.isArray(data.observations) && data.observations.length > 0) {
-                        // Server has recorded observations: populate authoritative history
+                    if (data && Array.isArray(data.observations)) {
+                        // Server is the sole authority: replace local cache with server records
                         if (typeof window.setObservations === 'function') {
                             window.setObservations(data.observations);
                         } else if (typeof observations !== 'undefined' && Array.isArray(observations)) {
                             observations.length = 0;
                             data.observations.forEach(o => observations.push(o));
                             if (typeof updateObservationTable === 'function') updateObservationTable();
-                            if (typeof updateResultFromObservations === 'function') updateResultFromObservations();
                         }
                     }
 
@@ -98,10 +97,11 @@
                         const practicalDate = data.progress && data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'In Progress';
                         const certDate = data.certificate && data.certificate.issued_at ? new Date(data.certificate.issued_at).toLocaleString() : null;
 
+                        const obsCount = typeof data.observationCount === 'number' ? data.observationCount : (Array.isArray(data.observations) ? data.observations.length : 0);
                         resTextEl.innerHTML = `
                             <strong>Academic Laboratory Record:</strong><br><br>
                             • <strong>Overall Academic Status:</strong> ${isAcademicComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #D97706; font-weight: bold;">In Progress</span>'}<br>
-                            • <strong>Practical Simulation:</strong> ${hasCompletedSim ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #2563EB;">In Progress</span>'} (${data.observations.length} activities logged)<br>
+                            • <strong>Practical Simulation:</strong> ${hasCompletedSim ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #2563EB;">In Progress</span>'} (${obsCount} activities logged)<br>
                             • <strong>Viva Evaluation (Quiz):</strong> ${quizDisplay}<br>
                             • <strong>Academic Certificate:</strong> ${data.certificate ? `<span style="font-family: monospace; color: #2563EB; font-weight: bold;">${data.certificate.certificate_code}</span>` : '<span style="color: #64748B;">Not Issued (Requires &ge; 70% Quiz Pass)</span>'}<br>
                             • <strong>Practical Completion Date:</strong> ${practicalDate}${certDate ? `<br>• <strong>Academic Certification Date:</strong> ${certDate}` : ''}
@@ -110,6 +110,10 @@
                 }
             } catch (e) {
                 console.warn('[VLabSync] Could not restore server history:', e);
+            } finally {
+                if (typeof window.setHydrated === 'function') {
+                    window.setHydrated();
+                }
             }
         },
 

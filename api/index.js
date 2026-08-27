@@ -3,8 +3,10 @@ const url = require('url');
 
 // Handlers imported from lib/ (so Vercel does not scan them as separate serverless functions)
 const healthHandler = require('../lib/health');
-const registerHandler = require('../lib/auth/register');
-const loginHandler = require('../lib/auth/login');
+const studentRegisterHandler = require('../lib/auth/student-register');
+const studentLoginHandler = require('../lib/auth/student-login');
+const facultyRegisterHandler = require('../lib/auth/faculty-register');
+const facultyLoginHandler = require('../lib/auth/faculty-login');
 const meHandler = require('../lib/auth/me');
 const logoutHandler = require('../lib/auth/logout');
 const progressGetHandler = require('../lib/progress/get');
@@ -15,6 +17,11 @@ const certificateVerifyHandler = require('../lib/certificate/verify');
 const facultyStatsHandler = require('../lib/faculty/stats');
 const facultyStudentsHandler = require('../lib/faculty/students');
 const facultyStudentDetailHandler = require('../lib/faculty/student-detail');
+const facultyClassroomCreateHandler = require('../lib/faculty/classroom-create');
+const facultyClassroomListHandler = require('../lib/faculty/classroom-list');
+const facultyClassroomDetailHandler = require('../lib/faculty/classroom-detail');
+const studentClassroomJoinHandler = require('../lib/classroom/join');
+const studentClassroomStatusHandler = require('../lib/classroom/status');
 
 module.exports = async function handler(req, res) {
     const parsedUrl = url.parse(req.url, true);
@@ -36,11 +43,19 @@ module.exports = async function handler(req, res) {
             case '/api/health':
                 return await healthHandler(req, res);
 
-            // Auth
-            case '/api/auth/register':
-                return await registerHandler(req, res);
-            case '/api/auth/login':
-                return await loginHandler(req, res);
+            // Dedicated Student Auth Endpoints
+            case '/api/auth/student/register':
+                return await studentRegisterHandler(req, res);
+            case '/api/auth/student/login':
+                return await studentLoginHandler(req, res);
+
+            // Dedicated Faculty Auth Endpoints
+            case '/api/auth/faculty/register':
+                return await facultyRegisterHandler(req, res);
+            case '/api/auth/faculty/login':
+                return await facultyLoginHandler(req, res);
+
+            // Session Verification & Logout
             case '/api/auth/me':
                 return await meHandler(req, res);
             case '/api/auth/logout':
@@ -60,7 +75,19 @@ module.exports = async function handler(req, res) {
             case '/api/certificate/verify':
                 return await certificateVerifyHandler(req, res);
 
-            // Faculty
+            // Classroom & Faculty Hub
+            case '/api/faculty/classroom/create':
+                return await facultyClassroomCreateHandler(req, res);
+            case '/api/faculty/classroom/list':
+                return await facultyClassroomListHandler(req, res);
+            case '/api/faculty/classroom/detail':
+                return await facultyClassroomDetailHandler(req, res);
+            case '/api/classroom/join':
+                return await studentClassroomJoinHandler(req, res);
+            case '/api/classroom/status':
+                return await studentClassroomStatusHandler(req, res);
+
+            // Faculty Legacy Analytics
             case '/api/faculty/stats':
                 return await facultyStatsHandler(req, res);
             case '/api/faculty/students':

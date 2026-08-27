@@ -15,10 +15,14 @@
             this.restoreAuthoritativeHistory();
         },
 
-        // 1. Hydrate User Details from API or Session Cache
+        // 1. Hydrate User Details from API or Session Cache and verify classroom enrollment
         async hydrateUser() {
             const token = localStorage.getItem('vlab_token');
-            const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const authHeaders = { 'Authorization': `Bearer ${token}` };
 
             try {
                 const res = await fetch('/api/auth/me', { headers: authHeaders });
@@ -28,6 +32,17 @@
                         this.user = data.user;
                         localStorage.setItem('vlab_user', JSON.stringify(this.user));
                         this.applyUserToDOM();
+
+                        // Student Classroom Gate: Verify student is enrolled before running experiment
+                        if (this.user.role === 'student') {
+                            const classRes = await fetch('/api/classroom/status', { headers: authHeaders });
+                            const classData = await classRes.json();
+                            if (!classData || !classData.enrolled) {
+                                alert('You must join a faculty classroom before accessing laboratory experiments.');
+                                window.location.href = 'dashboard.html';
+                                return;
+                            }
+                        }
                         return;
                     }
                 }
@@ -50,13 +65,11 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data.observations)) {
-                        // Server is the sole authority: replace local cache with server records
+                        // Server is the authoritative snapshot: update observation cache via window.setObservations
                         if (typeof window.setObservations === 'function') {
                             window.setObservations(data.observations);
-                        } else if (typeof observations !== 'undefined' && Array.isArray(observations)) {
-                            observations.length = 0;
-                            data.observations.forEach(o => observations.push(o));
-                            if (typeof updateObservationTable === 'function') updateObservationTable();
+                        } else if (typeof updateObservationTable === 'function') {
+                            updateObservationTable();
                         }
                     }
 

@@ -101,6 +101,33 @@
     </header>
 
     <main class="fac-container" style="flex: 1;">
+        <!-- Classroom Management & Switcher Header Bar -->
+        <div style="background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
+                    <label for="classroom-select" style="font-size: 0.75rem; font-weight: bold; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active Laboratory Section</label>
+                    <select id="classroom-select" style="display: block; margin-top: 0.25rem; padding: 0.5rem 1rem; font-size: 1rem; font-weight: 600; color: #1E293B; border: 1px solid #CBD5E1; border-radius: 6px; background: #F8FAFC; min-width: 280px;">
+                        <option value="">Loading classrooms...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Live Join Code Badge Card -->
+                <div id="join-code-container" style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 600; color: #1E40AF; text-transform: uppercase;">Classroom Join Code</div>
+                        <div id="active-join-code" style="font-family: monospace; font-size: 1.15rem; font-weight: bold; color: #1D4ED8; letter-spacing: 1px;">----</div>
+                    </div>
+                    <button id="copy-code-btn" class="btn" style="background: #2563EB; color: white; padding: 0.35rem 0.65rem; font-size: 0.8rem; border-radius: 4px;">Copy</button>
+                </div>
+
+                <button id="create-class-modal-btn" class="btn" style="background: #059669; color: white; padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px;">
+                    + New Classroom
+                </button>
+            </div>
+        </div>
+
         <!-- Analytics Stat Overview Cards -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
             <div class="stat-card">
@@ -112,40 +139,35 @@
             </div>
             <div class="stat-card">
                 <div>
-                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">EXPERIMENTS ACTIVE</div>
-                    <div class="stat-num">5</div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">CLASS COMPLETION RATE</div>
+                    <div class="stat-num" id="class-completion-rate">0%</div>
                 </div>
-                <i data-lucide="book-open" style="color: #64748B; width: 32px; height: 32px;"></i>
+                <i data-lucide="award" style="color: #D97706; width: 32px; height: 32px;"></i>
             </div>
             <div class="stat-card">
                 <div>
-                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">TOTAL COMPLETIONS</div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">COMPLETED LABS</div>
                     <div class="stat-num" id="total-completions">0</div>
                 </div>
                 <i data-lucide="check-circle" style="color: #059669; width: 32px; height: 32px;"></i>
             </div>
             <div class="stat-card">
                 <div>
-                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">AVERAGE QUIZ SCORE</div>
-                    <div class="stat-num" id="avg-quiz">84%</div>
+                    <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">ACTIVE EXERCISES</div>
+                    <div class="stat-num">5</div>
                 </div>
-                <i data-lucide="award" style="color: #D97706; width: 32px; height: 32px;"></i>
+                <i data-lucide="book-open" style="color: #64748B; width: 32px; height: 32px;"></i>
             </div>
         </div>
 
-        <!-- Class Experiment Completion Breakdown -->
-        <div class="card" style="margin-bottom: 1.5rem; background: white;">
-            <h3 style="margin-top: 0; color: #1E293B;">Exercise Completion Breakdown</h3>
-            <div id="exp-breakdown-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
-                <!-- Filled dynamically -->
-            </div>
-        </div>
-
-        <!-- Student Roster Table -->
-        <div class="card" style="background: white;">
+        <!-- Student Roster & Progress Matrix -->
+        <div class="card" style="background: white; margin-bottom: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h3 style="margin: 0; color: #1E293B;">Registered Student Roster</h3>
-                <input type="text" id="search-student" placeholder="Search by name, reg number or section..." style="padding: 0.5rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; min-width: 280px; font-family: inherit;">
+                <div>
+                    <h3 style="margin: 0; color: #1E293B;" id="roster-heading">Enrolled Students Progress Matrix</h3>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: #64748B;" id="roster-subheading">Classroom Section Record</p>
+                </div>
+                <input type="text" id="search-student" placeholder="Search by name or register number..." style="padding: 0.5rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; min-width: 280px; font-family: inherit;">
             </div>
             <div style="overflow-x: auto;">
                 <table>
@@ -153,22 +175,54 @@
                         <tr>
                             <th>Register Number</th>
                             <th>Student Name</th>
-                            <th>Email ID</th>
-                            <th>Department / Sec</th>
-                            <th>Completed Exercises</th>
-                            <th>Last Lab Activity</th>
+                            <th>Exp 1</th>
+                            <th>Exp 2</th>
+                            <th>Exp 3</th>
+                            <th>Exp 4</th>
+                            <th>Exp 5</th>
+                            <th>Overall</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="student-table-body">
                         <tr>
-                            <td colspan="7" style="text-align: center; color: #64748B; padding: 2rem;">Loading student records from PostgreSQL database...</td>
+                            <td colspan="9" style="text-align: center; color: #64748B; padding: 2rem;">Select a classroom to view student progress records.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
+
+    <!-- Create Classroom Modal -->
+    <div id="create-class-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #E2E8F0; position: relative;">
+            <button id="close-create-modal" style="position: absolute; top: 1rem; right: 1rem; border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #64748B;">&times;</button>
+            <h3 style="margin-top: 0; color: #1E293B; font-size: 1.35rem;">Create New Laboratory Classroom</h3>
+            <p style="font-size: 0.875rem; color: #64748B; margin-bottom: 1.5rem;">Classrooms are permanent course sections that remain active across the semester.</p>
+
+            <form id="create-classroom-form">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="new-class-name" style="font-weight: 600; font-size: 0.875rem; color: #334155;">Course / Lab Name</label>
+                    <input type="text" id="new-class-name" placeholder="e.g. Computer Networks Laboratory" value="Computer Networks Laboratory" required
+                        style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; margin-top: 0.25rem; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="new-class-sec" style="font-weight: 600; font-size: 0.875rem; color: #334155;">Section / Batch</label>
+                    <input type="text" id="new-class-sec" placeholder="e.g. CSE-F1 (Batch 2026)" required
+                        style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; margin-top: 0.25rem; box-sizing: border-box;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="new-class-year" style="font-weight: 600; font-size: 0.875rem; color: #334155;">Academic Year</label>
+                    <input type="text" id="new-class-year" placeholder="e.g. 2025-2026" value="2025-2026" required
+                        style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #CBD5E1; border-radius: 6px; margin-top: 0.25rem; box-sizing: border-box;">
+                </div>
+                <button type="submit" id="create-submit-btn" class="btn" style="width: 100%; background: #059669; color: white; padding: 0.75rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer;">
+                    Create &amp; Generate Code
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Student Detail Modal -->
     <div id="student-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
@@ -183,86 +237,162 @@
     <script>
         lucide.createIcons();
 
-        let allStudents = [];
+        let allClassrooms = [];
+        let currentClassroomId = null;
+        let currentStudents = [];
+
+        const token = localStorage.getItem('vlab_token');
+        if (!token) {
+            window.location.href = 'index.html';
+        }
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
 
         // 1. Authenticate Faculty Session
-        fetch('/api/auth/me')
+        fetch('/api/auth/me', { headers: authHeaders })
             .then(res => res.json())
             .then(data => {
                 if (!data.authenticated || (data.user.role !== 'faculty' && data.user.role !== 'admin')) {
-                    alert('Access Restricted. You must sign in with a Faculty or Administrator account.');
+                    alert('Access Restricted. You must sign in with a Faculty account.');
                     window.location.href = 'index.html';
                 } else {
                     document.getElementById('faculty-name').textContent = data.user.fullName;
-                    document.getElementById('faculty-role').textContent = `Role: ${data.user.role.toUpperCase()}`;
-                    loadDashboardData();
+                    document.getElementById('faculty-role').textContent = `Department of ${data.user.department || 'CSE'}`;
+                    loadClassrooms();
                 }
             })
             .catch(() => {
                 window.location.href = 'index.html';
             });
 
-        // 2. Load Stats & Roster
-        async function loadDashboardData() {
+        // 2. Load Faculty Classrooms
+        async function loadClassrooms(autoSelectId = null) {
             try {
-                // Fetch Stats
-                const statsRes = await fetch('/api/faculty/stats');
-                if (statsRes.ok) {
-                    const stats = await statsRes.json();
-                    document.getElementById('total-students').textContent = stats.overview.totalStudents;
-                    
-                    let totalComp = 0;
-                    const breakdownBox = document.getElementById('exp-breakdown-list');
-                    breakdownBox.innerHTML = '';
+                const res = await fetch('/api/faculty/classroom/list', { headers: authHeaders });
+                const data = await res.json();
+                allClassrooms = data.classrooms || [];
 
-                    stats.experimentCompletions.forEach(exp => {
-                        const count = parseInt(exp.completed_count) || 0;
-                        totalComp += count;
-                        const card = document.createElement('div');
-                        card.style.cssText = 'background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid #E2E8F0;';
-                        card.innerHTML = `
-                            <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXP ${exp.experiment_id}</div>
-                            <div style="font-weight: 600; font-size: 0.9rem; margin: 0.25rem 0;">${exp.title}</div>
-                            <div style="font-size: 1.25rem; font-weight: bold; color: #059669; margin-top: 0.5rem;">${count} <span style="font-size: 0.8rem; color: #64748B; font-weight: normal;">completed</span></div>
-                        `;
-                        breakdownBox.appendChild(card);
-                    });
+                const select = document.getElementById('classroom-select');
+                select.innerHTML = '';
 
-                    document.getElementById('total-completions').textContent = totalComp;
+                if (allClassrooms.length === 0) {
+                    select.innerHTML = '<option value="">No classrooms created yet. Click "+ New Classroom".</option>';
+                    document.getElementById('active-join-code').textContent = '----';
+                    renderEmptyClassroom();
+                    return;
                 }
 
-                // Fetch Students
-                const studentsRes = await fetch('/api/faculty/students');
-                if (studentsRes.ok) {
-                    const data = await studentsRes.json();
-                    allStudents = data.students || [];
-                    renderStudentTable(allStudents);
-                }
+                allClassrooms.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = `${c.section} — ${c.name} (${c.student_count || 0} students)`;
+                    select.appendChild(opt);
+                });
+
+                currentClassroomId = autoSelectId || allClassrooms[0].id;
+                select.value = currentClassroomId;
+                loadClassroomDetail(currentClassroomId);
             } catch (err) {
-                console.error('Error loading faculty dashboard:', err);
+                console.error('Error loading classrooms:', err);
             }
         }
 
-        function renderStudentTable(students) {
+        // Classroom Select Change
+        document.getElementById('classroom-select').addEventListener('change', (e) => {
+            currentClassroomId = e.target.value;
+            if (currentClassroomId) {
+                loadClassroomDetail(currentClassroomId);
+            }
+        });
+
+        // 3. Load Detail & Student Matrix for Selected Classroom
+        async function loadClassroomDetail(classroomId) {
+            try {
+                const res = await fetch(`/api/faculty/classroom/detail?id=${classroomId}`, { headers: authHeaders });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Failed to load classroom.');
+
+                const c = data.classroom;
+                document.getElementById('active-join-code').textContent = c.classroom_code;
+                document.getElementById('roster-heading').textContent = `${c.name} (${c.section})`;
+                document.getElementById('roster-subheading').textContent = `Academic Year: ${c.academic_year} | Persistent Code: ${c.classroom_code}`;
+
+                // Stats
+                document.getElementById('total-students').textContent = data.stats.totalStudents || 0;
+                document.getElementById('class-completion-rate').textContent = `${data.stats.classCompletionRate || 0}%`;
+                document.getElementById('total-completions').textContent = data.stats.totalCompletedExps || 0;
+
+                currentStudents = data.students || [];
+                renderStudentMatrix(currentStudents);
+            } catch (err) {
+                console.error('Error loading classroom detail:', err);
+            }
+        }
+
+        function renderEmptyClassroom() {
+            document.getElementById('total-students').textContent = '0';
+            document.getElementById('class-completion-rate').textContent = '0%';
+            document.getElementById('total-completions').textContent = '0';
+            document.getElementById('student-table-body').innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align: center; color: #64748B; padding: 2.5rem;">
+                        No classrooms found. Create your first classroom using the <strong>"+ New Classroom"</strong> button above.
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderStudentMatrix(students) {
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = '';
 
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748B;">No students found matching search.</td></tr>';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: #64748B; padding: 2.5rem;">
+                            No students enrolled yet. Share the classroom code with your students to begin.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
             students.forEach(st => {
                 const tr = document.createElement('tr');
-                const lastAct = st.last_lab_activity ? new Date(st.last_lab_activity).toLocaleString() : 'No activity yet';
+                const pMap = {};
+                if (Array.isArray(st.experiments_progress)) {
+                    st.experiments_progress.forEach(p => {
+                        pMap[p.experiment_id] = p;
+                    });
+                }
+
+                let expCells = '';
+                let compCount = 0;
+
+                for (let expId = 1; expId <= 5; expId++) {
+                    const p = pMap[expId];
+                    if (p && (p.status === 'completed' || p.progress_percentage === 100)) {
+                        compCount++;
+                        const scoreDisplay = typeof p.final_score === 'number' ? ` (${p.final_score}%)` : '';
+                        expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100%${scoreDisplay}</td>`;
+                    } else if (p && p.progress_percentage > 0) {
+                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%</td>`;
+                    } else {
+                        expCells += `<td style="color: #94A3B8; font-size: 0.85rem;">—</td>`;
+                    }
+                }
+
+                const overallPercent = Math.round((compCount / 5) * 100);
+
                 tr.innerHTML = `
                     <td><strong>${st.register_number}</strong></td>
-                    <td><a class="student-link" data-id="${st.id}">${st.full_name}</a></td>
-                    <td>${st.email}</td>
-                    <td>${st.department || 'CSE'} - ${st.section || 'A'}</td>
-                    <td><span style="font-weight: bold; color: #059669;">${st.completed_experiments_count || 0}</span> / 5</td>
-                    <td style="font-size: 0.85rem; color: #64748B;">${lastAct}</td>
-                    <td><button class="btn view-btn" data-id="${st.id}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">View Profile</button></td>
+                    <td><a class="student-link" data-id="${st.student_id}">${st.full_name}</a></td>
+                    ${expCells}
+                    <td><span style="font-weight: bold; color: ${overallPercent === 100 ? '#059669' : '#2563EB'};">${overallPercent}%</span></td>
+                    <td><button class="btn view-btn" data-id="${st.student_id}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; background: #3B82F6;">View</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -272,18 +402,67 @@
             });
         }
 
-        // 3. Search Filter
+        // 4. Search Filter
         document.getElementById('search-student').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase().trim();
-            const filtered = allStudents.filter(s => 
+            const filtered = currentStudents.filter(s => 
                 s.full_name.toLowerCase().includes(q) ||
-                s.register_number.toLowerCase().includes(q) ||
-                (s.section && s.section.toLowerCase().includes(q))
+                s.register_number.toLowerCase().includes(q)
             );
-            renderStudentTable(filtered);
+            renderStudentMatrix(filtered);
         });
 
-        // 4. Student Detail & Activity History Modal
+        // 5. Create Classroom Modal Controls
+        const createModal = document.getElementById('create-class-modal');
+        document.getElementById('create-class-modal-btn').addEventListener('click', () => {
+            createModal.style.display = 'flex';
+        });
+        document.getElementById('close-create-modal').addEventListener('click', () => {
+            createModal.style.display = 'none';
+        });
+
+        document.getElementById('create-classroom-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('new-class-name').value;
+            const section = document.getElementById('new-class-sec').value;
+            const academicYear = document.getElementById('new-class-year').value;
+            const submitBtn = document.getElementById('create-submit-btn');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Generating Room...';
+
+            try {
+                const res = await fetch('/api/faculty/classroom/create', {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: JSON.stringify({ name, section, academicYear })
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Failed to create classroom.');
+
+                createModal.style.display = 'none';
+                await loadClassrooms(data.classroom.id);
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create & Generate Code';
+            }
+        });
+
+        // 6. Copy Code Button
+        document.getElementById('copy-code-btn').addEventListener('click', () => {
+            const code = document.getElementById('active-join-code').textContent;
+            if (code && code !== '----') {
+                navigator.clipboard.writeText(code);
+                const btn = document.getElementById('copy-code-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+            }
+        });
+
+        // 7. Student Detail & Milestone Inspection Modal
         async function openStudentModal(studentId) {
             const modal = document.getElementById('student-modal');
             const content = document.getElementById('student-modal-content');
@@ -291,7 +470,7 @@
             modal.style.display = 'flex';
 
             try {
-                const res = await fetch(`/api/faculty/student-detail?id=${studentId}`);
+                const res = await fetch(`/api/faculty/student-detail?id=${studentId}`, { headers: authHeaders });
                 if (!res.ok) throw new Error('Failed to load student details.');
                 const data = await res.json();
                 const st = data.student;
@@ -310,7 +489,7 @@
                 });
 
                 let timelineHtml = '';
-                if (data.activityTimeline.length === 0) {
+                if (!data.activityTimeline || data.activityTimeline.length === 0) {
                     timelineHtml = '<p style="color: #64748B;">No recorded simulation milestones yet.</p>';
                 } else {
                     data.activityTimeline.forEach(ev => {
@@ -353,12 +532,13 @@
             document.getElementById('student-modal').style.display = 'none';
         });
 
-        // 5. Logout
+        // 8. Logout
         document.getElementById('logout-btn').addEventListener('click', async () => {
             try {
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders });
             } catch (e) {}
-            sessionStorage.removeItem('vlab_user');
+            localStorage.clear();
+            sessionStorage.clear();
             window.location.href = 'index.html';
         });
     </script>

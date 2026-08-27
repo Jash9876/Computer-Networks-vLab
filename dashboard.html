@@ -188,7 +188,45 @@
                 </div>
             </div>
         </div>
-    </main>
+    <!-- Classroom Join Modal Overlay -->
+    <div id="classroom-gate-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; max-width: 480px; width: 90%; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #E2E8F0;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="width: 48px; height: 48px; background: #EFF6FF; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #2563EB; font-size: 1.5rem; margin-bottom: 0.75rem;">
+                    🏫
+                </div>
+                <h3 style="margin: 0; font-size: 1.35rem; color: #1E293B;">Join Laboratory Classroom</h3>
+                <p style="margin: 0.5rem 0 0; font-size: 0.875rem; color: #64748B;">Enter the classroom room code provided by your lab instructor to unlock the experiments.</p>
+            </div>
+
+            <div id="join-error-msg" style="display: none; background: #FEF2F2; color: #991B1B; border: 1px solid #F87171; border-radius: 6px; padding: 0.75rem; font-size: 0.85rem; margin-bottom: 1rem;"></div>
+
+            <form id="join-classroom-form">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="join-room-code" style="font-weight: 600; font-size: 0.875rem; color: #334155;">Classroom Code</label>
+                    <input type="text" id="join-room-code" placeholder="e.g. CNF1-8K92" required
+                        style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; text-align: center; font-family: monospace; box-sizing: border-box; margin-top: 0.25rem;">
+                </div>
+
+                <button type="submit" id="join-submit-btn" class="btn" style="width: 100%; background: #2563EB; color: white; padding: 0.75rem; font-size: 1rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer;">
+                    Enroll in Classroom
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Active Classroom Banner -->
+    <div id="classroom-banner" style="display: none; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.25rem;">🏫</span>
+            <div>
+                <strong id="banner-class-name" style="color: #1E40AF; font-size: 0.95rem;">Computer Networks Lab</strong>
+                <span id="banner-class-sec" style="color: #3B82F6; font-size: 0.85rem; margin-left: 0.5rem;">(Section A)</span>
+                <div style="font-size: 0.8rem; color: #64748B;">Instructor: <span id="banner-faculty-name">Faculty</span> | Code: <span id="banner-class-code" style="font-family: monospace; font-weight: 600;">CNF1-8K92</span></div>
+            </div>
+        </div>
+        <span style="background: #DBEAFE; color: #1E40AF; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 999px;">Enrolled ✔</span>
+    </div>
 
     <footer style="text-align: center; padding: 1rem; color: #94A3B8; font-size: 0.8rem; border-top: 1px solid var(--border-color); background: white;">
         &copy; 2026 SRM Institute of Science and Technology. All rights reserved. | Virtual Laboratory Platform
@@ -216,19 +254,22 @@
 
         const authHeaders = { 'Authorization': `Bearer ${token}` };
 
-        // 2. Authoritative User Session Verification
+        // 2. Authoritative User Session & Classroom Verification
         fetch('/api/auth/me', { headers: authHeaders })
             .then(res => {
                 if (!res.ok) throw new Error('Session invalid or expired');
                 return res.json();
             })
-            .then(data => {
+            .then(async (data) => {
                 if (data && data.authenticated && data.user) {
                     localStorage.setItem('vlab_user', JSON.stringify(data.user));
                     renderUser(data.user);
-                    loadAuthoritativeProgress();
+                    if (data.user.role === 'faculty') {
+                        window.location.href = 'faculty.html';
+                        return;
+                    }
+                    await verifyClassroomEnrollment();
                 } else {
-                    // Invalid session -> Force sign-in
                     localStorage.clear();
                     sessionStorage.clear();
                     window.location.href = 'index.html';
@@ -240,6 +281,70 @@
                 sessionStorage.clear();
                 window.location.href = 'index.html';
             });
+
+        // 2b. Classroom Status Verification & Join Logic
+        async function verifyClassroomEnrollment() {
+            const gateModal = document.getElementById('classroom-gate-modal');
+            const banner = document.getElementById('classroom-banner');
+
+            try {
+                const res = await fetch('/api/classroom/status', { headers: authHeaders });
+                const data = await res.json();
+
+                if (data && data.enrolled && data.classroom) {
+                    gateModal.style.display = 'none';
+                    banner.style.display = 'flex';
+                    document.getElementById('banner-class-name').textContent = data.classroom.name;
+                    document.getElementById('banner-class-sec').textContent = `(${data.classroom.section})`;
+                    document.getElementById('banner-faculty-name').textContent = data.classroom.faculty_name || 'Assigned Faculty';
+                    document.getElementById('banner-class-code').textContent = data.classroom.classroom_code;
+                    loadAuthoritativeProgress();
+                } else {
+                    // Show Gate Modal
+                    gateModal.style.display = 'flex';
+                }
+            } catch (e) {
+                console.warn('Classroom check failed:', e);
+                loadAuthoritativeProgress();
+            }
+        }
+
+        // Join Classroom Form Submission
+        document.getElementById('join-classroom-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codeInput = document.getElementById('join-room-code');
+            const submitBtn = document.getElementById('join-submit-btn');
+            const errorMsg = document.getElementById('join-error-msg');
+            const classroomCode = (codeInput.value || '').trim();
+
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying Code...';
+
+            try {
+                const res = await fetch('/api/classroom/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ classroomCode })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to join classroom.');
+                }
+
+                document.getElementById('classroom-gate-modal').style.display = 'none';
+                await verifyClassroomEnrollment();
+            } catch (err) {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = err.message;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enroll in Classroom';
+            }
+        });
 
         // 3. Authoritative Progress Hydration from PostgreSQL
         async function loadAuthoritativeProgress() {

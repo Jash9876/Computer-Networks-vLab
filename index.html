@@ -245,10 +245,11 @@
                 }
 
                 showAlert('Login successful! Redirecting...', false);
-                sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                if (data.token) localStorage.setItem('vlab_token', data.token);
+                localStorage.setItem('vlab_user', JSON.stringify(data.user));
                 setTimeout(() => {
                     window.location.href = data.user.role === 'faculty' ? 'faculty.html' : 'dashboard.html';
-                }, 800);
+                }, 600);
             } catch (err) {
                 showAlert(err.message);
                 btn.textContent = 'Sign In to Virtual Lab';
@@ -283,10 +284,11 @@
                 }
 
                 showAlert('Account created successfully! Redirecting to Dashboard...', false);
-                sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                if (data.token) localStorage.setItem('vlab_token', data.token);
+                localStorage.setItem('vlab_user', JSON.stringify(data.user));
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
-                }, 1000);
+                }, 700);
             } catch (err) {
                 showAlert(err.message);
                 btn.textContent = 'Create Student Account';

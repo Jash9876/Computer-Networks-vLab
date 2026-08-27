@@ -168,34 +168,39 @@
     <script>
         lucide.createIcons();
 
-        // 1. Check User Session (Strict Authentication Guard)
-        fetch('/api/auth/me')
+        // 1. Instant Render from Local Cache
+        const cachedUser = localStorage.getItem('vlab_user');
+        if (cachedUser) {
+            try {
+                const u = JSON.parse(cachedUser);
+                document.getElementById('user-display-name').textContent = u.fullName || 'Student';
+                document.getElementById('user-display-reg').textContent = `Register No: ${u.registerNumber || '-'}`;
+            } catch(e) {}
+        }
+
+        const token = localStorage.getItem('vlab_token');
+        const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+        // 2. Check User Session with Serverless API
+        fetch('/api/auth/me', { headers: authHeaders })
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (data && data.authenticated && data.user) {
-                    sessionStorage.setItem('vlab_user', JSON.stringify(data.user));
+                    localStorage.setItem('vlab_user', JSON.stringify(data.user));
                     document.getElementById('user-display-name').textContent = data.user.fullName;
                     document.getElementById('user-display-reg').textContent = `Register No: ${data.user.registerNumber}`;
                     loadProgress();
-                } else {
-                    // Not authenticated -> Redirect to Portal Login
+                } else if (!cachedUser) {
                     window.location.href = 'index.html';
+                } else {
+                    loadProgress();
                 }
             })
             .catch(() => {
-                // If API fails or user is offline, check session cache
-                const cached = sessionStorage.getItem('vlab_user');
-                if (cached) {
-                    const u = JSON.parse(cached);
-                    document.getElementById('user-display-name').textContent = u.fullName;
-                    document.getElementById('user-display-reg').textContent = `Register No: ${u.registerNumber}`;
-                    loadProgress();
-                } else {
-                    window.location.href = 'index.html';
-                }
+                loadProgress();
             });
 
-        // 2. Load Progress from API or localStorage
+        // 3. Load Progress from API or localStorage
         async function loadProgress() {
             let completed = [];
 
@@ -209,12 +214,11 @@
 
             // Try fetching from server API if online
             try {
-                const res = await fetch('/api/progress/get');
+                const res = await fetch('/api/progress/get', { headers: authHeaders });
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data.completedExperiments)) {
                         completed = data.completedExperiments;
-                        // Update local cache
                         localStorage.setItem('vlab_progression', JSON.stringify({ completed }));
                     }
                 }

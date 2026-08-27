@@ -217,9 +217,9 @@ function evaluateQuiz() {
     isQuizSubmitting = true;
 
     currentAttempt++;
-    let score = 0;
     const total = experimentData.quiz.length;
 
+    // Show neutral evaluating state across question feedback elements
     experimentData.quiz.forEach((q, index) => {
         const selected = document.querySelector(`input[name="q${index}"]:checked`);
         const feedbackEl = document.getElementById(`feedback-q${index}`);
@@ -228,49 +228,21 @@ function evaluateQuiz() {
         if (!selected) {
             feedbackEl.className = 'quiz-feedback incorrect';
             feedbackEl.textContent = `Please select an option.`;
-            return;
-        }
-
-        const selectedVal = parseInt(selected.value);
-        if (selectedVal === q.answer) {
-            score++;
-            feedbackEl.className = 'quiz-feedback correct';
-            feedbackEl.textContent = `✔ Correct! ${q.explanation || ''}`;
         } else {
-            feedbackEl.className = 'quiz-feedback incorrect';
-            if (currentAttempt === 1 && q.hint) {
-                feedbackEl.innerHTML = `❌ <strong>Not quite. Hint:</strong> ${q.hint} <br><em>Re-evaluate your choice and click Submit Quiz again.</em>`;
-            } else if (q.explanation) {
-                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> ${q.explanation}`;
-            } else {
-                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> The correct answer was: <em>${q.options[q.answer]}</em>`;
-            }
+            feedbackEl.className = 'quiz-feedback';
+            feedbackEl.style.background = '#F1F5F9';
+            feedbackEl.style.color = '#475569';
+            feedbackEl.innerHTML = `⏳ <em>Evaluating with server...</em>`;
         }
     });
 
-    const percentage = Math.round((score / total) * 100);
     const resultsEl = document.getElementById('quiz-results');
     resultsEl.style.display = 'block';
     resultsEl.innerHTML = `
         <h3>Quiz Evaluation</h3>
         <p><strong>Attempt:</strong> ${currentAttempt}</p>
-        <p><strong>Score:</strong> ${score} / ${total} (${percentage}%)</p>
-        <p style="font-size:0.9rem; color:#4B5563;">${percentage >= 70 ? '🎉 Great job! You have passed the quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
+        <p style="color:#64748B;">⏳ <em>Evaluating answers with server...</em></p>
     `;
-
-    // Show View Certificate Button if passed
-    const certBtn = document.getElementById('view-cert-btn');
-    if (certBtn) {
-        certBtn.style.display = percentage >= 70 ? 'inline-block' : 'none';
-    }
-    
-    // Setup Certificate Data
-    const certScoreEl = document.getElementById('cert-score');
-    if (certScoreEl) certScoreEl.textContent = `${percentage}%`;
-    const certAttemptEl = document.getElementById('cert-attempt');
-    if (certAttemptEl) certAttemptEl.textContent = currentAttempt;
-    const certDateEl = document.getElementById('cert-date');
-    if (certDateEl) certDateEl.textContent = new Date().toLocaleDateString();
 
     // Determine current experiment number
     let currentExpId = 1;
@@ -308,25 +280,59 @@ function evaluateQuiz() {
     .then(res => res.ok ? res.json() : null)
     .then(data => {
         if (data && data.success) {
-            const officialPercentage = typeof data.percentage === 'number' ? data.percentage : percentage;
-            const officialScore = typeof data.score === 'number' ? data.score : score;
+            const officialScore = typeof data.score === 'number' ? data.score : 0;
+            const officialTotal = typeof data.totalQuestions === 'number' ? data.totalQuestions : total;
+            const officialPercentage = typeof data.percentage === 'number' 
+                ? data.percentage 
+                : (officialTotal > 0 ? Math.round((officialScore / officialTotal) * 100) : 0);
 
             // 1. Authoritative Quiz Results display
             resultsEl.innerHTML = `
                 <h3>Quiz Evaluation</h3>
                 <p><strong>Attempt:</strong> ${currentAttempt}</p>
-                <p><strong>Official Verified Score:</strong> ${officialScore} / ${data.totalQuestions || total} (${officialPercentage}%)</p>
+                <p><strong>Official Verified Score:</strong> ${officialScore} / ${officialTotal} (${officialPercentage}%)</p>
                 <p style="font-size:0.9rem; color:#4B5563;">${data.passed ? '🎉 Great job! You have passed the institutional quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
             `;
+
+            // 1b. Update question feedback boxes strictly according to server evaluation
+            if (Array.isArray(data.details)) {
+                data.details.forEach(det => {
+                    const feedbackEl = document.getElementById(`feedback-q${det.questionIndex}`);
+                    const qObj = quizList[det.questionIndex];
+                    if (feedbackEl && qObj) {
+                        feedbackEl.style.display = 'block';
+                        if (det.correct) {
+                            feedbackEl.className = 'quiz-feedback correct';
+                            feedbackEl.textContent = `✔ Correct! ${qObj.explanation || ''}`;
+                        } else {
+                            feedbackEl.className = 'quiz-feedback incorrect';
+                            if (currentAttempt === 1 && qObj.hint) {
+                                feedbackEl.innerHTML = `❌ <strong>Not quite. Hint:</strong> ${qObj.hint} <br><em>Re-evaluate your choice and click Submit Quiz again.</em>`;
+                            } else if (qObj.explanation) {
+                                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> ${qObj.explanation}`;
+                            } else {
+                                feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> The correct answer was: <em>${qObj.options[det.correctIndex]}</em>`;
+                            }
+                        }
+                    }
+                });
+            }
 
             // 2. Authoritative Certificate Data
             if (data.certificateCode) {
                 const certCodeEl = document.getElementById('cert-code');
                 if (certCodeEl) certCodeEl.textContent = data.certificateCode;
                 const certScoreEl = document.getElementById('cert-score');
-                if (certScoreEl) certScoreEl.textContent = `${officialPercentage}%`;
+                const certVerifiedScore = typeof data.certificateScore === 'number' ? data.certificateScore : officialPercentage;
+                if (certScoreEl) certScoreEl.textContent = `${certVerifiedScore}%`;
                 const certBtn = document.getElementById('view-cert-btn');
                 if (certBtn) certBtn.style.display = 'inline-block';
+            } else {
+                // If attempt did not earn a certificate, don't show the certificate button for this failed attempt
+                const certBtn = document.getElementById('view-cert-btn');
+                if (certBtn && !data.passed) {
+                    certBtn.style.display = 'none';
+                }
             }
 
             // 3. Authoritative Result Tab update
@@ -334,9 +340,9 @@ function evaluateQuiz() {
             if (resTextEl) {
                 resTextEl.innerHTML = `
                     <strong>Academic Lab Evaluation:</strong><br><br>
-                    • <strong>Status:</strong> ${data.passed ? '<span style="color:#059669; font-weight:bold;">Completed ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress (Quiz Retry Required)</span>'}<br>
-                    • <strong>Official Score:</strong> ${officialPercentage}% (Attempt ${currentAttempt})<br>
-                    • <strong>Certificate Code:</strong> ${data.certificateCode ? `<span style="font-family:monospace; color:#2563EB;">${data.certificateCode}</span>` : 'Requires &ge; 70%'}<br>
+                    • <strong>Current Quiz Score:</strong> ${officialScore} / ${data.totalQuestions || total} (${officialPercentage}%)<br>
+                    • <strong>Status:</strong> ${data.passed ? '<span style="color:#059669; font-weight:bold;">Completed ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress (Quiz Retry Required &ge; 70%)</span>'}<br>
+                    • <strong>Certificate:</strong> ${data.certificateCode ? `<span style="font-family:monospace; color:#2563EB; font-weight:bold;">${data.certificateCode}</span>` : '<span style="color:#64748B;">Requires &ge; 70% Quiz Pass</span>'}<br>
                     • <strong>Interactive Modules Completed:</strong> ${new Set(observations.map(o => o.moduleName)).size} module(s).
                 `;
             }

@@ -9,6 +9,7 @@ const meHandler = require('../lib/auth/me');
 const logoutHandler = require('../lib/auth/logout');
 const progressGetHandler = require('../lib/progress/get');
 const eventsLogHandler = require('../lib/events/log');
+const eventsHistoryHandler = require('../lib/events/history');
 const quizSubmitHandler = require('../lib/quiz/submit');
 const certificateVerifyHandler = require('../lib/certificate/verify');
 const facultyStatsHandler = require('../lib/faculty/stats');
@@ -50,6 +51,8 @@ module.exports = async function handler(req, res) {
                 return await progressGetHandler(req, res);
             case '/api/events/log':
                 return await eventsLogHandler(req, res);
+            case '/api/events/history':
+                return await eventsHistoryHandler(req, res);
 
             // Quiz & Certificates
             case '/api/quiz/submit':

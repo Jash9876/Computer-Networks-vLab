@@ -9,9 +9,10 @@
         experimentId: 5, // Default for Exp 5
 
         init(expNumber) {
-            this.experimentId = expNumber || 5;
+            this.experimentId = expNumber || 1;
             this.hydrateUser();
             this.hookObservationLogger();
+            this.restoreAuthoritativeHistory();
         },
 
         // 1. Hydrate User Details from API or Session Cache
@@ -37,6 +38,59 @@
                 this.user = JSON.parse(localStorage.getItem('vlab_user') || sessionStorage.getItem('vlab_user'));
                 this.applyUserToDOM();
             } catch (e) {}
+        },
+
+        // 2. Authoritative PostgreSQL Observation & Result Restoration
+        async restoreAuthoritativeHistory() {
+            const token = localStorage.getItem('vlab_token');
+            const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+            try {
+                const res = await fetch(`/api/events/history?experimentId=${this.experimentId}`, { headers: authHeaders });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.observations) && data.observations.length > 0) {
+                        // Merge/replace local observations with server authority
+                        if (typeof window.setObservations === 'function') {
+                            window.setObservations(data.observations);
+                        } else if (typeof observations !== 'undefined' && Array.isArray(observations)) {
+                            observations.length = 0;
+                            data.observations.forEach(o => observations.push(o));
+                            if (typeof updateObservationTable === 'function') updateObservationTable();
+                            if (typeof updateResultFromObservations === 'function') updateResultFromObservations();
+                        }
+                    }
+
+                    // Restore Certificate & Score state
+                    if (data.certificate && data.certificate.certificate_code) {
+                        const certCodeEl = document.getElementById('cert-code');
+                        if (certCodeEl) certCodeEl.textContent = data.certificate.certificate_code;
+                        const certScoreEl = document.getElementById('cert-score');
+                        if (certScoreEl) certScoreEl.textContent = `${data.certificate.final_score}%`;
+                        const viewCertBtn = document.getElementById('view-cert-btn');
+                        if (viewCertBtn) viewCertBtn.style.display = 'inline-block';
+                    }
+
+                    // Restore Result Tab dynamically from Server
+                    if (data.progress && data.progress.status === 'completed') {
+                        const resTextEl = document.getElementById('result-text');
+                        if (resTextEl) {
+                            const score = data.certificate ? data.certificate.final_score : (data.latestQuiz ? data.latestQuiz.score : 100);
+                            const completedDate = data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'Recorded';
+                            resTextEl.innerHTML = `
+                                <strong>Academic Experiment Record Verified:</strong><br><br>
+                                • <strong>Status:</strong> <span style="color: #059669; font-weight: bold;">Completed ✔</span><br>
+                                • <strong>Verified Final Score:</strong> ${score}%<br>
+                                • <strong>Official Completion Date:</strong> ${completedDate}<br>
+                                • <strong>Academic Certificate:</strong> ${data.certificate ? `<span style="font-family: monospace; color: #2563EB;">${data.certificate.certificate_code}</span>` : 'Eligible'}<br>
+                                • <strong>Milestone Events Logged:</strong> ${data.observations.length} activities.
+                            `;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[VLabSync] Could not restore server history:', e);
+            }
         },
 
         applyUserToDOM() {

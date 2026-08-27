@@ -391,16 +391,18 @@
 
                 for (let expId = 1; expId <= 5; expId++) {
                     const p = pMap[expId];
-                    if (p && p.status === 'completed') {
-                        compCount++;
-                        const scoreDisplay = typeof p.final_score === 'number' ? ` (${p.final_score}%)` : '';
-                        expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100%${scoreDisplay}</td>`;
-                    } else if (p && p.progress_percentage > 0) {
-                        const mCount = (p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
-                        const reqCount = expTotalReq[expId] || 5;
-                        const isSimComplete = mCount >= reqCount;
-                        const isVivaPassed = typeof p.final_score === 'number' && p.final_score >= 70;
+                    const mCount = (p && p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
+                    const reqCount = expTotalReq[expId] || 5;
+                    const isSimComplete = mCount >= reqCount;
+                    const vivaScore = p ? (Number(p.final_score) || 0) : 0;
+                    const isVivaPassed = vivaScore >= 70;
 
+                    const isAcademicComplete = p && ((isSimComplete && isVivaPassed) || (p.isAcademicComplete === true && p.status === 'completed'));
+
+                    if (isAcademicComplete) {
+                        compCount++;
+                        expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100% (${vivaScore}%)</td>`;
+                    } else if (p && (p.progress_percentage > 0 || mCount > 0 || vivaScore > 0)) {
                         let tag = '';
                         if (!isSimComplete && isVivaPassed) {
                             tag = ' <span style="font-size: 0.72rem; color: #D97706; font-weight: 600;">(Sim Req)</span>';
@@ -410,7 +412,8 @@
                             tag = ' <span style="font-size: 0.72rem; color: #64748B;">(In Prog)</span>';
                         }
 
-                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%${tag}</td>`;
+                        const displayPct = isSimComplete ? 85 : Math.min(85, Math.round((mCount / reqCount) * 85));
+                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${displayPct}%${tag}</td>`;
                     } else {
                         expCells += `<td style="color: #94A3B8; font-size: 0.85rem;">—</td>`;
                     }

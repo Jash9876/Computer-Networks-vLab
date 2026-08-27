@@ -38,7 +38,9 @@ header {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+    z-index: 50;
+    position: sticky;
+    top: 0;
 }
 
 header h1 {
@@ -55,21 +57,27 @@ header .subtitle {
 .app-container {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    min-height: calc(100vh - 65px);
+    position: relative;
 }
 
-/* Sidebar */
+/* Sidebar - Sticky and viewport-relative */
 .sidebar {
     width: 250px;
+    min-width: 250px;
     background-color: var(--secondary-color);
     color: white;
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 65px;
+    height: calc(100vh - 65px);
     overflow-y: auto;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    z-index: 40;
 }
 
 .nav-item {
@@ -100,7 +108,8 @@ header .subtitle {
 .content-area {
     flex: 1;
     padding: 2rem 3rem;
-    overflow-y: auto;
+    min-height: calc(100vh - 65px);
+    overflow-y: visible;
     scroll-behavior: smooth;
 }
 

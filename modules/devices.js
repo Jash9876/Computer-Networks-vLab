@@ -75,12 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = `${type}${typeIndex}`;
             const node = document.createElement('div');
             node.className = 'topology-node';
-            node.innerHTML = `<img src="assets/icons/${icon}.svg" width="24" height="24" style="margin-bottom: 2px; pointer-events: none;"><br><span style="pointer-events: none;">${label}</span>`;
-            node.style.left = `${Math.max(0, Math.min(x, canvas.clientWidth - 60))}px`;
-            node.style.top = `${Math.max(0, Math.min(y, canvas.clientHeight - 60))}px`;
+            node.innerHTML = `<img src="assets/icons/${icon}.svg" alt="${type}"><span class="node-label">${label}</span>`;
+            node.style.left = `${Math.max(0, Math.min(x, canvas.clientWidth - 68))}px`;
+            node.style.top = `${Math.max(0, Math.min(y, canvas.clientHeight - 68))}px`;
             node.id = id;
             
-            nodes[id] = { element: node, type: type, label: label, x: x+30, y: y+30, ip: '', subnet: '', gateway: '', dns: '' };
+            nodes[id] = { element: node, type: type, label: label, x: x+34, y: y+34, ip: '', subnet: '', gateway: '', dns: '' };
             
             makeNodeInteractive(node, id);
             canvas.appendChild(node);
@@ -233,15 +233,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let newX = initialX + dx;
             let newY = initialY + dy;
             
-            newX = Math.max(0, Math.min(newX, canvas.clientWidth - 60));
-            newY = Math.max(0, Math.min(newY, canvas.clientHeight - 60));
+            newX = Math.max(0, Math.min(newX, canvas.clientWidth - 68));
+            newY = Math.max(0, Math.min(newY, canvas.clientHeight - 68));
 
             node.style.left = `${newX}px`;
             node.style.top = `${newY}px`;
             
-            // Update node center coordinates
-            nodes[id].x = newX + 30;
-            nodes[id].y = newY + 30;
+            // Update node center coordinates (68px node -> center at +34px)
+            nodes[id].x = newX + 34;
+            nodes[id].y = newY + 34;
             
             drawConnections();
         });

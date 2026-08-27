@@ -61,6 +61,13 @@
                         }
                     }
 
+                    // Restore Quiz Attempt Count
+                    if (data.latestQuiz && typeof data.latestQuiz.attempt_number === 'number') {
+                        if (typeof window.setQuizAttempt === 'function') {
+                            window.setQuizAttempt(data.latestQuiz.attempt_number);
+                        }
+                    }
+
                     // Restore Certificate & Score state
                     if (data.certificate && data.certificate.certificate_code) {
                         const certCodeEl = document.getElementById('cert-code');

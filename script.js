@@ -32,15 +32,14 @@ function loadData() {
     // Procedure
     document.getElementById('procedure-content').innerHTML = experimentData.procedure;
 
-    // Result (will be updated dynamically, but set initial)
-    // For Exercise 3, the CLI module manages the Result tab
-    if (!document.title.includes('Exercise 3')) {
-        document.getElementById('result-text').textContent = "Complete the simulations and quiz to view the final result.";
-    }
-
     // Hydrate existing observations & result on page load
     updateObservationTable();
-    updateResultFromObservations();
+    if (observations.length > 0) {
+        updateResultFromObservations();
+    } else if (!document.title.includes('Exercise 3')) {
+        const resEl = document.getElementById('result-text');
+        if (resEl) resEl.textContent = "Complete the simulations and quiz to view the final result.";
+    }
 
     // Quiz
     setupQuiz();
@@ -85,13 +84,26 @@ const observations = (function() {
 
 window.setObservations = function(newObs) {
     if (Array.isArray(newObs) && newObs.length > 0) {
-        observations.length = 0;
-        newObs.forEach(o => observations.push(o));
+        // Union & deduplicate: keep all distinct observations by moduleName + action
+        const existingKeys = new Set(observations.map(o => `${o.moduleName}::${o.action}`));
+        newObs.forEach(o => {
+            const k = `${o.moduleName}::${o.action}`;
+            if (!existingKeys.has(k)) {
+                observations.push(o);
+                existingKeys.add(k);
+            }
+        });
+
         try {
             localStorage.setItem(getExpKey(), JSON.stringify(observations));
         } catch(e) {}
         updateObservationTable();
-        updateResultFromObservations();
+    }
+};
+
+window.setQuizAttempt = function(num) {
+    if (typeof num === 'number' && num > currentAttempt) {
+        currentAttempt = num;
     }
 };
 

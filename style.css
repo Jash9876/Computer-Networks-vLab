@@ -25,43 +25,44 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    margin: 0;
 }
 
 /* Header */
 header {
     background-color: var(--primary-color);
     color: white;
-    padding: 1rem 2rem;
+    padding: 0.75rem 2rem;
+    height: 65px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 50;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    z-index: 100;
     position: sticky;
     top: 0;
 }
 
 header h1 {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 600;
 }
 
 header .subtitle {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     opacity: 0.9;
 }
 
-/* Main Layout */
+/* Main Laboratory Viewport Shell */
 .app-container {
     display: flex;
     flex: 1;
-    min-height: calc(100vh - 65px);
+    width: 100%;
     position: relative;
+    align-items: flex-start;
 }
 
-/* Sidebar - Sticky and viewport-relative */
+/* Viewport-Locked Sidebar Navigation */
 .sidebar {
     width: 250px;
     min-width: 250px;
@@ -73,11 +74,31 @@ header .subtitle {
     top: 65px;
     height: calc(100vh - 65px);
     overflow-y: auto;
+    overflow-x: hidden;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    z-index: 40;
+    z-index: 50;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom Sleek Scrollbar for Sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .nav-item {
@@ -102,20 +123,20 @@ header .subtitle {
 .nav-item.active {
     background-color: rgba(255, 255, 255, 0.15);
     border-left-color: var(--accent-color);
+    color: #FFFFFF;
 }
 
-/* Content Area */
+/* Main Experiment Content Area - Page Scrolls Naturally */
 .content-area {
     flex: 1;
+    min-width: 0;
     padding: 2rem 3rem;
-    min-height: calc(100vh - 65px);
-    overflow-y: visible;
     scroll-behavior: smooth;
 }
 
 .section {
     display: none;
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.25s ease-in-out;
 }
 
 .section.active {
@@ -123,7 +144,7 @@ header .subtitle {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 

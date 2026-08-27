@@ -389,12 +389,13 @@
 
                 for (let expId = 1; expId <= 5; expId++) {
                     const p = pMap[expId];
-                    if (p && (p.status === 'completed' || p.progress_percentage === 100)) {
+                    if (p && p.status === 'completed') {
                         compCount++;
                         const scoreDisplay = typeof p.final_score === 'number' ? ` (${p.final_score}%)` : '';
                         expCells += `<td style="color: #059669; font-weight: bold; font-size: 0.85rem;">✔ 100%${scoreDisplay}</td>`;
                     } else if (p && p.progress_percentage > 0) {
-                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%</td>`;
+                        const vivaNotice = (typeof p.final_score !== 'number' || p.final_score < 70) ? ' <span style="font-size: 0.75rem; color: #DC2626;">(Viva Req)</span>' : '';
+                        expCells += `<td style="color: #D97706; font-size: 0.85rem; font-weight: 600;">${p.progress_percentage}%${vivaNotice}</td>`;
                     } else {
                         expCells += `<td style="color: #94A3B8; font-size: 0.85rem;">—</td>`;
                     }

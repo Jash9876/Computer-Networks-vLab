@@ -235,7 +235,14 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        // Safe Lucide icon initialization
+        if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
+            try {
+                lucide.createIcons();
+            } catch (e) {
+                console.warn('Lucide icon initialization skipped:', e);
+            }
+        }
 
         let allClassrooms = [];
         let currentClassroomId = null;
@@ -271,14 +278,18 @@
         async function loadClassrooms(autoSelectId = null) {
             try {
                 const res = await fetch('/api/faculty/classroom/list', { headers: authHeaders });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { error: await res.text() };
+
                 allClassrooms = data.classrooms || [];
 
                 const select = document.getElementById('classroom-select');
                 select.innerHTML = '';
 
                 if (allClassrooms.length === 0) {
-                    select.innerHTML = '<option value="">No classrooms created yet. Click "+ New Classroom".</option>';
+                    select.innerHTML = '<option value="">No classrooms created yet — click "+ New Classroom"</option>';
                     document.getElementById('active-join-code').textContent = '----';
                     renderEmptyClassroom();
                     return;
@@ -296,6 +307,7 @@
                 loadClassroomDetail(currentClassroomId);
             } catch (err) {
                 console.error('Error loading classrooms:', err);
+                renderEmptyClassroom();
             }
         }
 
@@ -311,7 +323,10 @@
         async function loadClassroomDetail(classroomId) {
             try {
                 const res = await fetch(`/api/faculty/classroom/detail?id=${classroomId}`, { headers: authHeaders });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { error: await res.text() };
 
                 if (!res.ok) throw new Error(data.error || 'Failed to load classroom.');
 
@@ -448,11 +463,15 @@
                     headers: authHeaders,
                     body: JSON.stringify({ name, section, academicYear })
                 });
-                const data = await res.json();
+
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { error: await res.text() };
 
                 if (!res.ok) throw new Error(data.error || 'Failed to create classroom.');
 
-                createModal.style.display = 'none';
+                window.closeCreateModal();
                 await loadClassrooms(data.classroom.id);
             } catch (err) {
                 alert(err.message);

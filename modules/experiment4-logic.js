@@ -120,24 +120,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function normaliseIf(raw) {
         if (!raw) return null;
-        const str = String(raw).trim().toLowerCase();
+        let s = String(raw).trim().toLowerCase();
         
-        // Match Serial 0/1/0 variations:
-        // '0/1/0', 's0/1/0', 'se0/1/0', 'serial 0/1/0', 'serial s0/1/0', 'serial0/1/0', 'se 0/1/0'
-        if (str.includes('0/1/0') || str.includes('0/1/1')) {
-            return 'Serial0/1/0';
-        }
+        // Disallow non-existent interface families like FastEthernet
+        if (s.startsWith('fastethernet') || s.startsWith('fa')) return null;
 
-        // Match GigabitEthernet 0/0 variations:
-        // '0/0', 'g0/0', 'gi0/0', 'gigabitethernet 0/0', 'gigabitethernet g0/0', 'gigabitethernet0/0', 'gi 0/0'
-        if (str.includes('0/0') || str.includes('0/0/0')) {
+        // Clean double-prefixed syntax: "gigabitethernet g0/0" -> "g0/0", "serial s0/1/0" -> "s0/1/0"
+        s = s.replace(/^(gigabitethernet|gi|g)\s+/i, '')
+             .replace(/^(serial|se|s)\s+/i, '')
+             .replace(/\s+/g, '');
+
+        // Exact pattern match for GigabitEthernet 0/0
+        if (/^(gi|g|gigabitethernet)?0\/0$/i.test(s) || s === '0/0') {
             return 'GigabitEthernet0/0';
         }
 
-        // Match GigabitEthernet 0/1 variations:
-        // '0/1', 'g0/1', 'gi0/1', 'gigabitethernet 0/1', 'gigabitethernet g0/1', 'gigabitethernet0/1', 'gi 0/1'
-        if (str.includes('0/1') || str.includes('0/0/1')) {
+        // Exact pattern match for GigabitEthernet 0/1
+        if (/^(gi|g|gigabitethernet)?0\/1$/i.test(s) || s === '0/1') {
             return 'GigabitEthernet0/1';
+        }
+
+        // Exact pattern match for Serial 0/1/0
+        if (/^(se|s|serial)?0\/1\/0$/i.test(s) || s === '0/1/0') {
+            return 'Serial0/1/0';
         }
 
         return null;

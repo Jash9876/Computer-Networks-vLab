@@ -120,26 +120,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function normaliseIf(raw) {
         if (!raw) return null;
-        // Strip out redundant words and clean all whitespace
-        let n = String(raw).trim().toLowerCase();
-        // Remove repeated 'gigabitethernet' or 'serial' or 'g' or 's' if user typed e.g. "gigabitethernet g0/0"
-        n = n.replace(/^gigabitethernet\s*/, 'gi')
-             .replace(/^fastethernet\s*/, 'fa')
-             .replace(/^serial\s*/, 'se')
-             .replace(/\s+/g, '');
-
-        // Match GigabitEthernet 0/0
-        if (/^(gi|g|gigabitethernet)?0\/0$/.test(n) || n === 'gi0/0' || n === 'g0/0' || n === '0/0') {
-            return 'GigabitEthernet0/0';
-        }
-        // Match GigabitEthernet 0/1
-        if (/^(gi|g|gigabitethernet)?0\/1$/.test(n) || n === 'gi0/1' || n === 'g0/1' || n === '0/1') {
-            return 'GigabitEthernet0/1';
-        }
-        // Match Serial 0/1/0
-        if (/^(se|s|serial)?0\/1\/0$/.test(n) || n === 'se0/1/0' || n === 's0/1/0' || n === '0/1/0') {
+        const str = String(raw).trim().toLowerCase();
+        
+        // Match Serial 0/1/0 variations:
+        // '0/1/0', 's0/1/0', 'se0/1/0', 'serial 0/1/0', 'serial s0/1/0', 'serial0/1/0', 'se 0/1/0'
+        if (str.includes('0/1/0') || str.includes('0/1/1')) {
             return 'Serial0/1/0';
         }
+
+        // Match GigabitEthernet 0/0 variations:
+        // '0/0', 'g0/0', 'gi0/0', 'gigabitethernet 0/0', 'gigabitethernet g0/0', 'gigabitethernet0/0', 'gi 0/0'
+        if (str.includes('0/0') || str.includes('0/0/0')) {
+            return 'GigabitEthernet0/0';
+        }
+
+        // Match GigabitEthernet 0/1 variations:
+        // '0/1', 'g0/1', 'gi0/1', 'gigabitethernet 0/1', 'gigabitethernet g0/1', 'gigabitethernet0/1', 'gi 0/1'
+        if (str.includes('0/1') || str.includes('0/0/1')) {
+            return 'GigabitEthernet0/1';
+        }
+
         return null;
     }
 

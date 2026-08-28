@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 6</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="modules/device-gate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <a href="dashboard.html"><img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 46px; object-fit: contain;"></a>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.2rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Computer Networks Lab &bull; Exercise 6</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="dashboard.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Dashboard</a>
+            <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); background: #EFF6FF; padding: 0.3rem 0.8rem; border-radius: 6px;">Exercise 6</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h2 class="section-title" style="margin:0;">Interactive NAT Simulation</h2>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button id="btn-mode-6a" class="btn" style="background:var(--primary-color); color:white; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:6px; cursor:pointer;">Part 6A: Static NAT</button>
+                            <button id="btn-mode-6b" class="btn" style="background:#F1F5F9; color:#334155; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:6px; cursor:pointer;">Part 6B: Dynamic NAT</button>
+                        </div>
+                    </div>
+
+                    <p style="font-size:0.9rem; color:#64748B;">Click devices to inspect or configure IP addresses. Use the Cisco IOS CLI to configure static/dynamic NAT mappings, verify translations, and test packet flows.</p>
+                    
+                    <!-- Topology Canvas -->
+                    <div id="nat-topology-container" style="margin-top:1rem; margin-bottom:1.5rem;"></div>
+
+                    <!-- Cisco IOS CLI Terminal -->
+                    <div class="terminal-container" style="background:#0F172A; border-radius:8px; padding:1rem; border:1px solid #334155; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:0.5rem; margin-bottom:0.5rem;">
+                            <span style="color:#94A3B8; font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Cisco IOS Boundary Router CLI</span>
+                            <span style="color:#64748B; font-size:0.75rem;">Type '?' or 'help' for command list</span>
+                        </div>
+                        <div id="nat-terminal-output" style="height:260px; overflow-y:auto; font-family:monospace; font-size:0.85rem; margin-bottom:0.5rem;"></div>
+                        <div style="display:flex; align-items:center; gap:0.5rem; background:#1E293B; padding:0.4rem 0.8rem; border-radius:4px;">
+                            <span id="nat-terminal-prompt" style="color:#10B981; font-family:monospace; font-weight:bold; font-size:0.85rem;">Router1#</span>
+                            <input type="text" id="nat-terminal-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1; background:transparent; border:none; color:#F8FAFC; font-family:monospace; font-size:0.85rem; outline:none;" placeholder="Enter Cisco IOS command...">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation Table</h2>
+                    <p>Educational activity and NAT translations verified during simulation:</p>
+                    <table class="observation-table" id="observation-table" style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color); text-align:left;">
+                                <th style="padding:0.75rem;">Time</th>
+                                <th style="padding:0.75rem;">Stage</th>
+                                <th style="padding:0.75rem;">Action</th>
+                                <th style="padding:0.75rem;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="observation-tbody">
+                            <tr>
+                                <td colspan="4" style="text-align:center; padding:1rem; color:#64748B;">No activities logged yet. Configure NAT in the Simulation tab.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Evaluation</h2>
+                    <p>Answer the 5 randomized questions below to test your understanding of NAT. A minimum score of <strong>70%</strong> is required for Academic Certification.</p>
+                    <div id="quiz-container">
+                        <!-- Dynamic Quiz Rendering via script.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <div id="result-text" style="line-height: 1.8;">
+                        <p>Complete the practical simulation and viva evaluation to view your finalized laboratory result.</p>
+                    </div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #005BAC; color: white;">
+                        <i data-lucide="award"></i> View Academic Certificate
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- IP Configuration Modal -->
+    <div id="ip-config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 420px; max-width: 90%;">
+            <h3 id="ip-modal-title" style="margin-bottom: 1rem; color: #1E293B;">IP Configuration</h3>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 10.10.10.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.255.255.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Default Gateway</label>
+                <input type="text" id="gateway-input" placeholder="e.g. 10.10.10.254" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="save-ip-config" style="background-color: var(--primary-color); color:white; padding:0.5rem 1rem; border-radius:4px; border:none; cursor:pointer;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Student Name</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 6</h3>
+                <p style="margin-bottom: 2rem;">Configuration of Network Address Translation (NAT) in Packet Tracer</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/api-sync.js"></script>
+    <script src="modules/platform-manager.js"></script>
+    <script src="data/experiment6.js"></script>
+    <script src="modules/experiment6-logic.js"></script>
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

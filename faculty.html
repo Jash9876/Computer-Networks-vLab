@@ -154,7 +154,7 @@
             <div class="stat-card">
                 <div>
                     <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">ACTIVE EXERCISES</div>
-                    <div class="stat-num">5</div>
+                    <div class="stat-num">6</div>
                 </div>
                 <i data-lucide="book-open" style="color: #64748B; width: 32px; height: 32px;"></i>
             </div>
@@ -180,13 +180,14 @@
                             <th>Exp 3</th>
                             <th>Exp 4</th>
                             <th>Exp 5</th>
+                            <th>Exp 6</th>
                             <th>Overall</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="student-table-body">
                         <tr>
-                            <td colspan="9" style="text-align: center; color: #64748B; padding: 2rem;">Select a classroom to view student progress records.</td>
+                            <td colspan="10" style="text-align: center; color: #64748B; padding: 2rem;">Select a classroom to view student progress records.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -378,7 +379,7 @@
                 return;
             }
 
-            const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
+            const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5, 6: 5 };
             let liveTotalCompletedExps = 0;
 
             students.forEach(st => {
@@ -393,7 +394,7 @@
                 let expCells = '';
                 let compCount = 0;
 
-                for (let expId = 1; expId <= 5; expId++) {
+                for (let expId = 1; expId <= 6; expId++) {
                     const p = pMap[expId];
                     const mCount = (p && p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
                     const reqCount = expTotalReq[expId] || 5;
@@ -425,7 +426,7 @@
                     }
                 }
 
-                const overallPercent = Math.round((compCount / 5) * 100);
+                const overallPercent = Math.round((compCount / 6) * 100);
 
                 tr.innerHTML = `
                     <td><strong>${st.register_number}</strong></td>
@@ -539,7 +540,7 @@
                 const st = data.student;
 
                 let progressRows = '';
-                const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
+                const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5, 6: 5 };
 
                 (data.progress || []).forEach(p => {
                     const expId = p.experiment_id;

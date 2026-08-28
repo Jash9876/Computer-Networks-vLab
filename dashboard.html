@@ -187,6 +187,19 @@
                     <a href="experiment5.html" class="btn" id="btn-exp5" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
+
+            <!-- Exp 6 -->
+            <div class="exp-card" id="card-exp6">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 6</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Configuration of Network Address Translation (NAT)</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure 1-to-1 Static NAT (6A) and Dynamic NAT with ACL and address pools (6B) on Cisco boundary routers.</p>
+                </div>
+                <div>
+                    <span class="badge" id="badge-exp6">Loading...</span>
+                    <a href="experiment6.html" class="btn" id="btn-exp6" style="text-decoration: none;">Open Lab</a>
+                </div>
+            </div>
         </div>
     <!-- Classroom Join Modal Overlay -->
     <div id="classroom-gate-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
@@ -252,37 +265,31 @@
             window.location.href = 'index.html';
         }
 
-        const authHeaders = { 'Authorization': `Bearer ${token}` };
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
 
-        // 2. Authoritative User Session & Classroom Verification
-        fetch('/api/auth/me', { headers: authHeaders })
-            .then(res => {
-                if (!res.ok) throw new Error('Session invalid or expired');
-                return res.json();
-            })
-            .then(async (data) => {
-                if (data && data.authenticated && data.user) {
-                    localStorage.setItem('vlab_user', JSON.stringify(data.user));
+        // Initialize User Identity
+        async function fetchMe() {
+            try {
+                const res = await fetch('/api/auth/me', { headers: authHeaders });
+                if (res.ok) {
+                    const data = await res.json();
                     renderUser(data.user);
-                    if (data.user.role === 'faculty') {
-                        window.location.href = 'faculty.html';
-                        return;
-                    }
                     await verifyClassroomEnrollment();
                 } else {
-                    localStorage.clear();
-                    sessionStorage.clear();
+                    localStorage.removeItem('vlab_token');
                     window.location.href = 'index.html';
                 }
-            })
-            .catch(err => {
-                console.error('[Auth Guard]', err);
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.href = 'index.html';
-            });
+            } catch (err) {
+                console.error('Session validation error:', err);
+            }
+        }
 
-        // 2b. Classroom Status Verification & Join Logic
+        fetchMe();
+
+        // 2. Classroom Enrollment Enforcement
         async function verifyClassroomEnrollment() {
             const gateModal = document.getElementById('classroom-gate-modal');
             const banner = document.getElementById('classroom-banner');
@@ -291,12 +298,13 @@
                 const res = await fetch('/api/classroom/status', { headers: authHeaders });
                 const data = await res.json();
 
-                if (data && data.enrolled && data.classroom) {
+                if (res.ok && data.enrolled && data.classroom) {
+                    // Hide Modal & Show Active Banner
                     gateModal.style.display = 'none';
                     banner.style.display = 'flex';
                     document.getElementById('banner-class-name').textContent = data.classroom.name;
                     document.getElementById('banner-class-sec').textContent = `(${data.classroom.section})`;
-                    document.getElementById('banner-faculty-name').textContent = data.classroom.faculty_name || 'Assigned Faculty';
+                    document.getElementById('banner-faculty-name').textContent = data.classroom.faculty_name || 'Faculty';
                     document.getElementById('banner-class-code').textContent = data.classroom.classroom_code;
                     loadAuthoritativeProgress();
                 } else {
@@ -348,7 +356,7 @@
 
         // 3. Authoritative Progress Hydration from PostgreSQL
         async function loadAuthoritativeProgress() {
-            const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5 };
+            const expTotalReq = { 1: 3, 2: 4, 3: 4, 4: 4, 5: 5, 6: 5 };
             let validatedCompleted = [];
             let inProgressExpIds = [];
 
@@ -359,7 +367,7 @@
                     const expList = data.experiments || data.detailedProgress || [];
 
                     if (Array.isArray(expList)) {
-                        for (let i = 1; i <= 5; i++) {
+                        for (let i = 1; i <= 6; i++) {
                             const p = expList.find(e => Number(e.experiment_id) === i);
                             if (!p) continue;
 
@@ -386,7 +394,7 @@
             }
 
             // Update UI
-            const totalExp = 5;
+            const totalExp = 6;
             const completedCount = validatedCompleted.length;
             const percent = Math.round((completedCount / totalExp) * 100);
 
@@ -398,7 +406,7 @@
             if (percentEl) percentEl.textContent = `${percent}%`;
             if (barEl) barEl.style.width = `${percent}%`;
 
-            for (let i = 1; i <= 5; i++) {
+            for (let i = 1; i <= 6; i++) {
                 const badge = document.getElementById(`badge-exp${i}`);
                 if (!badge) continue;
                 const isCompleted = validatedCompleted.includes(i);

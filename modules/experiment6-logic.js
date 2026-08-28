@@ -298,6 +298,7 @@
             modal.style.display = 'none';
             renderTopologyCanvas();
             checkAddressingMilestone();
+            checkDynamicNatMilestone();
         };
     }
 

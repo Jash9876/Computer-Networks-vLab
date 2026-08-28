@@ -657,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // CLI Ping Handler (Authoritative Evaluation)
+        // CLI Ping Handler (Authoritative Evaluation via evaluatePingState)
         function handleCliPing(targetIp) {
             if (!targetIp) {
                 printLine('% Incomplete command. Usage: ping <ip-address>');
@@ -666,98 +666,63 @@ document.addEventListener('DOMContentLoaded', function () {
             printLine('Type escape sequence to abort.');
             printLine(`Sending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:`);
 
-            // Check if pinging router's own interfaces
-            let isDirectMatch = false;
+            // 1. Direct match on active router's own interfaces
+            let isSelf = false;
             for (const ifName in rState.interfaces) {
                 const iface = rState.interfaces[ifName];
                 if (iface.ip === targetIp && iface.state === 'up') {
-                    isDirectMatch = true;
+                    isSelf = true;
                     break;
                 }
             }
 
-            if (isDirectMatch) {
+            if (isSelf) {
                 printLine('!!!!!');
                 printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms');
                 obs(`ping ${targetIp}`, 'CLI Ping Success (Self interface)');
+                updateResult();
                 return;
             }
 
-            // Find target in topology
-            let targetNode = null;
+            // 2. Derive source PC node connected to this router to evaluate path using single source of truth
+            let sourceNode = null, sourceId = null;
             for (const id in nodes()) {
                 const n = nodes()[id];
-                if (n.ip === targetIp) {
-                    targetNode = n;
-                    break;
-                }
-            }
-
-            const otherRKey = activeRouterKey === 'R0' ? 'R1' : 'R0';
-            const otherR = routerStates[otherRKey];
-            for (const ifName in otherR.interfaces) {
-                if (otherR.interfaces[ifName].ip === targetIp && otherR.interfaces[ifName].state === 'up') {
-                    targetNode = { type: 'Router', ip: targetIp, label: otherRKey === 'R0' ? 'Router0' : 'Router1' };
-                    break;
-                }
-            }
-
-            let pingSuccess = false;
-            let failureReason = 'Destination host unreachable.';
-
-            if (currentMode === '4A') {
-                const g00 = rState.interfaces['GigabitEthernet0/0'];
-                const g01 = rState.interfaces['GigabitEthernet0/1'];
-
-                if (targetNode && targetNode.type === 'PC') {
-                    if (g00.state === 'up' && targetNode.gateway === g00.ip && targetNode.subnet === g00.mask) {
-                        pingSuccess = true;
-                    } else if (g01.state === 'up' && targetNode.gateway === g01.ip && targetNode.subnet === g01.mask) {
-                        pingSuccess = true;
-                    }
-                }
-            } else {
-                // Mode 4B: WAN Subnetting & Routing
-                const s010 = rState.interfaces['Serial0/1/0'];
-                const otherS010 = otherR.interfaces['Serial0/1/0'];
-                const serialUp = s010.state === 'up' && otherS010.state === 'up' && (s010.role !== 'DCE' || s010.clockRate === 64000) && (otherS010.role !== 'DCE' || otherS010.clockRate === 64000);
-
-                if (targetNode) {
-                    const destNet = calculateNetwork(targetIp, '255.255.255.224');
-
-                    // Check if directly connected to this router
+                if (n.type === 'PC' && n.gateway) {
                     for (const ifName in rState.interfaces) {
-                        const iface = rState.interfaces[ifName];
-                        if (iface.state === 'up' && iface.ip) {
-                            const ifNet = calculateNetwork(iface.ip, iface.mask);
-                            if (ifNet === destNet) {
-                                if (ifName.startsWith('Serial')) {
-                                    if (serialUp) pingSuccess = true;
-                                } else {
-                                    pingSuccess = true;
-                                }
-                                break;
-                            }
-                        }
-                    }
-
-                    // Check if routed over WAN
-                    if (!pingSuccess && serialUp) {
-                        const hasRoute = rState.routes.some(r => r.network === destNet && r.mask === '255.255.255.224');
-                        if (hasRoute) {
-                            pingSuccess = true;
+                        if (rState.interfaces[ifName].ip === n.gateway && rState.interfaces[ifName].state === 'up') {
+                            sourceNode = n;
+                            sourceId = id;
+                            break;
                         }
                     }
                 }
+                if (sourceNode) break;
             }
 
-            if (pingSuccess) {
+            // If no PC connected yet, build a synthetic source from active router interface
+            if (!sourceNode) {
+                const primaryIf = rState.interfaces['GigabitEthernet0/0'].ip ? rState.interfaces['GigabitEthernet0/0'] : rState.interfaces['Serial0/1/0'];
+                sourceNode = {
+                    type: 'Router',
+                    ip: primaryIf.ip || '192.168.10.1',
+                    subnet: primaryIf.mask || (currentMode === '4A' ? '255.255.255.0' : '255.255.255.224'),
+                    gateway: primaryIf.ip || '192.168.10.1'
+                };
+                sourceId = activeRouterKey;
+            }
+
+            // Execute unified evaluator
+            const diag = evaluatePingState(sourceNode, targetIp, sourceId);
+
+            if (diag.success) {
                 printLine('!!!!!');
                 printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 2/5/12 ms');
                 obs(`ping ${targetIp}`, 'CLI Ping Success');
+                updateResult();
             } else {
                 printLine('.....');
-                printLine(`Success rate is 0 percent (0/5) (${failureReason})`);
+                printLine(`Success rate is 0 percent (0/5) (${diag.reason || 'Destination host unreachable'})`);
                 obs(`ping ${targetIp}`, 'CLI Ping Timed Out');
             }
         }

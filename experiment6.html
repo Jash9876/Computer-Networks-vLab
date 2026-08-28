@@ -114,21 +114,24 @@
                 <div class="card">
                     <h2 class="section-title">Observation Table</h2>
                     <p>Educational activity and NAT translations verified during simulation:</p>
-                    <table class="observation-table" id="observation-table" style="width:100%; border-collapse:collapse; margin-top:1rem;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--border-color); text-align:left;">
-                                <th style="padding:0.75rem;">Time</th>
-                                <th style="padding:0.75rem;">Stage</th>
-                                <th style="padding:0.75rem;">Action</th>
-                                <th style="padding:0.75rem;">Result</th>
-                            </tr>
-                        </thead>
-                        <tbody id="observation-tbody">
-                            <tr>
-                                <td colspan="4" style="text-align:center; padding:1rem; color:#64748B;">No activities logged yet. Configure NAT in the Simulation tab.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div id="observation-content">
+                        <table class="observation-table" id="observation-table" style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color); text-align:left;">
+                                    <th style="padding:0.75rem;">Time</th>
+                                    <th style="padding:0.75rem;">Stage</th>
+                                    <th style="padding:0.75rem;">Action</th>
+                                    <th style="padding:0.75rem;">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="observation-tbody">
+                                <tr>
+                                    <td colspan="4" style="text-align:center; padding:1rem; color:#64748B;">No activities logged yet. Configure NAT in the Simulation tab.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
                 </div>
             </section>
 
@@ -136,10 +139,12 @@
             <section id="quiz" class="section">
                 <div class="card">
                     <h2 class="section-title">Viva Evaluation</h2>
-                    <p>Answer the 5 randomized questions below to test your understanding of NAT. A minimum score of <strong>70%</strong> is required for Academic Certification.</p>
+                    <p>Answer the 5 questions below to test your understanding of NAT. A minimum score of <strong>70%</strong> is required for Academic Certification.</p>
                     <div id="quiz-container">
                         <!-- Dynamic Quiz Rendering via script.js -->
                     </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1.5rem; background-color: #2563EB; color: white;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results" style="margin-top: 1rem; display: none;"></div>
                 </div>
             </section>
 
@@ -150,7 +155,7 @@
                     <div id="result-text" style="line-height: 1.8;">
                         <p>Complete the practical simulation and viva evaluation to view your finalized laboratory result.</p>
                     </div>
-                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #005BAC; color: white;">
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #059669; color: white;">
                         <i data-lucide="award"></i> View Academic Certificate
                     </button>
                 </div>

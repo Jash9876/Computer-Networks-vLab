@@ -292,6 +292,7 @@ function evaluateQuiz() {
     else if (window.location.pathname.includes('experiment3')) currentExpId = 3;
     else if (window.location.pathname.includes('experiment4')) currentExpId = 4;
     else if (window.location.pathname.includes('experiment5')) currentExpId = 5;
+    else if (window.location.pathname.includes('experiment6')) currentExpId = 6;
 
     // Collect user answers for secure server-side evaluation
     const userAnswers = [];

@@ -750,29 +750,29 @@
     // ── Milestone Verification Handlers ─────────────────────────────
     function checkAddressingMilestone() {
         if (currentMode === '6A') {
+            const pc0 = topoNodes['PC0'];
+            const pc1 = topoNodes['PC1'];
             const pc2 = topoNodes['PC2'];
             const s0 = topoNodes['Server0'];
+            const r0 = routerStates.R0;
             const r1 = routerStates.R1;
+
+            const isPc0Ok = pc0 && pc0.ip === '20.20.20.1' && pc0.gateway === '20.20.20.254';
+            const isPc1Ok = pc1 && pc1.ip === '20.20.20.2' && pc1.gateway === '20.20.20.254';
             const isPc2Ok = pc2 && pc2.ip === '10.10.10.1' && pc2.gateway === '10.10.10.254';
             const isS0Ok = s0 && s0.ip === '10.10.10.2' && s0.gateway === '10.10.10.254';
+
+            const isR0G0Ok = r0.interfaces['GigabitEthernet0/0'].ip === '20.20.20.254' && r0.interfaces['GigabitEthernet0/0'].state === 'up';
+            const isR0S0Ok = r0.interfaces['Serial0/1/0'].ip === '30.30.30.2' && r0.interfaces['Serial0/1/0'].state === 'up';
             const isR1G0Ok = r1.interfaces['GigabitEthernet0/0'].ip === '10.10.10.254' && r1.interfaces['GigabitEthernet0/0'].state === 'up';
             const isR1S0Ok = r1.interfaces['Serial0/1/0'].ip === '30.30.30.3' && r1.interfaces['Serial0/1/0'].state === 'up';
 
-            if (isPc2Ok && isS0Ok && isR1G0Ok && isR1S0Ok) {
-                recordMilestone('6A_TOPOLOGY_IP', '6A Topology & Addressing', 'Configured 6A IP addresses, subnet masks, and operational interfaces.');
+            if (isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok && isR0G0Ok && isR0S0Ok && isR1G0Ok && isR1S0Ok) {
+                recordMilestone('6A_TOPOLOGY_IP', '6A Topology & Addressing', 'Configured 6A IP addresses, subnet masks, and operational interfaces across all devices.');
             }
         } else {
-            const pc0 = topoNodes['PC0'];
-            const pc1 = topoNodes['PC1'];
-            const r0 = routerStates.R0;
-            const isPc0Ok = pc0 && pc0.ip === '10.0.0.2' && pc0.gateway === '10.0.0.1';
-            const isPc1Ok = pc1 && pc1.ip === '10.0.0.3' && pc1.gateway === '10.0.0.1';
-            const isR0G0Ok = r0.interfaces['GigabitEthernet0/0'].ip === '10.0.0.1' && r0.interfaces['GigabitEthernet0/0'].state === 'up';
-            const isR0S0Ok = r0.interfaces['Serial0/1/0'].ip === '2.0.0.1' && r0.interfaces['Serial0/1/0'].state === 'up';
-
-            if (isPc0Ok && isPc1Ok && isR0G0Ok && isR0S0Ok) {
-                recordMilestone('6A_TOPOLOGY_IP', '6A Topology & Addressing', 'Configured 6B IP addresses, default gateways, and operational interfaces.');
-            }
+            // For 6B, addressing verification is verified as part of 6B Dynamic NAT Config
+            checkDynamicNatMilestone();
         }
     }
 
@@ -791,31 +791,50 @@
 
     function checkStaticNatVerifyMilestone() {
         const r1 = routerStates.R1;
-        const hasActiveTrans = r1.activeTranslations.length >= 1;
+        const hasActiveTrans = r1.activeTranslations.some(t => 
+            t.type === 'static' &&
+            ((t.insideLocal === '10.10.10.1' && t.insideGlobal === '30.30.30.10') ||
+             (t.insideLocal === '10.10.10.2' && t.insideGlobal === '30.30.30.20'))
+        );
         if (hasActiveTrans && verifiedMilestones.has('6A_STATIC_NAT')) {
             recordMilestone('6A_NAT_VERIFY', '6A Static NAT Verified', 'ICMP traffic successfully translated between inside private and outside public domains.');
         }
     }
 
     function checkDynamicNatMilestone() {
+        if (currentMode !== '6B') return;
+        const pc0 = topoNodes['PC0'];
+        const pc1 = topoNodes['PC1'];
+        const s0  = topoNodes['Server0'];
         const r0 = routerStates.R0;
-        const hasInside = r0.interfaces['GigabitEthernet0/0'].natRole === 'inside';
-        const hasOutside = r0.interfaces['Serial0/1/0'].natRole === 'outside';
+
+        const isPc0Ok = pc0 && pc0.ip === '10.0.0.2' && pc0.gateway === '10.0.0.1';
+        const isPc1Ok = pc1 && pc1.ip === '10.0.0.3' && pc1.gateway === '10.0.0.1';
+        const isS0Ok  = s0 && s0.ip === '3.0.0.2' && s0.gateway === '3.0.0.1';
+
+        const isR0G0Ok = r0.interfaces['GigabitEthernet0/0'].ip === '10.0.0.1' && r0.interfaces['GigabitEthernet0/0'].state === 'up' && r0.interfaces['GigabitEthernet0/0'].natRole === 'inside';
+        const isR0S0Ok = r0.interfaces['Serial0/1/0'].ip === '2.0.0.1' && r0.interfaces['Serial0/1/0'].state === 'up' && r0.interfaces['Serial0/1/0'].natRole === 'outside' && r0.interfaces['Serial0/1/0'].clockRate === 64000;
+
         const hasAcl = r0.accessLists[1] && r0.accessLists[1].some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255');
         const hasPool = r0.dynamicNatPools['DYNAT'] && r0.dynamicNatPools['DYNAT'].startIp === '2.0.0.10' && r0.dynamicNatPools['DYNAT'].endIp === '2.0.0.20';
         const hasBinding = r0.dynamicNatBindings.some(b => b.listNum === 1 && b.poolName === 'DYNAT');
         const hasRoute = r0.staticRoutes.some(r => r.network === '3.0.0.0' && r.nextHop === '2.0.0.2');
 
-        if (hasInside && hasOutside && hasAcl && hasPool && hasBinding && hasRoute) {
-            recordMilestone('6B_DYN_NAT_CFG', '6B Dynamic NAT Config', 'Configured Dynamic NAT pool, standard ACL 1, binding rule, and static route.');
+        if (isPc0Ok && isPc1Ok && isS0Ok && isR0G0Ok && isR0S0Ok && hasAcl && hasPool && hasBinding && hasRoute) {
+            recordMilestone('6B_DYN_NAT_CFG', '6B Dynamic NAT Config', 'Configured 6B addressing, Dynamic NAT pool, standard ACL 1, binding rule, and static route.');
         }
     }
 
     function checkDynamicNatVerifyMilestone() {
         const r0 = routerStates.R0;
-        const hasActiveTrans = r0.activeTranslations.some(t => t.type === 'dynamic');
-        if (hasActiveTrans && verifiedMilestones.has('6B_DYN_NAT_CFG')) {
-            recordMilestone('6B_DYN_NAT_VERIFY', '6B Dynamic NAT Verified', 'Dynamic IP pool allocation and real-time NAT translation verified.');
+        const hasValidDynTrans = r0.activeTranslations.some(t => 
+            t.type === 'dynamic' &&
+            (t.insideLocal === '10.0.0.2' || t.insideLocal === '10.0.0.3') &&
+            t.insideGlobal >= '2.0.0.10' && t.insideGlobal <= '2.0.0.20' &&
+            t.outsideGlobal === '3.0.0.2'
+        );
+        if (hasValidDynTrans && verifiedMilestones.has('6B_DYN_NAT_CFG')) {
+            recordMilestone('6B_DYN_NAT_VERIFY', '6B Dynamic NAT Verified', 'Dynamic IP pool allocation and real-time NAT translation verified with outside server.');
         }
     }
 
@@ -836,6 +855,7 @@
         resTextEl.innerHTML = `
             <strong>Academic Laboratory Record (Experiment 6 - NAT):</strong><br><br>
             • <strong>Verified Practical Milestones:</strong> ${completedCount}/5 Complete ${isSimComplete ? '✔' : ''}<br>
+            • <strong>6A Topology &amp; Addressing:</strong> ${verifiedMilestones.has('6A_TOPOLOGY_IP') ? '<span style="color:#059669; font-weight:bold;">✔ Verified</span>' : '<span style="color:#D97706;">In Progress</span>'}<br>
             • <strong>6A Static NAT Config:</strong> ${verifiedMilestones.has('6A_STATIC_NAT') ? '<span style="color:#059669; font-weight:bold;">✔ Verified</span>' : '<span style="color:#D97706;">In Progress</span>'}<br>
             • <strong>6A NAT Translation Ping:</strong> ${verifiedMilestones.has('6A_NAT_VERIFY') ? '<span style="color:#059669; font-weight:bold;">✔ Verified</span>' : '<span style="color:#64748B;">Pending</span>'}<br>
             • <strong>6B Dynamic NAT Pool &amp; ACL:</strong> ${verifiedMilestones.has('6B_DYN_NAT_CFG') ? '<span style="color:#059669; font-weight:bold;">✔ Verified</span>' : '<span style="color:#D97706;">In Progress</span>'}<br>

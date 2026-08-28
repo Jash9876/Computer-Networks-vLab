@@ -622,23 +622,29 @@ document.addEventListener('DOMContentLoaded', function () {
         const cmd   = parts[0];
         const rState = routerStates[activeRouterKey];
 
-        if (cmd === '?') {
+        if (cmd === '?' || cmd === 'help') {
             if (cliMode === 'user_exec') {
                 printLine('Available commands:');
-                printLine('  enable       - Enter privileged EXEC mode');
+                printLine('  enable             - Enter privileged EXEC mode');
+                printLine('  ping <ip-address>  - Test connectivity to a destination host or interface');
+                printLine('  help / ?           - Show available commands');
             } else if (cliMode === 'priv_exec') {
                 printLine('Available commands:');
                 printLine('  configure terminal       - Enter global config mode');
                 printLine('  show ip route            - Show routing table');
                 printLine('  show ip interface brief  - Show interface summary');
                 printLine('  show controllers serial 0/1/0 - Show DCE/DTE and clock rate');
+                printLine('  ping <ip-address>        - Test connectivity to a destination host or interface');
                 printLine('  disable                  - Return to user EXEC');
+                printLine('  exit                     - Return to user EXEC');
+                printLine('  help / ?                 - Show available commands');
             } else if (cliMode === 'global_config') {
                 printLine('Available commands:');
                 printLine('  interface <g0/0|g0/1|s0/1/0>    - Enter interface config');
                 printLine('  ip route <net> <mask> <nexthop> - Add static route');
                 printLine('  hostname <name>                  - Set hostname');
-                printLine('  exit                             - Return to priv EXEC');
+                printLine('  exit / end                       - Return to priv EXEC');
+                printLine('  help / ?                         - Show available commands');
             } else if (cliMode === 'if_config') {
                 printLine('Available commands:');
                 printLine('  ip address <ip> <mask>  - Set IP address');
@@ -646,14 +652,122 @@ document.addEventListener('DOMContentLoaded', function () {
                 printLine('  no shutdown             - Bring interface up');
                 printLine('  shutdown                - Bring interface down');
                 printLine('  exit                    - Return to global config');
+                printLine('  help / ?                - Show available commands');
             }
             return;
+        }
+
+        // CLI Ping Handler (Authoritative Evaluation)
+        function handleCliPing(targetIp) {
+            if (!targetIp) {
+                printLine('% Incomplete command. Usage: ping <ip-address>');
+                return;
+            }
+            printLine('Type escape sequence to abort.');
+            printLine(`Sending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:`);
+
+            // Check if pinging router's own interfaces
+            let isDirectMatch = false;
+            for (const ifName in rState.interfaces) {
+                const iface = rState.interfaces[ifName];
+                if (iface.ip === targetIp && iface.state === 'up') {
+                    isDirectMatch = true;
+                    break;
+                }
+            }
+
+            if (isDirectMatch) {
+                printLine('!!!!!');
+                printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms');
+                obs(`ping ${targetIp}`, 'CLI Ping Success (Self interface)');
+                return;
+            }
+
+            // Find target in topology
+            let targetNode = null;
+            for (const id in nodes()) {
+                const n = nodes()[id];
+                if (n.ip === targetIp) {
+                    targetNode = n;
+                    break;
+                }
+            }
+
+            const otherRKey = activeRouterKey === 'R0' ? 'R1' : 'R0';
+            const otherR = routerStates[otherRKey];
+            for (const ifName in otherR.interfaces) {
+                if (otherR.interfaces[ifName].ip === targetIp && otherR.interfaces[ifName].state === 'up') {
+                    targetNode = { type: 'Router', ip: targetIp, label: otherRKey === 'R0' ? 'Router0' : 'Router1' };
+                    break;
+                }
+            }
+
+            let pingSuccess = false;
+            let failureReason = 'Destination host unreachable.';
+
+            if (currentMode === '4A') {
+                const g00 = rState.interfaces['GigabitEthernet0/0'];
+                const g01 = rState.interfaces['GigabitEthernet0/1'];
+
+                if (targetNode && targetNode.type === 'PC') {
+                    if (g00.state === 'up' && targetNode.gateway === g00.ip && targetNode.subnet === g00.mask) {
+                        pingSuccess = true;
+                    } else if (g01.state === 'up' && targetNode.gateway === g01.ip && targetNode.subnet === g01.mask) {
+                        pingSuccess = true;
+                    }
+                }
+            } else {
+                // Mode 4B: WAN Subnetting & Routing
+                const s010 = rState.interfaces['Serial0/1/0'];
+                const otherS010 = otherR.interfaces['Serial0/1/0'];
+                const serialUp = s010.state === 'up' && otherS010.state === 'up' && (s010.role !== 'DCE' || s010.clockRate === 64000) && (otherS010.role !== 'DCE' || otherS010.clockRate === 64000);
+
+                if (targetNode) {
+                    const destNet = calculateNetwork(targetIp, '255.255.255.224');
+
+                    // Check if directly connected to this router
+                    for (const ifName in rState.interfaces) {
+                        const iface = rState.interfaces[ifName];
+                        if (iface.state === 'up' && iface.ip) {
+                            const ifNet = calculateNetwork(iface.ip, iface.mask);
+                            if (ifNet === destNet) {
+                                if (ifName.startsWith('Serial')) {
+                                    if (serialUp) pingSuccess = true;
+                                } else {
+                                    pingSuccess = true;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Check if routed over WAN
+                    if (!pingSuccess && serialUp) {
+                        const hasRoute = rState.routes.some(r => r.network === destNet && r.mask === '255.255.255.224');
+                        if (hasRoute) {
+                            pingSuccess = true;
+                        }
+                    }
+                }
+            }
+
+            if (pingSuccess) {
+                printLine('!!!!!');
+                printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 2/5/12 ms');
+                obs(`ping ${targetIp}`, 'CLI Ping Success');
+            } else {
+                printLine('.....');
+                printLine(`Success rate is 0 percent (0/5) (${failureReason})`);
+                obs(`ping ${targetIp}`, 'CLI Ping Timed Out');
+            }
         }
 
         if (cliMode === 'user_exec') {
             if (cmd === 'enable' || cmd === 'en') {
                 cliMode = 'priv_exec';
                 obs('enable', 'Entered privileged EXEC');
+            } else if (cmd === 'ping') {
+                handleCliPing(parts[1]);
             } else {
                 printLine(`% Unknown command: "${raw}". Type ? for help.`);
             }
@@ -670,6 +784,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 printControllers(rState);
             } else if (cmd === 'show' && parts[1] === 'running-config') {
                 printRunningConfig(rState);
+            } else if (cmd === 'ping') {
+                handleCliPing(parts[1]);
             } else if (cmd === 'disable') {
                 cliMode = 'user_exec';
             } else if (cmd === 'exit') {

@@ -120,28 +120,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function normaliseIf(raw) {
         if (!raw) return null;
-        let s = String(raw).trim().toLowerCase();
-        
-        // Disallow non-existent interface families like FastEthernet
-        if (s.startsWith('fastethernet') || s.startsWith('fa')) return null;
+        const s = String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
 
-        // Clean double-prefixed syntax: "gigabitethernet g0/0" -> "g0/0", "serial s0/1/0" -> "s0/1/0"
-        s = s.replace(/^(gigabitethernet|gi|g)\s+/i, '')
-             .replace(/^(serial|se|s)\s+/i, '')
-             .replace(/\s+/g, '');
-
-        // Exact pattern match for GigabitEthernet 0/0
-        if (/^(gi|g|gigabitethernet)?0\/0$/i.test(s) || s === '0/0') {
+        // GigabitEthernet 0/0
+        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/0|(?:gi|g)\s*0\/0|0\/0)$/i.test(s)) {
             return 'GigabitEthernet0/0';
         }
 
-        // Exact pattern match for GigabitEthernet 0/1
-        if (/^(gi|g|gigabitethernet)?0\/1$/i.test(s) || s === '0/1') {
+        // GigabitEthernet 0/1
+        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/1|(?:gi|g)\s*0\/1|0\/1)$/i.test(s)) {
             return 'GigabitEthernet0/1';
         }
 
-        // Exact pattern match for Serial 0/1/0
-        if (/^(se|s|serial)?0\/1\/0$/i.test(s) || s === '0/1/0') {
+        // Serial 0/1/0
+        if (/^(?:serial\s*(?:se|s)?\s*0\/1\/0|(?:se|s)\s*0\/1\/0|0\/1\/0)$/i.test(s)) {
             return 'Serial0/1/0';
         }
 

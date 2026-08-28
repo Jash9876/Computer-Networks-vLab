@@ -120,11 +120,16 @@
 
     // ── Interface name normalizer ─────────────────────────────────
     function normalizeInterface(name) {
-        // Accept various abbreviations
-        const n = name.trim().toLowerCase();
-        if (n.match(/^gi(gabitethernet)?\s*0\/0\/0$/))  return 'GigabitEthernet0/0/0';
-        if (n.match(/^gi(gabitethernet)?\s*0\/0\/1$/))  return 'GigabitEthernet0/0/1';
-        if (n.match(/^se(rial)?\s*0\/0\/0$/))            return 'Serial0/0/0';
+        if (!name) return null;
+        let n = String(name).trim().toLowerCase();
+        n = n.replace(/^gigabitethernet\s*/, 'gi')
+             .replace(/^fastethernet\s*/, 'fa')
+             .replace(/^serial\s*/, 'se')
+             .replace(/\s+/g, '');
+
+        if (/^(gi|g)?0\/0\/0$/.test(n) || n === '0/0/0') return 'GigabitEthernet0/0/0';
+        if (/^(gi|g)?0\/0\/1$/.test(n) || n === '0/0/1') return 'GigabitEthernet0/0/1';
+        if (/^(se|s)?0\/0\/0$/.test(n))                  return 'Serial0/0/0';
         return null;
     }
 

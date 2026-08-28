@@ -119,10 +119,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function normaliseIf(raw) {
-        const n = (raw || '').trim().toLowerCase().replace(/\s+/g, '');
-        if (/^(g|gi|gigabitethernet)0\/0$/.test(n)) return 'GigabitEthernet0/0';
-        if (/^(g|gi|gigabitethernet)0\/1$/.test(n)) return 'GigabitEthernet0/1';
-        if (/^(s|se|serial)0\/1\/0$/.test(n))       return 'Serial0/1/0';
+        if (!raw) return null;
+        // Strip out redundant words and clean all whitespace
+        let n = String(raw).trim().toLowerCase();
+        // Remove repeated 'gigabitethernet' or 'serial' or 'g' or 's' if user typed e.g. "gigabitethernet g0/0"
+        n = n.replace(/^gigabitethernet\s*/, 'gi')
+             .replace(/^fastethernet\s*/, 'fa')
+             .replace(/^serial\s*/, 'se')
+             .replace(/\s+/g, '');
+
+        // Match GigabitEthernet 0/0
+        if (/^(gi|g|gigabitethernet)?0\/0$/.test(n) || n === 'gi0/0' || n === 'g0/0' || n === '0/0') {
+            return 'GigabitEthernet0/0';
+        }
+        // Match GigabitEthernet 0/1
+        if (/^(gi|g|gigabitethernet)?0\/1$/.test(n) || n === 'gi0/1' || n === 'g0/1' || n === '0/1') {
+            return 'GigabitEthernet0/1';
+        }
+        // Match Serial 0/1/0
+        if (/^(se|s|serial)?0\/1\/0$/.test(n) || n === 'se0/1/0' || n === 's0/1/0' || n === '0/1/0') {
+            return 'Serial0/1/0';
+        }
         return null;
     }
 
@@ -666,9 +683,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } else if (cliMode === 'global_config') {
             if (cmd === 'interface' || cmd === 'int') {
-                const ifKey = normaliseIf(parts.slice(1).join('/'));
+                const ifKey = normaliseIf(parts.slice(1).join(' '));
                 if (!ifKey) {
-                    printLine('% Invalid input. Valid interfaces: g0/0, g0/1, s0/1/0');
+                    printLine('% Invalid input. Valid interfaces: GigabitEthernet0/0 (g0/0), GigabitEthernet0/1 (g0/1), Serial0/1/0 (s0/1/0)');
                     return;
                 }
                 cliInterface = ifKey;

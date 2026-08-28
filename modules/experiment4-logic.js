@@ -700,14 +700,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (sourceNode) break;
             }
 
-            // If no PC connected yet, build a synthetic source from active router interface
+            // If no PC is connected, use the active router interface as the source
             if (!sourceNode) {
-                const primaryIf = rState.interfaces['GigabitEthernet0/0'].ip ? rState.interfaces['GigabitEthernet0/0'] : rState.interfaces['Serial0/1/0'];
+                const primaryIf = rState.interfaces['GigabitEthernet0/0'].ip
+                    ? rState.interfaces['GigabitEthernet0/0']
+                    : rState.interfaces['Serial0/1/0'];
+
                 sourceNode = {
                     type: 'Router',
-                    ip: primaryIf.ip || '192.168.10.1',
+                    ip: primaryIf.ip || '',
                     subnet: primaryIf.mask || (currentMode === '4A' ? '255.255.255.0' : '255.255.255.224'),
-                    gateway: primaryIf.ip || '192.168.10.1'
+                    gateway: primaryIf.ip || ''
                 };
                 sourceId = activeRouterKey;
             }

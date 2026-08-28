@@ -93,30 +93,40 @@
                     // Restore Result Tab dynamically from Server
                     const resTextEl = document.getElementById('result-text');
                     if (resTextEl) {
+                        const isSimComplete = data.isSimComplete === true || data.progress?.isSimComplete === true;
+                        
                         let quizDisplay = 'Not Attempted';
-                        let isQuizPassed = false;
+                        let isVivaPassed = false;
+                        let vivaScore = 0;
 
-                        if (data.certificate && typeof data.certificate.final_score === 'number') {
-                            isQuizPassed = true;
-                            quizDisplay = `${data.certificate.final_score}% (Passed ✔)`;
-                        } else if (data.latestQuiz && data.latestQuiz.total_questions > 0) {
-                            const percent = Math.round((data.latestQuiz.score / data.latestQuiz.total_questions) * 100);
-                            isQuizPassed = percent >= 70;
-                            quizDisplay = `${data.latestQuiz.score}/${data.latestQuiz.total_questions} (${percent}%) ${isQuizPassed ? '✔ Passed' : '✘ Retry Required (&ge;70%)'}`;
+                        if (data.latestQuiz && typeof data.latestQuiz.score === 'number') {
+                            vivaScore = data.latestQuiz.total_questions > 0 
+                                ? Math.round((data.latestQuiz.score / data.latestQuiz.total_questions) * 100)
+                                : data.latestQuiz.score;
+                            isVivaPassed = vivaScore >= 70;
+                            quizDisplay = `${data.latestQuiz.score}/${data.latestQuiz.total_questions} (${vivaScore}%) ${isVivaPassed ? '✔ Passed' : '✘ Retry Required (&ge;70%)'}`;
+                        } else if (data.progress && typeof data.progress.viva_score === 'number' && data.progress.viva_score > 0) {
+                            vivaScore = data.progress.viva_score;
+                            isVivaPassed = vivaScore >= 70;
+                            quizDisplay = `${vivaScore}% ${isVivaPassed ? '✔ Passed' : '✘ Retry Required (&ge;70%)'}`;
+                        } else if (data.certificate && typeof data.certificate.final_score === 'number') {
+                            vivaScore = data.certificate.final_score;
+                            isVivaPassed = vivaScore >= 70;
+                            quizDisplay = `${vivaScore}% (Passed ✔)`;
                         }
 
-                        const hasCompletedSim = data.progress && (data.progress.status === 'completed' || data.progress.progress_percentage === 100);
-                        const isAcademicComplete = isQuizPassed && hasCompletedSim;
-                        const practicalDate = data.progress && data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'In Progress';
-                        const certDate = data.certificate && data.certificate.issued_at ? new Date(data.certificate.issued_at).toLocaleString() : null;
+                        // Strict Authoritative Dual Condition
+                        const isAcademicComplete = isSimComplete && isVivaPassed;
+                        const practicalDate = isSimComplete && data.progress && data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'In Progress';
+                        const certDate = isAcademicComplete && data.certificate && data.certificate.issued_at ? new Date(data.certificate.issued_at).toLocaleString() : null;
 
                         const obsCount = typeof data.observationCount === 'number' ? data.observationCount : (Array.isArray(data.observations) ? data.observations.length : 0);
                         resTextEl.innerHTML = `
                             <strong>Academic Laboratory Record:</strong><br><br>
-                            • <strong>Overall Academic Status:</strong> ${isAcademicComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #D97706; font-weight: bold;">In Progress</span>'}<br>
-                            • <strong>Practical Simulation:</strong> ${hasCompletedSim ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #2563EB;">In Progress</span>'} (${obsCount} activities logged)<br>
+                            • <strong>Overall Academic Status:</strong> ${isAcademicComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔ (100%)</span>' : '<span style="color: #D97706; font-weight: bold;">In Progress</span>'}<br>
+                            • <strong>Practical Simulation:</strong> ${isSimComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #2563EB;">In Progress</span>'} (${obsCount} activities logged)<br>
                             • <strong>Viva Evaluation (Quiz):</strong> ${quizDisplay}<br>
-                            • <strong>Academic Certificate:</strong> ${data.certificate ? `<span style="font-family: monospace; color: #2563EB; font-weight: bold;">${data.certificate.certificate_code}</span>` : '<span style="color: #64748B;">Not Issued (Requires &ge; 70% Quiz Pass)</span>'}<br>
+                            • <strong>Academic Certificate:</strong> ${isAcademicComplete && data.certificate ? `<span style="font-family: monospace; color: #2563EB; font-weight: bold;">${data.certificate.certificate_code}</span>` : '<span style="color: #64748B;">Not Issued (Requires &ge; 70% Quiz Pass)</span>'}<br>
                             • <strong>Practical Completion Date:</strong> ${practicalDate}${certDate ? `<br>• <strong>Academic Certification Date:</strong> ${certDate}` : ''}
                         `;
                     }

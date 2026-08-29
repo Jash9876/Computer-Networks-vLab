@@ -1026,6 +1026,7 @@
 
             obs(stageName, `Milestone: ${milestoneId}`, desc, evidence);
             updateResult();
+            renderTaskGuide(currentMode);
         }
     }
 
@@ -1036,115 +1037,153 @@
 
         if (!stepsEl) return;
 
+        const m = verifiedMilestones;
+
         if (mode === '6A') {
+            const step1Done = m.has('6A_TOPOLOGY_IP');
+            const step2Done = Boolean(routerStates.R1.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && routerStates.R1.interfaces['Serial0/1/0']?.natRole === 'outside');
+            const step3Done = m.has('6A_STATIC_NAT');
+            const step4Done = m.has('6A_NAT_VERIFY');
+
             if (titleEl) {
                 titleEl.innerHTML = `
                     <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
-                    Part 6A: Static NAT Configuration Checklist
+                    Part 6A: Static NAT Milestone Checklist
                 `;
             }
             stepsEl.innerHTML = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step1Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 1</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Host IPs</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step1Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 1</span>
+                                <span>${step1Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Host &amp; Interface Addressing</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>PC0:</strong> 20.20.20.1/24 (GW: .254)<br>
-                                • <strong>PC1:</strong> 20.20.20.2/24 (GW: .254)<br>
-                                • <strong>PC2:</strong> 10.10.10.1/24 (GW: .254)<br>
-                                • <strong>Server0:</strong> 10.10.10.2/24 (GW: .254)
+                                • Configure Inside LAN hosts with IP &amp; Gateway<br>
+                                • Configure Outside WAN hosts &amp; interfaces<br>
+                                • Verify green status badges on topology canvas
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step2Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 2</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router1 NAT Roles</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step2Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 2</span>
+                                <span>${step2Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Designate NAT Boundaries</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>G0/0 (Inside LAN):</strong> 10.10.10.254/24 with <code>ip nat inside</code><br>
-                                • <strong>S0/1/0 (Outside WAN):</strong> 30.30.30.3/24 with <code>ip nat outside</code>
+                                • Access <strong>Router1 CLI</strong><br>
+                                • Designate LAN interface as <em>inside</em><br>
+                                • Designate WAN serial interface as <em>outside</em>
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step3Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 3</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Static Mappings &amp; Route</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step3Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 3</span>
+                                <span>${step3Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Static Mappings &amp; Route</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>PC2 Global:</strong> 10.10.10.1 &rarr; 30.30.30.10<br>
-                                • <strong>Server0 Global:</strong> 10.10.10.2 &rarr; 30.30.30.20<br>
-                                • <strong>Route:</strong> 20.20.20.0/24 via 30.30.30.2
+                                • Map private hosts to their public addresses<br>
+                                • Add static routing for outside return traffic<br>
+                                • Confirm entry in running-config
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step4Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#10B981; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 4</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Verify &amp; Inspect</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step4Done ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 4</span>
+                                <span>${step4Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">End-to-End Verification</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • Run <code>ping 30.30.30.10</code> to test translation.<br>
-                                • Run <code>show ip nat translations</code> to inspect live mapping table.
+                                • Ping public translated addresses across WAN<br>
+                                • Inspect translation table via IOS command<br>
+                                • Observe real-time address translation
                             </div>
                         </div>
                     </div>
                 </div>
             `;
         } else {
+            const step1Done = m.has('6B_TOPOLOGY_IP');
+            const step2Done = Boolean(routerStates.R0.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && routerStates.R0.interfaces['Serial0/1/0']?.natRole === 'outside');
+            const step3Done = m.has('6B_DYN_NAT_CFG');
+            const step4Done = m.has('6B_DYN_NAT_VERIFY');
+
             if (titleEl) {
                 titleEl.innerHTML = `
                     <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
-                    Part 6B: Dynamic NAT Configuration Checklist
+                    Part 6B: Dynamic NAT Milestone Checklist
                 `;
             }
             stepsEl.innerHTML = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step1Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 1</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Host IPs</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step1Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 1</span>
+                                <span>${step1Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Host Addressing &amp; Gateways</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>PC0:</strong> 10.0.0.2/8 (GW: 10.0.0.1)<br>
-                                • <strong>PC1:</strong> 10.0.0.3/8 (GW: 10.0.0.1)<br>
-                                • <strong>Server0:</strong> 3.0.0.2/8 (GW: 3.0.0.1)
+                                • Configure Inside LAN hosts with IP &amp; Gateway<br>
+                                • Configure Outside WAN server and router ports<br>
+                                • Verify topology status indicators
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step2Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 2</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router0 Roles &amp; DCE Clock</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step2Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 2</span>
+                                <span>${step2Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router Roles &amp; DCE Clock</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>G0/0 (Inside LAN):</strong> 10.0.0.1/8 with <code>ip nat inside</code><br>
-                                • <strong>S0/1/0 (Outside WAN):</strong> 2.0.0.1/8 with <code>clock rate 64000</code> &amp; <code>ip nat outside</code>
+                                • Access <strong>Router0 CLI</strong><br>
+                                • Assign inside &amp; outside NAT interface roles<br>
+                                • Set DCE clock rate on serial link
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step3Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 3</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">ACL, Pool &amp; Binding</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step3Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 3</span>
+                                <span>${step3Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">ACL, NAT Pool &amp; Binding</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • <strong>ACL 1:</strong> Permit <code>10.0.0.0 0.255.255.255</code><br>
-                                • <strong>Pool DYNAT:</strong> <code>2.0.0.10</code> to <code>2.0.0.20</code><br>
-                                • <strong>Binding &amp; Route:</strong> Bind ACL 1 to Pool DYNAT &amp; add route to <code>3.0.0.0/8</code>
+                                • Create Standard ACL defining inside network<br>
+                                • Define public NAT pool range<br>
+                                • Bind ACL to pool &amp; add static route
                             </div>
                         </div>
                     </div>
 
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step4Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:#10B981; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 4</div>
-                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Trace &amp; Verify</div>
+                            <div style="font-size:0.75rem; font-weight:700; color:${step4Done ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                                <span>Step 4</span>
+                                <span>${step4Done ? '✔ Completed' : 'Pending'}</span>
+                            </div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Trace &amp; Verify Dynamic NAT</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
-                                • Run <code>debug ip nat</code> for live trace.<br>
-                                • Run <code>ping 3.0.0.2</code> to test dynamic pool allocation.<br>
-                                • Run <code>show ip nat translations</code>.
+                                • Enable live NAT translation debugging<br>
+                                • Generate ICMP traffic across boundary<br>
+                                • Inspect dynamic pool address allocation
                             </div>
                         </div>
                     </div>

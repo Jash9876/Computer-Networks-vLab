@@ -651,29 +651,44 @@
     function evaluateNatConnectivity(sourceKey, targetIp) {
         if (currentMode === '6A') {
             // Mode 6A: Static NAT on Router1
-            const r1 = routerStates.R1;
             const r0 = routerStates.R0;
+            const r1 = routerStates.R1;
 
-            if (r1.interfaces['GigabitEthernet0/0'].state !== 'up' || r1.interfaces['GigabitEthernet0/0'].natRole !== 'inside') {
-                return { success: false, reason: 'Router1 G0/0 is down or missing "ip nat inside".' };
+            // 1. Check Router0 (Public Gateway) state
+            if (r0.interfaces['GigabitEthernet0/0'].state !== 'up' || !r0.interfaces['GigabitEthernet0/0'].ip) {
+                return { success: false, reason: 'Router0 G0/0 is administratively down or unassigned.' };
             }
+            if (r0.interfaces['Serial0/1/0'].state !== 'up' || r0.interfaces['Serial0/1/0'].clockRate !== 64000) {
+                return { success: false, reason: 'Router0 Serial0/1/0 (DCE) link is down or missing clock rate 64000.' };
+            }
+
+            // 2. Check Router1 (NAT Boundary) state
             if (r1.interfaces['Serial0/1/0'].state !== 'up' || r1.interfaces['Serial0/1/0'].natRole !== 'outside') {
                 return { success: false, reason: 'Router1 Serial0/1/0 is down or missing "ip nat outside".' };
             }
+            if (r1.interfaces['GigabitEthernet0/0'].state !== 'up' || r1.interfaces['GigabitEthernet0/0'].natRole !== 'inside') {
+                return { success: false, reason: 'Router1 G0/0 is down or missing "ip nat inside".' };
+            }
 
-            // Check if pinging mapped static global IP (e.g. 30.30.30.10 or 30.30.30.20)
+            // 3. Match destination to static NAT translation table
             const matchedStatic = r1.staticNatRules.find(r => r.globalIp === targetIp);
             if (!matchedStatic) {
-                return { success: false, reason: `No static NAT translation rule found for destination ${targetIp}.` };
+                return { success: false, reason: `No static NAT translation entry found mapping ${targetIp} to an inside local host.` };
             }
 
-            // Ensure static route exists back to public side
+            // 4. Verify target internal host exists and is configured
+            const targetHost = Object.values(topoNodes).find(n => n.ip === matchedStatic.localIp);
+            if (!targetHost || targetHost.gateway !== r1.interfaces['GigabitEthernet0/0'].ip) {
+                return { success: false, reason: `Inside host (${matchedStatic.localIp}) default gateway does not match Router1 G0/0.` };
+            }
+
+            // 5. Ensure static return route exists on Router1 back to public LAN (20.20.20.0/24)
             const hasRoute = r1.staticRoutes.some(r => r.network === '20.20.20.0' && r.nextHop === '30.30.30.2');
             if (!hasRoute) {
-                return { success: false, reason: 'Router1 missing static route to 20.20.20.0/24 via 30.30.30.2.' };
+                return { success: false, reason: 'Router1 missing static return route to 20.20.20.0/24 via 30.30.30.2.' };
             }
 
-            // Record dynamic translation in NAT table
+            // Record active translation in NAT table
             r1.activeTranslations = r1.activeTranslations.filter(t => t.insideLocal !== matchedStatic.localIp);
             r1.activeTranslations.push({
                 protocol: 'icmp',
@@ -691,6 +706,7 @@
             const r0 = routerStates.R0;
             const r1 = routerStates.R1;
 
+            // 1. Check Router0 (NAT Boundary) state
             if (r0.interfaces['GigabitEthernet0/0'].state !== 'up' || r0.interfaces['GigabitEthernet0/0'].natRole !== 'inside') {
                 return { success: false, reason: 'Router0 G0/0 is down or missing "ip nat inside".' };
             }
@@ -701,28 +717,38 @@
                 return { success: false, reason: 'Router0 Serial0/1/0 (DCE) missing "clock rate 64000".' };
             }
 
-            // Check ACL 1
-            const acl1 = r0.accessLists[1];
-            if (!acl1 || !acl1.some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255')) {
-                return { success: false, reason: 'ACL 1 missing or not permitting 10.0.0.0 0.255.255.255.' };
+            // 2. Check ISP Router1 state
+            if (r1.interfaces['Serial0/1/0'].state !== 'up' || r1.interfaces['GigabitEthernet0/0'].state !== 'up') {
+                return { success: false, reason: 'ISP Router1 interfaces are not operational.' };
             }
 
-            // Check Dynamic Pool
+            // 3. Check ACL 1 matching private network
+            const acl1 = r0.accessLists[1];
+            if (!acl1 || !acl1.some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255')) {
+                return { success: false, reason: 'Standard ACL 1 missing or does not permit 10.0.0.0 0.255.255.255.' };
+            }
+
+            // 4. Check Dynamic Pool configuration
             const pool = r0.dynamicNatPools['DYNAT'];
             if (!pool || pool.startIp !== '2.0.0.10' || pool.endIp !== '2.0.0.20') {
                 return { success: false, reason: 'Dynamic NAT pool "DYNAT" (2.0.0.10 - 2.0.0.20) not configured.' };
             }
 
-            // Check Binding
+            // 5. Check Binding between ACL 1 and Pool DYNAT
             const isBound = r0.dynamicNatBindings.some(b => b.listNum === 1 && b.poolName === 'DYNAT');
             if (!isBound) {
-                return { success: false, reason: 'Missing binding: "ip nat inside source list 1 pool DYNAT".' };
+                return { success: false, reason: 'Missing dynamic NAT binding: "ip nat inside source list 1 pool DYNAT".' };
             }
 
-            // Check Route to 3.0.0.0
+            // 6. Check Static Route to destination network (3.0.0.0/8 via 2.0.0.2)
             const hasRoute = r0.staticRoutes.some(r => r.network === '3.0.0.0' && r.nextHop === '2.0.0.2');
             if (!hasRoute) {
-                return { success: false, reason: 'Router0 missing static route to 3.0.0.0 via 2.0.0.2.' };
+                return { success: false, reason: 'Router0 missing static route to destination network 3.0.0.0 via 2.0.0.2.' };
+            }
+
+            // 7. Verify destination host
+            if (targetIp !== '3.0.0.2' && targetIp !== '3.0.0.1') {
+                return { success: false, reason: `Destination IP ${targetIp} is not reachable on remote network 3.0.0.0.` };
             }
 
             // Dynamically allocate from pool

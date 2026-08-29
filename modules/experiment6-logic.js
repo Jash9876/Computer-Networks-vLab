@@ -135,63 +135,95 @@
         return [(long >>> 24) & 255, (long >>> 16) & 255, (long >>> 8) & 255, long & 255].join('.');
     }
 
-    // ── Initialize Interactive Canvas ─────────────────────────────
+    // ── Dedicated Persistent State Containers for 6A & 6B ──────────
+    let stateStore = {
+        '6A': {
+            initialized: false,
+            activeRouterKey: 'R1',
+            routerStates: null,
+            topoNodes: null
+        },
+        '6B': {
+            initialized: false,
+            activeRouterKey: 'R0',
+            routerStates: null,
+            topoNodes: null
+        }
+    };
+
+    function cloneObj(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    }
+
+    // ── Initialize Interactive Canvas with Persistent State ────────
     function initTopology(mode) {
+        // Save current active mode state before switching
+        if (currentMode && stateStore[currentMode] && stateStore[currentMode].initialized) {
+            stateStore[currentMode].routerStates = cloneObj(routerStates);
+            stateStore[currentMode].topoNodes = cloneObj(topoNodes);
+            stateStore[currentMode].activeRouterKey = activeRouterKey;
+        }
+
         currentMode = mode;
-        topoNodes = {};
-        cablesList = [];
 
-        if (mode === '6A') {
-            activeRouterKey = 'R1';
-            // Default 6A pre-configured background state for Router0
-            routerStates.R0.hostname = 'Router0';
-            routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: '20.20.20.254', mask: '255.255.255.0', state: 'up', natRole: null };
-            routerStates.R0.interfaces['Serial0/1/0'] = { ip: '30.30.30.2', mask: '255.255.255.0', state: 'up', role: 'DCE', clockRate: 64000, natRole: null };
-
-            // Router1 is to be configured by the student
-            routerStates.R1.hostname = 'Router1';
-            routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
-            routerStates.R1.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DTE', clockRate: 0, natRole: null };
-            routerStates.R1.staticNatRules = [];
-            routerStates.R1.staticRoutes = [];
-            routerStates.R1.activeTranslations = [];
-
-            topoNodes = {
-                'PC0': { type: 'PC', label: 'PC0', ip: '20.20.20.1', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 100 },
-                'PC1': { type: 'PC', label: 'PC1', ip: '20.20.20.2', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 220 },
-                'SW0': { type: 'Switch', label: 'Switch0', x: 180, y: 160 },
-                'R0':  { type: 'Router', label: 'Router0', x: 300, y: 160 },
-                'R1':  { type: 'Router', label: 'Router1', x: 480, y: 160 },
-                'SW1': { type: 'Switch', label: 'Switch1', x: 600, y: 160 },
-                'PC2': { type: 'PC', label: 'PC2', ip: '', subnet: '', gateway: '', x: 720, y: 100 },
-                'Server0': { type: 'Server', label: 'Server0', ip: '', subnet: '', gateway: '', x: 720, y: 220 }
-            };
+        if (stateStore[mode].initialized) {
+            // Restore existing student configurations
+            routerStates = cloneObj(stateStore[mode].routerStates);
+            topoNodes = cloneObj(stateStore[mode].topoNodes);
+            activeRouterKey = stateStore[mode].activeRouterKey;
         } else {
-            // Mode 6B: Dynamic NAT
-            activeRouterKey = 'R0';
-            // Router0 to be configured by student
-            routerStates.R0.hostname = 'Router0';
-            routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
-            routerStates.R0.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DCE', clockRate: 0, natRole: null };
-            routerStates.R0.accessLists = {};
-            routerStates.R0.dynamicNatPools = {};
-            routerStates.R0.dynamicNatBindings = [];
-            routerStates.R0.staticRoutes = [];
-            routerStates.R0.activeTranslations = [];
+            // First time initialization for this mode
+            stateStore[mode].initialized = true;
+            if (mode === '6A') {
+                activeRouterKey = 'R1';
+                routerStates.R0.hostname = 'Router0';
+                routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: '20.20.20.254', mask: '255.255.255.0', state: 'up', natRole: null };
+                routerStates.R0.interfaces['Serial0/1/0'] = { ip: '30.30.30.2', mask: '255.255.255.0', state: 'up', role: 'DCE', clockRate: 64000, natRole: null };
 
-            // Router1 pre-configured as ISP
-            routerStates.R1.hostname = 'Router1';
-            routerStates.R1.interfaces['Serial0/1/0'] = { ip: '2.0.0.2', mask: '255.0.0.0', state: 'up', role: 'DTE', clockRate: 0, natRole: null };
-            routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: '3.0.0.1', mask: '255.0.0.0', state: 'up', natRole: null };
+                routerStates.R1.hostname = 'Router1';
+                routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
+                routerStates.R1.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DTE', clockRate: 0, natRole: null };
+                routerStates.R1.staticNatRules = [];
+                routerStates.R1.staticRoutes = [];
+                routerStates.R1.activeTranslations = [];
 
-            topoNodes = {
-                'PC0': { type: 'PC', label: 'PC0', ip: '', subnet: '', gateway: '', x: 80, y: 110 },
-                'PC1': { type: 'PC', label: 'PC1', ip: '', subnet: '', gateway: '', x: 80, y: 230 },
-                'SW0': { type: 'Switch', label: 'Switch0', x: 220, y: 170 },
-                'R0':  { type: 'Router', label: 'Router0', x: 360, y: 170 },
-                'R1':  { type: 'Router', label: 'Router1', x: 540, y: 170 },
-                'Server0': { type: 'Server', label: 'Server0', ip: '3.0.0.2', subnet: '255.0.0.0', gateway: '3.0.0.1', x: 700, y: 170 }
-            };
+                topoNodes = {
+                    'PC0': { type: 'PC', label: 'PC0', ip: '20.20.20.1', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 100 },
+                    'PC1': { type: 'PC', label: 'PC1', ip: '20.20.20.2', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 220 },
+                    'SW0': { type: 'Switch', label: 'Switch0', x: 180, y: 160 },
+                    'R0':  { type: 'Router', label: 'Router0', x: 300, y: 160 },
+                    'R1':  { type: 'Router', label: 'Router1', x: 480, y: 160 },
+                    'SW1': { type: 'Switch', label: 'Switch1', x: 600, y: 160 },
+                    'PC2': { type: 'PC', label: 'PC2', ip: '', subnet: '', gateway: '', x: 720, y: 100 },
+                    'Server0': { type: 'Server', label: 'Server0', ip: '', subnet: '', gateway: '', x: 720, y: 220 }
+                };
+            } else {
+                activeRouterKey = 'R0';
+                routerStates.R0.hostname = 'Router0';
+                routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
+                routerStates.R0.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DCE', clockRate: 0, natRole: null };
+                routerStates.R0.accessLists = {};
+                routerStates.R0.dynamicNatPools = {};
+                routerStates.R0.dynamicNatBindings = [];
+                routerStates.R0.staticRoutes = [];
+                routerStates.R0.activeTranslations = [];
+
+                routerStates.R1.hostname = 'Router1';
+                routerStates.R1.interfaces['Serial0/1/0'] = { ip: '2.0.0.2', mask: '255.0.0.0', state: 'up', role: 'DTE', clockRate: 0, natRole: null };
+                routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: '3.0.0.1', mask: '255.0.0.0', state: 'up', natRole: null };
+
+                topoNodes = {
+                    'PC0': { type: 'PC', label: 'PC0', ip: '', subnet: '', gateway: '', x: 80, y: 110 },
+                    'PC1': { type: 'PC', label: 'PC1', ip: '', subnet: '', gateway: '', x: 80, y: 230 },
+                    'SW0': { type: 'Switch', label: 'Switch0', x: 220, y: 170 },
+                    'R0':  { type: 'Router', label: 'Router0', x: 360, y: 170 },
+                    'R1':  { type: 'Router', label: 'Router1', x: 540, y: 170 },
+                    'Server0': { type: 'Server', label: 'Server0', ip: '3.0.0.2', subnet: '255.0.0.0', gateway: '3.0.0.1', x: 700, y: 170 }
+                };
+            }
+            stateStore[mode].routerStates = cloneObj(routerStates);
+            stateStore[mode].topoNodes = cloneObj(topoNodes);
+            stateStore[mode].activeRouterKey = activeRouterKey;
         }
 
         renderTopologyCanvas();

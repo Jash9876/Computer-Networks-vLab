@@ -252,7 +252,10 @@
                 if (!res.ok) throw new Error(data.error || 'Student login failed.');
 
                 showAlert('Login successful! Redirecting...', false);
-                if (data.token) localStorage.setItem('vlab_token', data.token);
+                if (data.token) {
+                    localStorage.setItem('vlab_student_token', data.token);
+                    localStorage.setItem('vlab_token', data.token);
+                }
                 localStorage.setItem('vlab_user', JSON.stringify(data.user));
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';

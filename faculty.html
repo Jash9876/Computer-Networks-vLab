@@ -249,9 +249,9 @@
         let currentClassroomId = null;
         let currentStudents = [];
 
-        const token = localStorage.getItem('vlab_token');
+        const token = localStorage.getItem('vlab_faculty_token') || localStorage.getItem('vlab_token');
         if (!token) {
-            window.location.href = 'index.html';
+            window.location.href = 'faculty-login.html';
         }
         const authHeaders = {
             'Content-Type': 'application/json',
@@ -264,7 +264,8 @@
             .then(data => {
                 if (!data.authenticated || (data.user.role !== 'faculty' && data.user.role !== 'admin')) {
                     alert('Access Restricted. You must sign in with a Faculty account.');
-                    window.location.href = 'index.html';
+                    localStorage.removeItem('vlab_faculty_token');
+                    window.location.href = 'faculty-login.html';
                 } else {
                     document.getElementById('faculty-name').textContent = data.user.fullName;
                     document.getElementById('faculty-role').textContent = `Department of ${data.user.department || 'CSE'}`;
@@ -272,7 +273,7 @@
                 }
             })
             .catch(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'faculty-login.html';
             });
 
         // 2. Load Faculty Classrooms

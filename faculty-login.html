@@ -250,8 +250,8 @@
                 if (!res.ok) throw new Error(data.error || 'Faculty login failed.');
 
                 showAlert('Faculty authentication successful! Redirecting...', false);
-                if (data.token) localStorage.setItem('vlab_token', data.token);
-                localStorage.setItem('vlab_user', JSON.stringify(data.user));
+                if (data.token) localStorage.setItem('vlab_faculty_token', data.token);
+                localStorage.setItem('vlab_faculty_user', JSON.stringify(data.user));
                 setTimeout(() => {
                     window.location.href = 'faculty.html';
                 }, 600);

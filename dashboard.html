@@ -260,7 +260,7 @@
             if (regEl && u.registerNumber) regEl.textContent = `Register No: ${u.registerNumber}`;
         }
 
-        const token = localStorage.getItem('vlab_token');
+        const token = localStorage.getItem('vlab_student_token') || localStorage.getItem('vlab_token');
         if (!token) {
             window.location.href = 'index.html';
         }

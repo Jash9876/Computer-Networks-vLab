@@ -94,24 +94,24 @@
     // Milestone tracking
     let verifiedMilestones = new Set();
 
-    function obs(stage, action, result) {
+    function obs(stage, action, result, evidence) {
         if (typeof addObservation === 'function') {
-            addObservation(stage, action, result);
+            addObservation(stage, action, result, evidence);
         }
     }
 
-    // ── Interface Name Normalizer ─────────────────────────────────
+    // ── Interface Name Normalizer (Strict Cisco Aliases) ──────────
     function normaliseIf(raw) {
         if (!raw) return null;
-        const s = String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
+        const s = String(raw).trim().toLowerCase().replace(/\s+/g, '');
 
-        // GigabitEthernet 0/0
-        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/0|(?:gi|g)\s*0\/0|0\/0|fastethernet\s*0\/0|fa\s*0\/0)$/i.test(s)) {
+        // GigabitEthernet 0/0 (Strict: gigabitethernet0/0, gi0/0, g0/0)
+        if (/^(?:gigabitethernet0\/0|gi0\/0|g0\/0)$/.test(s)) {
             return 'GigabitEthernet0/0';
         }
 
-        // Serial 0/1/0
-        if (/^(?:serial\s*(?:se|s)?\s*0\/1\/0|(?:se|s)\s*0\/1\/0|0\/1\/0|serial\s*0\/0\/0|s\s*0\/0\/0)$/i.test(s)) {
+        // Serial 0/1/0 (Strict: serial0/1/0, se0/1/0, s0/1/0)
+        if (/^(?:serial0\/1\/0|se0\/1\/0|s0\/1\/0)$/.test(s)) {
             return 'Serial0/1/0';
         }
 
@@ -242,9 +242,23 @@
         // Render Device Nodes
         for (const id in topoNodes) {
             const n = topoNodes[id];
+            const isRouter = n.type === 'Router';
+            const isSelected = isRouter && activeRouterKey === id;
+            
+            // Check if node is verified
+            let isVerified = false;
+            if (id === 'PC0') isVerified = n.ip === (currentMode === '6A' ? '20.20.20.1' : '10.0.0.2');
+            else if (id === 'PC1') isVerified = n.ip === (currentMode === '6A' ? '20.20.20.2' : '10.0.0.3');
+            else if (id === 'PC2') isVerified = n.ip === '10.10.10.1';
+            else if (id === 'Server0') isVerified = n.ip === (currentMode === '6A' ? '10.10.10.2' : '3.0.0.2');
+            else if (isRouter) {
+                const r = routerStates[id];
+                isVerified = r && Object.values(r.interfaces).some(i => i.state === 'up');
+            }
+
             const nodeDiv = document.createElement('div');
             nodeDiv.id = `node-${id}`;
-            nodeDiv.style.cssText = `position:absolute; left:${n.x}px; top:${n.y}px; width:48px; height:48px; background:white; border:2px solid #3B82F6; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); user-select:none; z-index:10;`;
+            nodeDiv.style.cssText = `position:absolute; left:${n.x}px; top:${n.y}px; width:52px; height:52px; background:${isSelected ? '#EFF6FF' : 'white'}; border:${isSelected ? '2px solid #2563EB' : (isVerified ? '2px solid #10B981' : '2px solid #94A3B8')}; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.06); user-select:none; z-index:10; transition:all 0.2s;`;
 
             let iconName = 'monitor';
             if (n.type === 'Router') iconName = 'router';
@@ -252,11 +266,24 @@
             else if (n.type === 'Server') iconName = 'server';
 
             nodeDiv.innerHTML = `
-                <div style="font-size:0.65rem; font-weight:bold; color:#1E293B;">${n.label}</div>
-                <div style="font-size:0.55rem; color:#64748B;">${n.ip || 'no-ip'}</div>
+                <div style="font-size:1.1rem; color:${isSelected ? '#2563EB' : (isVerified ? '#10B981' : '#475569')};">
+                    ${iconName === 'router' ? '🖧' : (iconName === 'server' ? '🖹' : (iconName === 'network' ? '🔀' : '💻'))}
+                </div>
+                <div style="font-size:0.65rem; font-weight:700; color:#1E293B; margin-top:2px;">${n.label}</div>
+                ${isVerified ? '<div style="position:absolute; top:-6px; right:-6px; background:#10B981; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold;">✔</div>' : ''}
             `;
 
-            nodeDiv.addEventListener('click', () => handleNodeClick(id));
+            nodeDiv.onclick = () => {
+                if (isRouter) {
+                    activeRouterKey = id;
+                    cliMode = 'priv_exec';
+                    printLine(`\n=== Switched to ${n.label} Console (${id === 'R1' ? (currentMode === '6A' ? 'NAT Boundary Router' : 'ISP Router') : (currentMode === '6B' ? 'NAT Boundary Router' : 'Default Gateway Router')}) ===`);
+                    updatePrompt();
+                    renderTopologyCanvas();
+                } else if (n.type !== 'Switch') {
+                    openIpModal(id);
+                }
+            };
             canvas.appendChild(nodeDiv);
         }
 
@@ -327,16 +354,55 @@
 
     if (terminalInput) {
         terminalInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const cmd = terminalInput.value.trim();
-                printLine(`${terminalPrompt.textContent} ${cmd}`);
+            // Ctrl+L to clear screen
+            if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+                e.preventDefault();
+                if (terminalOutput) terminalOutput.innerHTML = '';
+                return;
+            }
+
+            // Ctrl+C to cancel current line
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+                printLine(`${terminalPrompt.textContent} ${terminalInput.value}^C`);
                 terminalInput.value = '';
-                if (cmd) {
+                return;
+            }
+
+            // Tab for auto-completion
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const cur = terminalInput.value.trim().toLowerCase();
+                if (!cur) return;
+                const pool = cliMode === 'priv_exec' 
+                    ? ['configure terminal', 'show ip nat translations', 'show ip nat statistics', 'show ip interface brief', 'show ip route', 'debug ip nat', 'undebug all', 'ping', 'exit']
+                    : cliMode === 'global_config'
+                    ? ['interface GigabitEthernet0/0', 'interface Serial0/1/0', 'ip nat inside source static', 'access-list 1 permit', 'ip nat pool', 'ip route', 'exit', 'end']
+                    : cliMode === 'if_config'
+                    ? ['ip address', 'ip nat inside', 'ip nat outside', 'clock rate 64000', 'no shutdown', 'shutdown', 'exit']
+                    : ['enable', 'ping', 'help'];
+                const match = pool.find(c => c.toLowerCase().startsWith(cur));
+                if (match) terminalInput.value = match;
+                return;
+            }
+
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const text = terminalInput.value.trim();
+                terminalInput.value = '';
+                if (!text) {
+                    printLine(terminalPrompt.textContent);
+                    return;
+                }
+
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                lines.forEach(cmd => {
+                    printLine(`${terminalPrompt.textContent} ${cmd}`);
                     cliHistory.unshift(cmd);
                     historyIndex = -1;
                     processCommand(cmd);
-                }
-                updatePrompt();
+                    updatePrompt();
+                });
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (historyIndex < cliHistory.length - 1) historyIndex++;
@@ -346,6 +412,22 @@
                 if (historyIndex > 0) historyIndex--;
                 else historyIndex = -1;
                 terminalInput.value = historyIndex >= 0 ? cliHistory[historyIndex] : '';
+            }
+        });
+
+        // Dedicated paste handler for immediate multi-line block execution
+        terminalInput.addEventListener('paste', (e) => {
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            if (pastedText && pastedText.includes('\n')) {
+                e.preventDefault();
+                const lines = pastedText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                lines.forEach(cmd => {
+                    printLine(`${terminalPrompt.textContent} ${cmd}`);
+                    cliHistory.unshift(cmd);
+                    historyIndex = -1;
+                    processCommand(cmd);
+                    updatePrompt();
+                });
             }
         });
     }
@@ -438,9 +520,10 @@
         // Mode: global_config
         if (cliMode === 'global_config') {
             if (cmd === 'interface' || cmd === 'int') {
-                const ifKey = normaliseIf(parts.slice(1).join(' '));
+                const targetArg = parts.slice(1).join(' ').trim();
+                const ifKey = normaliseIf(targetArg);
                 if (!ifKey) {
-                    printLine('% Invalid interface. Available: GigabitEthernet0/0, Serial0/1/0');
+                    printLine('% Invalid interface type or number. Available: GigabitEthernet0/0, Serial0/1/0');
                     return;
                 }
                 cliInterface = ifKey;
@@ -457,7 +540,8 @@
                     obs('Static NAT Config', `ip nat inside source static ${localIp} ${globalIp}`, 'Static mapping recorded');
                     checkStaticNatMilestone();
                 } else {
-                    printLine('% Incomplete command. Usage: ip nat inside source static <inside-local-ip> <inside-global-ip>');
+                    printLine('% Incomplete command. Syntax: ip nat inside source static <inside-local-ip> <inside-global-ip>');
+                    printLine('  Example: ip nat inside source static 10.10.10.1 30.30.30.10');
                 }
             } else if (cmd === 'access-list') {
                 const originalParts = raw.trim().split(/\s+/);
@@ -471,21 +555,24 @@
                     obs('ACL Config', `access-list ${listNum} permit ${net} ${wildcard}`, 'ACL configured');
                     checkDynamicNatMilestone();
                 } else {
-                    printLine('% Incomplete ACL command. Usage: access-list <1-99> permit <network> <wildcard-mask>');
+                    printLine('% Incomplete command. Syntax: access-list <1-99> permit <network> <wildcard-mask>');
+                    printLine('  Example: access-list 1 permit 10.0.0.0 0.255.255.255');
                 }
             } else if (cmd === 'ip' && parts[1] === 'nat' && parts[2] === 'pool') {
                 const originalParts = raw.trim().split(/\s+/);
-                if (originalParts.length >= 8 && originalParts[6].toLowerCase() === 'netmask') {
+                if (originalParts.length >= 6) {
                     const poolName = originalParts[3];
-                    const startIp = originalParts[4];
-                    const endIp = originalParts[5];
-                    const mask = originalParts[7];
+                    const startIp  = originalParts[4];
+                    const endIp    = originalParts[5];
+                    const netmaskIdx = originalParts.findIndex(p => p.toLowerCase() === 'netmask' || p.toLowerCase() === 'prefix-length');
+                    const mask = (netmaskIdx !== -1 && originalParts[netmaskIdx + 1]) ? originalParts[netmaskIdx + 1] : '255.0.0.0';
                     rState.dynamicNatPools[poolName] = { startIp, endIp, mask, allocated: {} };
                     printLine('');
                     obs('NAT Pool Config', `ip nat pool ${poolName} ${startIp} ${endIp} netmask ${mask}`, 'Dynamic pool created');
                     checkDynamicNatMilestone();
                 } else {
-                    printLine('% Incomplete pool command. Usage: ip nat pool <name> <start-ip> <end-ip> netmask <mask>');
+                    printLine('% Incomplete command. Syntax: ip nat pool <name> <start-ip> <end-ip> netmask <mask>');
+                    printLine('  Example: ip nat pool DYNAT 2.0.0.10 2.0.0.20 netmask 255.0.0.0');
                 }
             } else if (cmd === 'ip' && parts[1] === 'nat' && parts[2] === 'inside' && parts[3] === 'source' && parts[4] === 'list' && parts[6] === 'pool') {
                 const originalParts = raw.trim().split(/\s+/);
@@ -508,6 +595,9 @@
                     obs('Static Route', `ip route ${network} ${mask} ${nextHop}`, 'Static route configured');
                     checkStaticNatMilestone();
                     checkDynamicNatMilestone();
+                } else {
+                    printLine('% Incomplete command. Syntax: ip route <network> <subnet-mask> <next-hop-ip>');
+                    printLine('  Example: ip route 20.20.20.0 255.255.255.0 30.30.30.2');
                 }
             } else if (cmd === 'exit' || cmd === 'end') {
                 cliMode = 'priv_exec';
@@ -528,6 +618,9 @@
                     printLine('');
                     obs('Interface IP', `ip address ${originalParts[2]} ${originalParts[3]} on ${cliInterface}`, 'IP configured');
                     checkAddressingMilestone();
+                } else {
+                    printLine('% Incomplete command. Syntax: ip address <ip-address> <subnet-mask>');
+                    printLine(`  Example: ip address ${originalParts[2] || '10.10.10.254'} 255.255.255.0`);
                 }
             } else if (cmd === 'ip' && parts[1] === 'nat' && (parts[2] === 'inside' || parts[2] === 'outside')) {
                 iface.natRole = parts[2];
@@ -536,13 +629,24 @@
                 checkStaticNatMilestone();
                 checkDynamicNatMilestone();
             } else if (cmd === 'clock' && parts[1] === 'rate') {
-                if (iface.role === 'DCE') {
-                    iface.clockRate = parseInt(parts[2]) || 64000;
-                    printLine('');
-                    obs('Clock Rate', `clock rate ${parts[2]} on ${cliInterface}`, 'Clock rate applied');
-                } else {
-                    printLine('% Error: Clock rate can only be applied to DCE cable ends.');
+                if (iface.role !== 'DCE') {
+                    printLine('% Error: Clock rate can only be applied to DCE cable interfaces.');
+                    return;
                 }
+                const originalParts = raw.trim().split(/\s+/);
+                const rateVal = parseInt(originalParts[2], 10);
+                if (isNaN(rateVal) || originalParts.length < 3) {
+                    printLine('% Incomplete command. Syntax: clock rate <speed>');
+                    printLine('  Example: clock rate 64000');
+                    return;
+                }
+                if (rateVal !== 64000 && rateVal !== 128000 && rateVal !== 56000) {
+                    printLine(`% Invalid clock rate: ${originalParts[2]}. Valid rates for lab: 64000, 128000`);
+                    return;
+                }
+                iface.clockRate = rateVal;
+                printLine('');
+                obs('Clock Rate', `clock rate ${rateVal} on ${cliInterface}`, 'Clock rate applied');
             } else if (cmd === 'no' && parts[1] === 'shutdown') {
                 iface.state = 'up';
                 printLine(`%LINK-3-UPDOWN: Interface ${cliInterface}, changed state to up`);
@@ -643,9 +747,14 @@
             else checkDynamicNatVerifyMilestone();
         } else {
             printLine('.....');
-            printLine(`Success rate is 0 percent (0/5) (${evalRes.reason})`);
+            printLine('Success rate is 0 percent (0/5)');
+            printLine(`% Packet Diagnostic: ${evalRes.reason}`);
+            if (evalRes.tip) {
+                printLine(`  [Guidance] ${evalRes.tip}`);
+            }
             obs('Ping Verification', `ping ${targetIp}`, `Failed: ${evalRes.reason}`);
         }
+        renderTopologyCanvas();
     }
 
     function evaluateNatConnectivity(sourceKey, targetIp) {
@@ -656,36 +765,36 @@
 
             // 1. Check Router0 (Public Gateway) state
             if (r0.interfaces['GigabitEthernet0/0'].state !== 'up' || !r0.interfaces['GigabitEthernet0/0'].ip) {
-                return { success: false, reason: 'Router0 G0/0 is administratively down or unassigned.' };
+                return { success: false, reason: 'Router0 G0/0 is administratively down or unassigned.', tip: 'Bring G0/0 up on Router0 with "no shutdown" and configure 20.20.20.254/24.' };
             }
             if (r0.interfaces['Serial0/1/0'].state !== 'up' || r0.interfaces['Serial0/1/0'].clockRate !== 64000) {
-                return { success: false, reason: 'Router0 Serial0/1/0 (DCE) link is down or missing clock rate 64000.' };
+                return { success: false, reason: 'Router0 Serial0/1/0 (DCE) link is down or missing clock rate 64000.', tip: 'On Router0 Serial0/1/0, configure "clock rate 64000" and "no shutdown".' };
             }
 
             // 2. Check Router1 (NAT Boundary) state
             if (r1.interfaces['Serial0/1/0'].state !== 'up' || r1.interfaces['Serial0/1/0'].natRole !== 'outside') {
-                return { success: false, reason: 'Router1 Serial0/1/0 is down or missing "ip nat outside".' };
+                return { success: false, reason: 'Router1 Serial0/1/0 is down or missing "ip nat outside".', tip: 'Select interface Serial0/1/0 on Router1 and run "ip nat outside" and "no shutdown".' };
             }
             if (r1.interfaces['GigabitEthernet0/0'].state !== 'up' || r1.interfaces['GigabitEthernet0/0'].natRole !== 'inside') {
-                return { success: false, reason: 'Router1 G0/0 is down or missing "ip nat inside".' };
+                return { success: false, reason: 'Router1 G0/0 is down or missing "ip nat inside".', tip: 'Select interface GigabitEthernet0/0 on Router1 and run "ip nat inside" and "no shutdown".' };
             }
 
             // 3. Match destination to static NAT translation table
             const matchedStatic = r1.staticNatRules.find(r => r.globalIp === targetIp);
             if (!matchedStatic) {
-                return { success: false, reason: `No static NAT translation entry found mapping ${targetIp} to an inside local host.` };
+                return { success: false, reason: `No static NAT translation entry found mapping ${targetIp} to an inside local host.`, tip: `Configure static mapping with "ip nat inside source static 10.10.10.1 ${targetIp}".` };
             }
 
             // 4. Verify target internal host exists and is configured
             const targetHost = Object.values(topoNodes).find(n => n.ip === matchedStatic.localIp);
             if (!targetHost || targetHost.gateway !== r1.interfaces['GigabitEthernet0/0'].ip) {
-                return { success: false, reason: `Inside host (${matchedStatic.localIp}) default gateway does not match Router1 G0/0.` };
+                return { success: false, reason: `Inside host (${matchedStatic.localIp}) default gateway does not match Router1 G0/0.`, tip: `Click ${targetHost ? targetHost.label : 'host'} node on the canvas and set Gateway to 10.10.10.254.` };
             }
 
             // 5. Ensure static return route exists on Router1 back to public LAN (20.20.20.0/24)
             const hasRoute = r1.staticRoutes.some(r => r.network === '20.20.20.0' && r.nextHop === '30.30.30.2');
             if (!hasRoute) {
-                return { success: false, reason: 'Router1 missing static return route to 20.20.20.0/24 via 30.30.30.2.' };
+                return { success: false, reason: 'Router1 missing static return route to 20.20.20.0/24 via 30.30.30.2.', tip: 'On Router1, configure "ip route 20.20.20.0 255.255.255.0 30.30.30.2".' };
             }
 
             // Record active translation in NAT table
@@ -708,42 +817,42 @@
 
             // 1. Check Router0 (NAT Boundary) state
             if (r0.interfaces['GigabitEthernet0/0'].state !== 'up' || r0.interfaces['GigabitEthernet0/0'].natRole !== 'inside') {
-                return { success: false, reason: 'Router0 G0/0 is down or missing "ip nat inside".' };
+                return { success: false, reason: 'Router0 G0/0 is down or missing "ip nat inside".', tip: 'Select interface GigabitEthernet0/0 on Router0 and enter "ip nat inside" and "no shutdown".' };
             }
             if (r0.interfaces['Serial0/1/0'].state !== 'up' || r0.interfaces['Serial0/1/0'].natRole !== 'outside') {
-                return { success: false, reason: 'Router0 Serial0/1/0 is down or missing "ip nat outside".' };
+                return { success: false, reason: 'Router0 Serial0/1/0 is down or missing "ip nat outside".', tip: 'Select interface Serial0/1/0 on Router0 and enter "ip nat outside" and "no shutdown".' };
             }
             if (r0.interfaces['Serial0/1/0'].clockRate !== 64000) {
-                return { success: false, reason: 'Router0 Serial0/1/0 (DCE) missing "clock rate 64000".' };
+                return { success: false, reason: 'Router0 Serial0/1/0 (DCE) missing "clock rate 64000".', tip: 'On Router0 Serial0/1/0, run "clock rate 64000".' };
             }
 
             // 2. Check ISP Router1 state
             if (r1.interfaces['Serial0/1/0'].state !== 'up' || r1.interfaces['GigabitEthernet0/0'].state !== 'up') {
-                return { success: false, reason: 'ISP Router1 interfaces are not operational.' };
+                return { success: false, reason: 'ISP Router1 interfaces are not operational.', tip: 'Verify ISP Router1 serial and gigabit interfaces are UP.' };
             }
 
             // 3. Check ACL 1 matching private network
             const acl1 = r0.accessLists[1];
             if (!acl1 || !acl1.some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255')) {
-                return { success: false, reason: 'Standard ACL 1 missing or does not permit 10.0.0.0 0.255.255.255.' };
+                return { success: false, reason: 'Standard ACL 1 missing or does not permit 10.0.0.0 0.255.255.255.', tip: 'On Router0, run "access-list 1 permit 10.0.0.0 0.255.255.255".' };
             }
 
             // 4. Check Dynamic Pool configuration
             const pool = r0.dynamicNatPools['DYNAT'];
             if (!pool || pool.startIp !== '2.0.0.10' || pool.endIp !== '2.0.0.20') {
-                return { success: false, reason: 'Dynamic NAT pool "DYNAT" (2.0.0.10 - 2.0.0.20) not configured.' };
+                return { success: false, reason: 'Dynamic NAT pool "DYNAT" (2.0.0.10 - 2.0.0.20) not configured.', tip: 'On Router0, run "ip nat pool DYNAT 2.0.0.10 2.0.0.20 netmask 255.0.0.0".' };
             }
 
             // 5. Check Binding between ACL 1 and Pool DYNAT
             const isBound = r0.dynamicNatBindings.some(b => b.listNum === 1 && b.poolName === 'DYNAT');
             if (!isBound) {
-                return { success: false, reason: 'Missing dynamic NAT binding: "ip nat inside source list 1 pool DYNAT".' };
+                return { success: false, reason: 'Missing dynamic NAT binding: "ip nat inside source list 1 pool DYNAT".', tip: 'On Router0, run "ip nat inside source list 1 pool DYNAT".' };
             }
 
             // 6. Check Static Route to destination network (3.0.0.0/8 via 2.0.0.2)
             const hasRoute = r0.staticRoutes.some(r => r.network === '3.0.0.0' && r.nextHop === '2.0.0.2');
             if (!hasRoute) {
-                return { success: false, reason: 'Router0 missing static route to destination network 3.0.0.0 via 2.0.0.2.' };
+                return { success: false, reason: 'Router0 missing static route to destination network 3.0.0.0 via 2.0.0.2.', tip: 'On Router0, run "ip route 3.0.0.0 255.0.0.0 2.0.0.2".' };
             }
 
             // 7. Verify destination host
@@ -868,8 +977,179 @@
     function recordMilestone(milestoneId, stageName, desc) {
         if (!verifiedMilestones.has(milestoneId)) {
             verifiedMilestones.add(milestoneId);
-            obs(stageName, `Milestone: ${milestoneId}`, desc);
+
+            // Construct state evidence snapshot
+            let evidence = {};
+            if (milestoneId === '6A_TOPOLOGY_IP') {
+                evidence = {
+                    pc0Ip: topoNodes['PC0']?.ip,
+                    pc1Ip: topoNodes['PC1']?.ip,
+                    pc2Ip: topoNodes['PC2']?.ip,
+                    r0G0: routerStates.R0.interfaces['GigabitEthernet0/0']?.ip,
+                    r1G0: routerStates.R1.interfaces['GigabitEthernet0/0']?.ip,
+                    r0S0: routerStates.R0.interfaces['Serial0/1/0']?.ip,
+                    r1S0: routerStates.R1.interfaces['Serial0/1/0']?.ip
+                };
+            } else if (milestoneId === '6A_STATIC_NAT') {
+                const r1 = routerStates.R1;
+                evidence = {
+                    hasInsideG0: r1.interfaces['GigabitEthernet0/0']?.natRole === 'inside',
+                    hasOutsideS0: r1.interfaces['Serial0/1/0']?.natRole === 'outside',
+                    mapping1: '10.10.10.1->30.30.30.10',
+                    mapping2: '10.10.10.2->30.30.30.20',
+                    hasRoute: r1.staticRoutes.some(r => r.network === '20.20.20.0')
+                };
+            } else if (milestoneId === '6A_NAT_VERIFY') {
+                evidence = {
+                    pingSuccess: true,
+                    targetIp: '30.30.30.10',
+                    translatedLocal: '10.10.10.1'
+                };
+            } else if (milestoneId === '6B_DYN_NAT_CFG') {
+                const r0 = routerStates.R0;
+                evidence = {
+                    hasInsideG0: r0.interfaces['GigabitEthernet0/0']?.natRole === 'inside',
+                    hasOutsideS0: r0.interfaces['Serial0/1/0']?.natRole === 'outside',
+                    clockRate: r0.interfaces['Serial0/1/0']?.clockRate,
+                    acl1Permit: '10.0.0.0 0.255.255.255',
+                    poolName: 'DYNAT',
+                    poolRange: '2.0.0.10-2.0.0.20',
+                    hasBinding: true
+                };
+            } else if (milestoneId === '6B_DYN_NAT_VERIFY') {
+                evidence = {
+                    pingSuccess: true,
+                    targetIp: '3.0.0.2',
+                    dynamicAllocatedGlobal: '2.0.0.10'
+                };
+            }
+
+            obs(stageName, `Milestone: ${milestoneId}`, desc, evidence);
             updateResult();
+        }
+    }
+
+    // ── Interactive Guided Task Guide ───────────────────────────────
+    function renderTaskGuide(mode) {
+        const titleEl = document.getElementById('nat-guide-title');
+        const stepsEl = document.getElementById('nat-guide-steps');
+
+        if (!stepsEl) return;
+
+        if (mode === '6A') {
+            if (titleEl) {
+                titleEl.innerHTML = `
+                    <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
+                    Part 6A: Static NAT Configuration Checklist
+                `;
+            }
+            stepsEl.innerHTML = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 1</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Host IPs</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>PC0:</strong> 20.20.20.1/24 (GW: .254)<br>
+                                • <strong>PC1:</strong> 20.20.20.2/24 (GW: .254)<br>
+                                • <strong>PC2:</strong> 10.10.10.1/24 (GW: .254)<br>
+                                • <strong>Server0:</strong> 10.10.10.2/24 (GW: .254)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 2</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router1 NAT Roles</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>G0/0 (Inside LAN):</strong> 10.10.10.254/24 with <code>ip nat inside</code><br>
+                                • <strong>S0/1/0 (Outside WAN):</strong> 30.30.30.3/24 with <code>ip nat outside</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 3</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Static Mappings &amp; Route</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>PC2 Global:</strong> 10.10.10.1 &rarr; 30.30.30.10<br>
+                                • <strong>Server0 Global:</strong> 10.10.10.2 &rarr; 30.30.30.20<br>
+                                • <strong>Route:</strong> 20.20.20.0/24 via 30.30.30.2
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#10B981; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 4</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Verify &amp; Inspect</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • Run <code>ping 30.30.30.10</code> to test translation.<br>
+                                • Run <code>show ip nat translations</code> to inspect live mapping table.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            if (titleEl) {
+                titleEl.innerHTML = `
+                    <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
+                    Part 6B: Dynamic NAT Configuration Checklist
+                `;
+            }
+            stepsEl.innerHTML = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 1</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Host IPs</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>PC0:</strong> 10.0.0.2/8 (GW: 10.0.0.1)<br>
+                                • <strong>PC1:</strong> 10.0.0.3/8 (GW: 10.0.0.1)<br>
+                                • <strong>Server0:</strong> 3.0.0.2/8 (GW: 3.0.0.1)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 2</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router0 Roles &amp; DCE Clock</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>G0/0 (Inside LAN):</strong> 10.0.0.1/8 with <code>ip nat inside</code><br>
+                                • <strong>S0/1/0 (Outside WAN):</strong> 2.0.0.1/8 with <code>clock rate 64000</code> &amp; <code>ip nat outside</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#3B82F6; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 3</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">ACL, Pool &amp; Binding</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • <strong>ACL 1:</strong> Permit <code>10.0.0.0 0.255.255.255</code><br>
+                                • <strong>Pool DYNAT:</strong> <code>2.0.0.10</code> to <code>2.0.0.20</code><br>
+                                • <strong>Binding &amp; Route:</strong> Bind ACL 1 to Pool DYNAT &amp; add route to <code>3.0.0.0/8</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.75rem; font-weight:700; color:#10B981; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">Step 4</div>
+                            <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Trace &amp; Verify</div>
+                            <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
+                                • Run <code>debug ip nat</code> for live trace.<br>
+                                • Run <code>ping 3.0.0.2</code> to test dynamic pool allocation.<br>
+                                • Run <code>show ip nat translations</code>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
     }
 
@@ -903,6 +1183,7 @@
                 btn6B.style.background = '#F1F5F9';
                 btn6B.style.color = '#334155';
                 initTopology('6A');
+                renderTaskGuide('6A');
                 printLine('\n=== Part 6A: Static NAT Active (Router1 Console) ===');
             });
 
@@ -912,11 +1193,13 @@
                 btn6A.style.background = '#F1F5F9';
                 btn6A.style.color = '#334155';
                 initTopology('6B');
+                renderTaskGuide('6B');
                 printLine('\n=== Part 6B: Dynamic NAT Active (Router0 Console) ===');
             });
         }
 
         initTopology('6A');
+        renderTaskGuide('6A');
     });
 
 })();

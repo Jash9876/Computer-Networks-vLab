@@ -89,7 +89,16 @@
                         </div>
                     </div>
 
-                    <p style="font-size:0.9rem; color:#64748B;">Click devices to inspect or configure IP addresses. Use the Cisco IOS CLI to configure static/dynamic NAT mappings, verify translations, and test packet flows.</p>
+                    <!-- Interactive Task & Addressing Guide (Guided Discovery) -->
+                    <div id="nat-task-guide" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:1.25rem; margin-top:1rem; margin-bottom:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <h3 id="nat-guide-title" style="margin:0 0 1rem 0; font-size:0.95rem; color:#0F172A; font-weight:700; display:flex; align-items:center; gap:0.5rem;">
+                            <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
+                            Part 6A: Static NAT Configuration Checklist
+                        </h3>
+                        <div id="nat-guide-steps">
+                            <!-- Dynamically loaded based on 6A or 6B mode -->
+                        </div>
+                    </div>
                     
                     <!-- Topology Canvas -->
                     <div id="nat-topology-container" style="margin-top:1rem; margin-bottom:1.5rem;"></div>
@@ -102,7 +111,7 @@
                         </div>
                         <div id="nat-terminal-output" style="height:260px; overflow-y:auto; font-family:monospace; font-size:0.85rem; margin-bottom:0.5rem;"></div>
                         <div style="display:flex; align-items:center; gap:0.5rem; background:#1E293B; padding:0.4rem 0.8rem; border-radius:4px;">
-                            <span id="nat-terminal-prompt" style="color:#10B981; font-family:monospace; font-weight:bold; font-size:0.85rem;">Router1#</span>
+                            <span id="nat-terminal-prompt" style="color:#10B981; font-family:monospace; font-weight:bold; font-size:0.85rem; white-space:nowrap;">Router1#</span>
                             <input type="text" id="nat-terminal-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="flex:1; background:transparent; border:none; color:#F8FAFC; font-family:monospace; font-size:0.85rem; outline:none;" placeholder="Enter Cisco IOS command...">
                         </div>
                     </div>

@@ -17,7 +17,7 @@
 
         // 1. Hydrate User Details from API or Session Cache and verify classroom enrollment
         async hydrateUser() {
-            const token = localStorage.getItem('vlab_token');
+            const token = localStorage.getItem('vlab_student_token') || localStorage.getItem('vlab_token');
             if (!token) {
                 window.location.href = 'index.html';
                 return;
@@ -45,14 +45,16 @@
                         }
                         return;
                     }
+                } else if (res.status === 401) {
+                    // Stale or invalid token: clean up and redirect to student login
+                    localStorage.removeItem('vlab_token');
+                    localStorage.removeItem('vlab_user');
+                    window.location.href = 'index.html';
+                    return;
                 }
-            } catch (e) {}
-
-            // Fallback to local session storage
-            try {
-                this.user = JSON.parse(localStorage.getItem('vlab_user') || sessionStorage.getItem('vlab_user'));
-                this.applyUserToDOM();
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[VLabSync] Session verification error:', e);
+            }
         },
 
         // 2. Authoritative PostgreSQL Observation & Result Restoration
@@ -93,7 +95,21 @@
                     // Restore Result Tab dynamically from Server
                     const resTextEl = document.getElementById('result-text');
                     if (resTextEl) {
-                        const isSimComplete = data.isSimComplete === true || data.progress?.isSimComplete === true;
+                        const EXP_CATALOGS = {
+                            1: ['CABLES_STUDIED', 'COMMANDS_EXECUTED', 'PT_UI_EXPLORED'],
+                            2: ['IPV4_CONFIGURED', 'SUBNET_CALCULATED', 'PINOUT_CRIMPED', 'CABLE_TESTED'],
+                            3: ['CONSOLE_CONNECTED', 'TERMINAL_CONFIGURED', 'HOSTNAME_SET', 'INTERFACES_CONFIGURED'],
+                            4: ['SUBNET_DESIGNED', 'TOPOLOGY_WIRED', 'ROUTER_CONFIGURED', 'PING_VERIFIED'],
+                            5: ['TOPOLOGY_CONFIGURED', 'STATIC_ROUTE_R0', 'STATIC_ROUTE_R1', 'DEFAULT_ROUTE_SET', 'CONNECTIVITY_VERIFIED'],
+                            6: ['6A_TOPOLOGY_IP', '6A_STATIC_NAT', '6A_NAT_VERIFY', '6B_DYN_NAT_CFG', '6B_DYN_NAT_VERIFY']
+                        };
+
+                        const requiredList = EXP_CATALOGS[this.experimentId] || [];
+                        const serverMilestones = Array.isArray(data.progress?.completed_milestones) ? data.progress.completed_milestones : [];
+                        const verifiedMilestones = serverMilestones.filter(m => requiredList.includes(m));
+                        const reqMilestones = requiredList.length || 5;
+                        const verifiedCount = verifiedMilestones.length;
+                        const isSimComplete = verifiedCount >= reqMilestones && reqMilestones > 0;
                         
                         let quizDisplay = 'Not Attempted';
                         let isVivaPassed = false;
@@ -120,11 +136,10 @@
                         const practicalDate = isSimComplete && data.progress && data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'In Progress';
                         const certDate = isAcademicComplete && data.certificate && data.certificate.issued_at ? new Date(data.certificate.issued_at).toLocaleString() : null;
 
-                        const obsCount = typeof data.observationCount === 'number' ? data.observationCount : (Array.isArray(data.observations) ? data.observations.length : 0);
                         resTextEl.innerHTML = `
                             <strong>Academic Laboratory Record:</strong><br><br>
                             • <strong>Overall Academic Status:</strong> ${isAcademicComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔ (100%)</span>' : '<span style="color: #D97706; font-weight: bold;">In Progress</span>'}<br>
-                            • <strong>Practical Simulation:</strong> ${isSimComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #2563EB;">In Progress</span>'} (${obsCount} activities logged)<br>
+                            • <strong>Practical Simulation:</strong> ${isSimComplete ? '<span style="color: #059669; font-weight: bold;">Completed ✔</span>' : '<span style="color: #D97706; font-weight: bold;">In Progress</span>'} (${verifiedCount}/${reqMilestones} verified milestones)<br>
                             • <strong>Viva Evaluation (Quiz):</strong> ${quizDisplay}<br>
                             • <strong>Academic Certificate:</strong> ${isAcademicComplete && data.certificate ? `<span style="font-family: monospace; color: #2563EB; font-weight: bold;">${data.certificate.certificate_code}</span>` : '<span style="color: #64748B;">Not Issued (Requires &ge; 70% Quiz Pass)</span>'}<br>
                             • <strong>Practical Completion Date:</strong> ${practicalDate}${certDate ? `<br>• <strong>Academic Certification Date:</strong> ${certDate}` : ''}
@@ -177,13 +192,13 @@
         hookObservationLogger() {
             const originalAddObs = window.addObservation;
             if (typeof originalAddObs === 'function') {
-                window.addObservation = (moduleName, action, result) => {
+                window.addObservation = (moduleName, action, result, evidence) => {
                     originalAddObs(moduleName, action, result);
                     
                     // Map common action keywords to verified milestone types
                     let eventType = 'CLI_COMMAND_EXECUTED';
-                    const actLower = action.toLowerCase();
-                    const resLower = result.toLowerCase();
+                    const actLower = String(action || '').toLowerCase();
+                    const resLower = String(result || '').toLowerCase();
 
                     if (actLower.includes('address') || actLower.includes('matched')) eventType = 'ADDRESSING_MATCHED';
                     else if (actLower.includes('subnet')) eventType = 'SUBNET_IDENTIFIED';
@@ -196,7 +211,7 @@
                     else if (actLower.includes('tracert') || actLower.includes('traceroute')) eventType = 'TRACEROUTE_EXECUTED';
                     else if (actLower.includes('quiz')) eventType = 'QUIZ_SUBMITTED';
 
-                    this.logEvent(moduleName, eventType, { action, result });
+                    this.logEvent(moduleName, eventType, { action, result, evidence });
                 };
             }
         }

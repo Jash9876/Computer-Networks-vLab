@@ -10,27 +10,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadData() {
     if (typeof experimentData === 'undefined') {
-        console.error("Experiment data not found. Ensure data/experiment1.js is loaded.");
+        console.error("Experiment data not found. Ensure the experiment data file is loaded.");
         return;
     }
 
     // Aim
-    document.getElementById('aim-text').textContent = experimentData.aim;
+    const aimEl = document.getElementById('aim-text');
+    if (aimEl) aimEl.textContent = experimentData.aim;
     
     // Objectives
     const objList = document.getElementById('objectives-list');
-    objList.innerHTML = '';
-    experimentData.objectives.forEach(obj => {
-        const li = document.createElement('li');
-        li.textContent = obj;
-        objList.appendChild(li);
-    });
+    if (objList && Array.isArray(experimentData.objectives)) {
+        objList.innerHTML = '';
+        experimentData.objectives.forEach(obj => {
+            const li = document.createElement('li');
+            li.textContent = obj;
+            objList.appendChild(li);
+        });
+    }
 
     // Theory
-    document.getElementById('theory-content').innerHTML = experimentData.theory;
+    const theoryEl = document.getElementById('theory-content');
+    if (theoryEl) theoryEl.innerHTML = experimentData.theory;
 
     // Procedure
-    document.getElementById('procedure-content').innerHTML = experimentData.procedure;
+    const procEl = document.getElementById('procedure-content');
+    if (procEl) procEl.innerHTML = experimentData.procedure;
 
     // Set loading placeholder for observation table and result
     const obsContainer = document.getElementById('observation-content');
@@ -38,14 +43,13 @@ function loadData() {
         obsContainer.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: #64748B;">⏳ <em>Restoring your academic observation record from database...</em></div>';
     }
     const resEl = document.getElementById('result-text');
-    if (resEl && !document.title.includes('Exercise 3')) {
+    if (resEl) {
         resEl.innerHTML = '⏳ <em>Restoring your academic record from institutional database...</em>';
     }
 
     // Hydrate existing offline cache as fallback
     if (observations.length > 0) {
         updateObservationTable();
-        updateResultFromObservations();
     }
 
     // Quiz
@@ -65,18 +69,16 @@ function setupNavigation() {
             // Add active class to clicked
             item.classList.add('active');
             const targetId = item.getAttribute('data-target');
-            document.getElementById(targetId).classList.add('active');
+            const targetSec = document.getElementById(targetId);
+            if (targetSec) targetSec.classList.add('active');
         });
     });
 }
 
-// Global Observation Tracker with LocalStorage Persistence
+// Global Observation Tracker with LocalStorage Persistence (Experiment-Agnostic)
 function getExpKey() {
-    let expId = 1;
-    if (window.location.pathname.includes('experiment2')) expId = 2;
-    else if (window.location.pathname.includes('experiment3')) expId = 3;
-    else if (window.location.pathname.includes('experiment4')) expId = 4;
-    else if (window.location.pathname.includes('experiment5')) expId = 5;
+    const match = window.location.pathname.match(/experiment(\d+)/i);
+    const expId = match ? parseInt(match[1]) : 1;
     return `vlab_obs_exp_${expId}`;
 }
 
@@ -115,24 +117,6 @@ function addObservation(moduleName, action, result) {
         localStorage.setItem(getExpKey(), JSON.stringify(observations));
     } catch(e) {}
     updateObservationTable();
-    updateResultFromObservations();
-}
-
-function updateResultFromObservations() {
-    const resTextEl = document.getElementById('result-text');
-    if (!resTextEl) return;
-    
-    const count = observations.length;
-    if (count > 0) {
-        const quizObs = observations.find(o => o.moduleName === 'Quiz');
-        const scoreInfo = quizObs ? ` (${quizObs.result})` : '';
-        resTextEl.innerHTML = `
-            <strong>Exercise Progress Recorded:</strong><br><br>
-            • <strong>Total Observation Events:</strong> ${count}<br>
-            • <strong>Modules Interacted:</strong> ${new Set(observations.map(o => o.moduleName)).size} module(s)<br>
-            • <strong>Status:</strong> ${quizObs ? 'Quiz Completed' + scoreInfo : 'Simulations in progress. Complete the Quiz to view final score.'}
-        `;
-    }
 }
 
 function updateObservationTable() {
@@ -286,13 +270,9 @@ function evaluateQuiz() {
         <p style="color:#64748B;">⏳ <em>Evaluating answers with server...</em></p>
     `;
 
-    // Determine current experiment number
-    let currentExpId = 1;
-    if (window.location.pathname.includes('experiment2')) currentExpId = 2;
-    else if (window.location.pathname.includes('experiment3')) currentExpId = 3;
-    else if (window.location.pathname.includes('experiment4')) currentExpId = 4;
-    else if (window.location.pathname.includes('experiment5')) currentExpId = 5;
-    else if (window.location.pathname.includes('experiment6')) currentExpId = 6;
+    // Determine current experiment number dynamically from URL
+    const match = window.location.pathname.match(/experiment(\d+)/i);
+    const currentExpId = match ? parseInt(match[1]) : 1;
 
     // Collect user answers for secure server-side evaluation
     const userAnswers = [];

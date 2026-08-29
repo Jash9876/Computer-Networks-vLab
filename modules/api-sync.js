@@ -203,14 +203,9 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Determine experiment number from title or URL
-        let expNum = 1;
-        if (window.location.pathname.includes('experiment1')) expNum = 1;
-        else if (window.location.pathname.includes('experiment2')) expNum = 2;
-        else if (window.location.pathname.includes('experiment3')) expNum = 3;
-        else if (window.location.pathname.includes('experiment4')) expNum = 4;
-        else if (window.location.pathname.includes('experiment5')) expNum = 5;
-        else if (window.location.pathname.includes('experiment6')) expNum = 6;
+        // Determine experiment number dynamically from URL
+        const match = window.location.pathname.match(/experiment(\d+)/i);
+        const expNum = match ? parseInt(match[1]) : 1;
 
         VLabSync.init(expNum);
     });

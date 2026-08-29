@@ -136,6 +136,8 @@
     }
 
     // ── Dedicated Persistent State Containers for 6A & 6B ──────────
+    const STORAGE_KEY = 'vlab_exp6_simulation_state';
+
     let stateStore = {
         '6A': {
             initialized: false,
@@ -154,6 +156,52 @@
     function cloneObj(obj) {
         return JSON.parse(JSON.stringify(obj));
     }
+
+    function saveLocalSimulationState() {
+        try {
+            if (currentMode && stateStore[currentMode]) {
+                stateStore[currentMode].routerStates = cloneObj(routerStates);
+                stateStore[currentMode].topoNodes = cloneObj(topoNodes);
+                stateStore[currentMode].activeRouterKey = activeRouterKey;
+            }
+            const payload = {
+                currentMode: currentMode,
+                stateStore: stateStore,
+                milestones: Array.from(verifiedMilestones)
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {
+            console.warn('[Exp6 State] Local persistence save error:', e);
+        }
+    }
+
+    function loadLocalSimulationState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.stateStore) {
+                stateStore = parsed.stateStore;
+                if (Array.isArray(parsed.milestones)) {
+                    parsed.milestones.forEach(m => verifiedMilestones.add(m));
+                }
+                return parsed.currentMode || '6A';
+            }
+        } catch (e) {
+            console.warn('[Exp6 State] Local persistence load error:', e);
+        }
+        return false;
+    }
+
+    // Expose hook for authoritative server milestone synchronization
+    window.setServerMilestones = function (serverMilestones) {
+        if (Array.isArray(serverMilestones)) {
+            serverMilestones.forEach(m => verifiedMilestones.add(m));
+            updateResult();
+            renderTaskGuide(currentMode);
+            saveLocalSimulationState();
+        }
+    };
 
     // ── Initialize Interactive Canvas with Persistent State ────────
     function initTopology(mode) {
@@ -228,6 +276,7 @@
 
         renderTopologyCanvas();
         updatePrompt();
+        saveLocalSimulationState();
     }
 
     function renderTopologyCanvas() {
@@ -1269,8 +1318,25 @@
             });
         }
 
-        initTopology('6A');
-        renderTaskGuide('6A');
+        const restoredMode = loadLocalSimulationState() || '6A';
+
+        if (btn6A && btn6B) {
+            if (restoredMode === '6B') {
+                btn6B.style.background = 'var(--primary-color)';
+                btn6B.style.color = 'white';
+                btn6A.style.background = '#F1F5F9';
+                btn6A.style.color = '#334155';
+            } else {
+                btn6A.style.background = 'var(--primary-color)';
+                btn6A.style.color = 'white';
+                btn6B.style.background = '#F1F5F9';
+                btn6B.style.color = '#334155';
+            }
+        }
+
+        initTopology(restoredMode);
+        renderTaskGuide(restoredMode);
+        updateResult();
     });
 
 })();

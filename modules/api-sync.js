@@ -111,6 +111,11 @@
                         const verifiedCount = verifiedMilestones.length;
                         const isSimComplete = verifiedCount >= reqMilestones && reqMilestones > 0;
                         
+                        // Inform local simulation engine about server-authoritative milestones
+                        if (typeof window.setServerMilestones === 'function') {
+                            window.setServerMilestones(verifiedMilestones);
+                        }
+                        
                         let quizDisplay = 'Not Attempted';
                         let isVivaPassed = false;
                         let vivaScore = 0;

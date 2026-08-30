@@ -229,13 +229,23 @@
             initialized: false,
             activeRouterKey: 'R1',
             routerStates: null,
-            topoNodes: null
+            topoNodes: null,
+            cliMode: 'priv_exec',
+            cliInterface: null,
+            cliHistory: [],
+            natDebugging: false,
+            terminalTranscript: ''
         },
         '6B': {
             initialized: false,
             activeRouterKey: 'R0',
             routerStates: null,
-            topoNodes: null
+            topoNodes: null,
+            cliMode: 'priv_exec',
+            cliInterface: null,
+            cliHistory: [],
+            natDebugging: false,
+            terminalTranscript: ''
         }
     };
 
@@ -247,9 +257,15 @@
     function saveLocalSimulationState() {
         try {
             if (currentMode && stateStore[currentMode] && topoNodes && Object.keys(topoNodes).length > 0) {
+                const termOut = getTerminalOutput();
                 stateStore[currentMode].routerStates = cloneObj(routerStates);
                 stateStore[currentMode].topoNodes = cloneObj(topoNodes);
                 stateStore[currentMode].activeRouterKey = activeRouterKey;
+                stateStore[currentMode].cliMode = cliMode;
+                stateStore[currentMode].cliInterface = cliInterface;
+                stateStore[currentMode].cliHistory = cloneObj(cliHistory);
+                stateStore[currentMode].natDebugging = natDebugging;
+                stateStore[currentMode].terminalTranscript = termOut ? termOut.innerHTML : '';
             }
             const payload = {
                 currentMode: currentMode,
@@ -294,9 +310,15 @@
     function initTopology(mode) {
         // Save current active mode state before switching
         if (currentMode && stateStore[currentMode] && stateStore[currentMode].initialized && topoNodes && Object.keys(topoNodes).length > 0) {
+            const termOut = getTerminalOutput();
             stateStore[currentMode].routerStates = cloneObj(routerStates);
             stateStore[currentMode].topoNodes = cloneObj(topoNodes);
             stateStore[currentMode].activeRouterKey = activeRouterKey;
+            stateStore[currentMode].cliMode = cliMode;
+            stateStore[currentMode].cliInterface = cliInterface;
+            stateStore[currentMode].cliHistory = cloneObj(cliHistory);
+            stateStore[currentMode].natDebugging = natDebugging;
+            stateStore[currentMode].terminalTranscript = termOut ? termOut.innerHTML : '';
         }
 
         currentMode = mode || '6A';
@@ -306,11 +328,36 @@
             routerStates = cloneObj(stateStore[currentMode].routerStates) || getDefaultRouterStates(currentMode);
             topoNodes = cloneObj(stateStore[currentMode].topoNodes) || getDefaultTopoNodes(currentMode);
             activeRouterKey = stateStore[currentMode].activeRouterKey || (currentMode === '6A' ? 'R1' : 'R0');
+            cliMode = stateStore[currentMode].cliMode || 'priv_exec';
+            cliInterface = stateStore[currentMode].cliInterface || null;
+            cliHistory = cloneObj(stateStore[currentMode].cliHistory) || [];
+            natDebugging = Boolean(stateStore[currentMode].natDebugging);
+
+            const termOut = getTerminalOutput();
+            if (termOut) {
+                if (stateStore[currentMode].terminalTranscript) {
+                    termOut.innerHTML = stateStore[currentMode].terminalTranscript;
+                    termOut.scrollTop = termOut.scrollHeight;
+                } else {
+                    termOut.innerHTML = '';
+                    printLine(`=== Part ${currentMode}: ${currentMode === '6A' ? 'Static NAT' : 'Dynamic NAT'} Active (${routerStates[activeRouterKey].hostname} Console) ===`);
+                }
+            }
         } else {
             // First time initialization for this mode
             routerStates = getDefaultRouterStates(currentMode);
             topoNodes = getDefaultTopoNodes(currentMode);
             activeRouterKey = currentMode === '6A' ? 'R1' : 'R0';
+            cliMode = 'priv_exec';
+            cliInterface = null;
+            cliHistory = [];
+            natDebugging = false;
+
+            const termOut = getTerminalOutput();
+            if (termOut) {
+                termOut.innerHTML = '';
+                printLine(`=== Part ${currentMode}: ${currentMode === '6A' ? 'Static NAT' : 'Dynamic NAT'} Active (${routerStates[activeRouterKey].hostname} Console) ===`);
+            }
 
             if (!stateStore[currentMode]) {
                 stateStore[currentMode] = {};
@@ -319,6 +366,11 @@
             stateStore[currentMode].routerStates = cloneObj(routerStates);
             stateStore[currentMode].topoNodes = cloneObj(topoNodes);
             stateStore[currentMode].activeRouterKey = activeRouterKey;
+            stateStore[currentMode].cliMode = cliMode;
+            stateStore[currentMode].cliInterface = cliInterface;
+            stateStore[currentMode].cliHistory = [];
+            stateStore[currentMode].natDebugging = false;
+            stateStore[currentMode].terminalTranscript = termOut ? termOut.innerHTML : '';
         }
 
         renderTopologyCanvas();
@@ -461,11 +513,11 @@
             node.subnet = maskInput.value.trim();
             node.gateway = gwInput.value.trim();
             modal.style.display = 'none';
+            checkAddressingMilestone();
+            checkDynamicNatMilestone();
             renderTopologyCanvas();
             renderTaskGuide(currentMode);
             saveLocalSimulationState();
-            checkAddressingMilestone();
-            checkDynamicNatMilestone();
         };
     }
 
@@ -652,6 +704,8 @@
             if (cmd === 'configure' || cmd === 'conf' || cmd === 'config') {
                 cliMode = 'global_config';
                 printLine('Enter configuration commands, one per line. End with CNTL/Z.');
+            } else if ((cmd === 'show' || cmd === 'sh') && (parts[1] === 'running-config' || parts[1] === 'run')) {
+                printRunningConfig(rState);
             } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'nat' && parts[3] === 'translations') {
                 printNatTranslations(rState);
             } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'nat' && parts[3] === 'statistics') {
@@ -679,6 +733,26 @@
 
         // Mode: global_config
         if (cliMode === 'global_config') {
+            if (cmd === 'do') {
+                const doArgs = parts.slice(1);
+                const doCmd = doArgs[0];
+                if ((doCmd === 'show' || doCmd === 'sh') && (doArgs[1] === 'running-config' || doArgs[1] === 'run')) {
+                    printRunningConfig(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'nat' && doArgs[3] === 'translations') {
+                    printNatTranslations(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'interface' && doArgs[3] === 'brief') {
+                    printInterfaceBrief(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'route') {
+                    printRoutingTable(rState);
+                    return;
+                } else if (doCmd === 'ping') {
+                    executeCliPing(doArgs[1]);
+                    return;
+                }
+            }
             if (cmd === 'interface' || cmd === 'int') {
                 const targetArg = parts.slice(1).join(' ').trim();
                 const ifKey = normaliseIf(targetArg);
@@ -769,6 +843,26 @@
 
         // Mode: if_config
         if (cliMode === 'if_config') {
+            if (cmd === 'do') {
+                const doArgs = parts.slice(1);
+                const doCmd = doArgs[0];
+                if ((doCmd === 'show' || doCmd === 'sh') && (doArgs[1] === 'running-config' || doArgs[1] === 'run')) {
+                    printRunningConfig(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'nat' && doArgs[3] === 'translations') {
+                    printNatTranslations(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'interface' && doArgs[3] === 'brief') {
+                    printInterfaceBrief(rState);
+                    return;
+                } else if ((doCmd === 'show' || doCmd === 'sh') && doArgs[1] === 'ip' && doArgs[2] === 'route') {
+                    printRoutingTable(rState);
+                    return;
+                } else if (doCmd === 'ping') {
+                    executeCliPing(doArgs[1]);
+                    return;
+                }
+            }
             const iface = rState.interfaces[cliInterface];
             if (cmd === 'ip' && parts[1] === 'address') {
                 const originalParts = raw.trim().split(/\s+/);
@@ -827,7 +921,88 @@
         }
     }
 
-    // ── Table Displays ──────────────────────────────────────────────
+    // ── Table Displays & Configuration Inspection ──────────────────
+    function printRunningConfig(rState) {
+        printLine('Building configuration...\n');
+        printLine(`Current configuration : 1024 bytes`);
+        printLine('!');
+        printLine('version 15.1');
+        printLine('service timestamps log datetime msec');
+        printLine('no service password-encryption');
+        printLine('!');
+        printLine(`hostname ${rState.hostname}`);
+        printLine('!');
+        printLine('ip cef');
+        printLine('no ipv6 cef');
+        printLine('!');
+        
+        // Interfaces
+        for (const ifName in rState.interfaces) {
+            const iface = rState.interfaces[ifName];
+            printLine(`interface ${ifName}`);
+            if (iface.ip && iface.mask) {
+                printLine(` ip address ${iface.ip} ${iface.mask}`);
+            } else {
+                printLine(' no ip address');
+            }
+            if (iface.natRole) {
+                printLine(` ip nat ${iface.natRole}`);
+            }
+            if (iface.clockRate) {
+                printLine(` clock rate ${iface.clockRate}`);
+            }
+            if (iface.state === 'down') {
+                printLine(' shutdown');
+            } else {
+                printLine(' no shutdown');
+            }
+            printLine('!');
+        }
+
+        // Static NAT rules
+        if (rState.staticNatRules && rState.staticNatRules.length > 0) {
+            rState.staticNatRules.forEach(r => {
+                printLine(`ip nat inside source static ${r.localIp} ${r.globalIp}`);
+            });
+            printLine('!');
+        }
+
+        // Dynamic NAT Pools
+        if (rState.dynamicNatPools) {
+            for (const pName in rState.dynamicNatPools) {
+                const p = rState.dynamicNatPools[pName];
+                printLine(`ip nat pool ${pName} ${p.startIp} ${p.endIp} netmask ${p.mask}`);
+            }
+        }
+
+        // Dynamic NAT Bindings
+        if (rState.dynamicNatBindings && rState.dynamicNatBindings.length > 0) {
+            rState.dynamicNatBindings.forEach(b => {
+                printLine(`ip nat inside source list ${b.listNum} pool ${b.poolName}`);
+            });
+            printLine('!');
+        }
+
+        // Access Lists
+        if (rState.accessLists) {
+            for (const lNum in rState.accessLists) {
+                rState.accessLists[lNum].forEach(acl => {
+                    printLine(`access-list ${lNum} ${acl.permit ? 'permit' : 'deny'} ${acl.net} ${acl.wildcard}`);
+                });
+            }
+            printLine('!');
+        }
+
+        // Static Routes
+        if (rState.staticRoutes && rState.staticRoutes.length > 0) {
+            rState.staticRoutes.forEach(rt => {
+                printLine(`ip route ${rt.network} ${rt.mask} ${rt.nextHop}`);
+            });
+            printLine('!');
+        }
+
+        printLine('end');
+    }
     function printNatTranslations(rState) {
         if (!rState.activeTranslations || rState.activeTranslations.length === 0) {
             printLine('Pro  Inside global     Inside local       Outside local      Outside global');
@@ -1200,30 +1375,28 @@
             const r0  = routerStates.R0;
             const r1  = routerStates.R1;
 
-            // Step 1: All 4 hosts + router interfaces addressed and brought UP
+            // Step 1: All 4 hosts configured with IP and Default Gateway
             const isPc0Ok = pc0 && pc0.ip === '20.20.20.1' && pc0.gateway === '20.20.20.254';
             const isPc1Ok = pc1 && pc1.ip === '20.20.20.2' && pc1.gateway === '20.20.20.254';
             const isPc2Ok = pc2 && pc2.ip === '10.10.10.1' && pc2.gateway === '10.10.10.254';
             const isS0Ok  = s0  && s0.ip === '10.10.10.2' && s0.gateway === '10.10.10.254';
-            
+            const step1 = Boolean(isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok);
+
+            // Step 2: Router1 Interface Addressing & NAT Boundaries (G0/0 inside, S0/1/0 outside)
             const isR1G0Ok = r1.interfaces['GigabitEthernet0/0']?.ip === '10.10.10.254' && r1.interfaces['GigabitEthernet0/0']?.state === 'up';
             const isR1S0Ok = r1.interfaces['Serial0/1/0']?.ip === '30.30.30.3' && r1.interfaces['Serial0/1/0']?.state === 'up';
-            
-            const step1 = isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok && isR1G0Ok && isR1S0Ok;
-
-            // Step 2: Router1 NAT Boundaries designated
-            const hasInside  = r1.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && r1.interfaces['GigabitEthernet0/0']?.state === 'up';
-            const hasOutside = r1.interfaces['Serial0/1/0']?.natRole === 'outside' && r1.interfaces['Serial0/1/0']?.state === 'up';
-            const step2 = hasInside && hasOutside;
+            const hasInside  = r1.interfaces['GigabitEthernet0/0']?.natRole === 'inside';
+            const hasOutside = r1.interfaces['Serial0/1/0']?.natRole === 'outside';
+            const step2 = Boolean(isR1G0Ok && isR1S0Ok && hasInside && hasOutside);
 
             // Step 3: Static NAT Mappings & Return Static Route
             const hasMap1 = r1.staticNatRules.some(r => r.localIp === '10.10.10.1' && r.globalIp === '30.30.30.10');
             const hasMap2 = r1.staticNatRules.some(r => r.localIp === '10.10.10.2' && r.globalIp === '30.30.30.20');
             const hasRoute = r1.staticRoutes.some(r => r.network === '20.20.20.0');
-            const step3 = hasMap1 && hasMap2 && hasRoute;
+            const step3 = Boolean(hasMap1 && hasMap2 && hasRoute);
 
             // Step 4: Verification Ping Executed Successfully
-            const step4 = verifiedMilestones.has('6A_NAT_VERIFY') || r1.activeTranslations.length > 0;
+            const step4 = Boolean(verifiedMilestones.has('6A_NAT_VERIFY') || r1.activeTranslations.length > 0);
 
             return { step1, step2, step3, step4 };
         } else {
@@ -1236,12 +1409,14 @@
             const isPc0Ok = pc0 && pc0.ip === '10.0.0.2' && pc0.gateway === '10.0.0.1';
             const isPc1Ok = pc1 && pc1.ip === '10.0.0.3' && pc1.gateway === '10.0.0.1';
             const isS0Ok  = s0  && s0.ip === '3.0.0.2' && s0.gateway === '3.0.0.1';
-            const step1 = isPc0Ok && isPc1Ok && isS0Ok;
+            const step1 = Boolean(isPc0Ok && isPc1Ok && isS0Ok);
 
-            // Step 2: Router0 NAT roles & DCE Clock Rate
-            const hasInside = r0.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && r0.interfaces['GigabitEthernet0/0']?.state === 'up';
-            const hasOutside = r0.interfaces['Serial0/1/0']?.natRole === 'outside' && r0.interfaces['Serial0/1/0']?.state === 'up' && r0.interfaces['Serial0/1/0']?.clockRate === 64000;
-            const step2 = hasInside && hasOutside;
+            // Step 2: Router0 Interface Addressing, NAT roles & DCE Clock Rate
+            const isR0G0Ok = r0.interfaces['GigabitEthernet0/0']?.ip === '10.0.0.1' && r0.interfaces['GigabitEthernet0/0']?.state === 'up';
+            const isR0S0Ok = r0.interfaces['Serial0/1/0']?.ip === '2.0.0.1' && r0.interfaces['Serial0/1/0']?.state === 'up';
+            const hasInside = r0.interfaces['GigabitEthernet0/0']?.natRole === 'inside';
+            const hasOutside = r0.interfaces['Serial0/1/0']?.natRole === 'outside' && r0.interfaces['Serial0/1/0']?.clockRate === 64000;
+            const step2 = Boolean(isR0G0Ok && isR0S0Ok && hasInside && hasOutside);
 
             // Step 3: ACL 1, Pool DYNAT, Binding, and Static Route
             const hasAcl = r0.accessLists[1] && r0.accessLists[1].some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255');
@@ -1251,7 +1426,7 @@
             const step3 = Boolean(hasAcl && hasPool && hasBinding && hasRoute);
 
             // Step 4: Dynamic NAT Verification Trace & Ping
-            const step4 = verifiedMilestones.has('6B_DYN_NAT_VERIFY') || r0.activeTranslations.some(t => t.type === 'dynamic');
+            const step4 = Boolean(verifiedMilestones.has('6B_DYN_NAT_VERIFY') || r0.activeTranslations.some(t => t.type === 'dynamic'));
 
             return { step1, step2, step3, step4 };
         }

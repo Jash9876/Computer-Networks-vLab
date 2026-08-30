@@ -1635,6 +1635,29 @@
             });
         }
 
+        const btnReset = document.getElementById('btn-reset-exp6');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset Experiment 6 simulation state? All local configurations and terminal transcript will start fresh.')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    verifiedMilestones.clear();
+                    stateStore = {
+                        '6A': { initialized: false, activeRouterKey: 'R1', routerStates: null, topoNodes: null, cliMode: 'priv_exec', cliInterface: null, cliHistory: [], natDebugging: false, terminalTranscript: '' },
+                        '6B': { initialized: false, activeRouterKey: 'R0', routerStates: null, topoNodes: null, cliMode: 'priv_exec', cliInterface: null, cliHistory: [], natDebugging: false, terminalTranscript: '' }
+                    };
+                    if (btn6A && btn6B) {
+                        btn6A.style.background = 'var(--primary-color)';
+                        btn6A.style.color = 'white';
+                        btn6B.style.background = '#F1F5F9';
+                        btn6B.style.color = '#334155';
+                    }
+                    initTopology('6A');
+                    renderTaskGuide('6A');
+                    updateResult();
+                }
+            });
+        }
+
         const restoredMode = loadLocalSimulationState() || '6A';
 
         if (btn6A && btn6B) {

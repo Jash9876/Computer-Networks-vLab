@@ -115,7 +115,7 @@
                 <div id="overall-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; color: #64748B;">
-                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 5</span>
+                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 6</span>
                 <span>Active Semester: 2025–26</span>
             </div>
         </div>
@@ -179,8 +179,8 @@
             <div class="exp-card" id="card-exp5">
                 <div>
                     <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 5</div>
-                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Demonstration of Static and Default Routing</h4>
-                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure bi-directional static routes, transition to 0.0.0.0/0 default routing, and trace hop-by-hop forwarding.</p>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Static and Default Routing Implementation</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Implement point-to-point serial static routes, summary default routes, and end-to-end ICMP verification.</p>
                 </div>
                 <div>
                     <span class="badge" id="badge-exp5">Loading...</span>
@@ -192,8 +192,8 @@
             <div class="exp-card" id="card-exp6">
                 <div>
                     <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 6</div>
-                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Configuration of Network Address Translation (NAT)</h4>
-                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure 1-to-1 Static NAT (6A) and Dynamic NAT with ACL and address pools (6B) on Cisco boundary routers.</p>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Static and Dynamic NAT Configuration</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure Static 1-to-1 NAT and Dynamic Pool NAT across edge routers with live Cisco IOS CLI simulation.</p>
                 </div>
                 <div>
                     <span class="badge" id="badge-exp6">Loading...</span>
@@ -373,7 +373,7 @@
 
                             const mCount = Array.isArray(p.completed_milestones) ? p.completed_milestones.length : 0;
                             const reqCount = expTotalReq[i] || 5;
-                            const isSimComplete = p.isSimComplete === true || mCount >= reqCount || Number(p.event_count) >= reqCount;
+                            const isSimComplete = p.isSimComplete === true || mCount >= reqCount;
                             const vivaScore = Number(p.final_score ?? p.score) || 0;
                             const isVivaPassed = vivaScore >= 70;
 
@@ -442,8 +442,8 @@
             localStorage.removeItem('vlab_progression');
             sessionStorage.clear();
 
-            // Clear all experiment observation caches (1 to 5)
-            for (let i = 1; i <= 5; i++) {
+            // Clear all experiment observation caches (1 to 6)
+            for (let i = 1; i <= 6; i++) {
                 localStorage.removeItem(`vlab_obs_exp_${i}`);
                 localStorage.removeItem(`vlab_score_exp${i}`);
             }

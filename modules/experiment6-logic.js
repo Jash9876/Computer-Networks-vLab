@@ -138,6 +138,92 @@
     // ── Dedicated Persistent State Containers for 6A & 6B ──────────
     const STORAGE_KEY = 'vlab_exp6_simulation_state';
 
+    function getDefaultRouterStates(mode) {
+        if (mode === '6A') {
+            return {
+                R0: {
+                    hostname: 'Router0',
+                    interfaces: {
+                        'GigabitEthernet0/0': { ip: '20.20.20.254', mask: '255.255.255.0', state: 'up', natRole: null },
+                        'Serial0/1/0': { ip: '30.30.30.2', mask: '255.255.255.0', state: 'up', role: 'DCE', clockRate: 64000, natRole: null }
+                    },
+                    staticRoutes: [],
+                    staticNatRules: [],
+                    dynamicNatPools: {},
+                    accessLists: {},
+                    dynamicNatBindings: [],
+                    activeTranslations: []
+                },
+                R1: {
+                    hostname: 'Router1',
+                    interfaces: {
+                        'GigabitEthernet0/0': { ip: null, mask: null, state: 'down', natRole: null },
+                        'Serial0/1/0': { ip: null, mask: null, state: 'down', role: 'DTE', clockRate: 0, natRole: null }
+                    },
+                    staticRoutes: [],
+                    staticNatRules: [],
+                    dynamicNatPools: {},
+                    accessLists: {},
+                    dynamicNatBindings: [],
+                    activeTranslations: []
+                }
+            };
+        } else {
+            return {
+                R0: {
+                    hostname: 'Router0',
+                    interfaces: {
+                        'GigabitEthernet0/0': { ip: null, mask: null, state: 'down', natRole: null },
+                        'Serial0/1/0': { ip: null, mask: null, state: 'down', role: 'DCE', clockRate: 0, natRole: null }
+                    },
+                    staticRoutes: [],
+                    staticNatRules: [],
+                    dynamicNatPools: {},
+                    accessLists: {},
+                    dynamicNatBindings: [],
+                    activeTranslations: []
+                },
+                R1: {
+                    hostname: 'Router1',
+                    interfaces: {
+                        'GigabitEthernet0/0': { ip: '3.0.0.1', mask: '255.0.0.0', state: 'up', natRole: null },
+                        'Serial0/1/0': { ip: '2.0.0.2', mask: '255.0.0.0', state: 'up', role: 'DTE', clockRate: 0, natRole: null }
+                    },
+                    staticRoutes: [],
+                    staticNatRules: [],
+                    dynamicNatPools: {},
+                    accessLists: {},
+                    dynamicNatBindings: [],
+                    activeTranslations: []
+                }
+            };
+        }
+    }
+
+    function getDefaultTopoNodes(mode) {
+        if (mode === '6A') {
+            return {
+                'PC0': { type: 'PC', label: 'PC0', ip: '20.20.20.1', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 100 },
+                'PC1': { type: 'PC', label: 'PC1', ip: '20.20.20.2', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 220 },
+                'SW0': { type: 'Switch', label: 'Switch0', x: 180, y: 160 },
+                'R0':  { type: 'Router', label: 'Router0', x: 300, y: 160 },
+                'R1':  { type: 'Router', label: 'Router1', x: 480, y: 160 },
+                'SW1': { type: 'Switch', label: 'Switch1', x: 600, y: 160 },
+                'PC2': { type: 'PC', label: 'PC2', ip: '', subnet: '', gateway: '', x: 720, y: 100 },
+                'Server0': { type: 'Server', label: 'Server0', ip: '', subnet: '', gateway: '', x: 720, y: 220 }
+            };
+        } else {
+            return {
+                'PC0': { type: 'PC', label: 'PC0', ip: '', subnet: '', gateway: '', x: 80, y: 110 },
+                'PC1': { type: 'PC', label: 'PC1', ip: '', subnet: '', gateway: '', x: 80, y: 230 },
+                'SW0': { type: 'Switch', label: 'Switch0', x: 220, y: 170 },
+                'R0':  { type: 'Router', label: 'Router0', x: 360, y: 170 },
+                'R1':  { type: 'Router', label: 'Router1', x: 540, y: 170 },
+                'Server0': { type: 'Server', label: 'Server0', ip: '3.0.0.2', subnet: '255.0.0.0', gateway: '3.0.0.1', x: 700, y: 170 }
+            };
+        }
+    }
+
     let stateStore = {
         '6A': {
             initialized: false,
@@ -154,12 +240,13 @@
     };
 
     function cloneObj(obj) {
+        if (!obj) return obj;
         return JSON.parse(JSON.stringify(obj));
     }
 
     function saveLocalSimulationState() {
         try {
-            if (currentMode && stateStore[currentMode]) {
+            if (currentMode && stateStore[currentMode] && topoNodes && Object.keys(topoNodes).length > 0) {
                 stateStore[currentMode].routerStates = cloneObj(routerStates);
                 stateStore[currentMode].topoNodes = cloneObj(topoNodes);
                 stateStore[currentMode].activeRouterKey = activeRouterKey;
@@ -206,72 +293,32 @@
     // ── Initialize Interactive Canvas with Persistent State ────────
     function initTopology(mode) {
         // Save current active mode state before switching
-        if (currentMode && stateStore[currentMode] && stateStore[currentMode].initialized) {
+        if (currentMode && stateStore[currentMode] && stateStore[currentMode].initialized && topoNodes && Object.keys(topoNodes).length > 0) {
             stateStore[currentMode].routerStates = cloneObj(routerStates);
             stateStore[currentMode].topoNodes = cloneObj(topoNodes);
             stateStore[currentMode].activeRouterKey = activeRouterKey;
         }
 
-        currentMode = mode;
+        currentMode = mode || '6A';
 
-        if (stateStore[mode].initialized) {
+        if (stateStore[currentMode] && stateStore[currentMode].initialized && stateStore[currentMode].topoNodes && Object.keys(stateStore[currentMode].topoNodes).length > 0) {
             // Restore existing student configurations
-            routerStates = cloneObj(stateStore[mode].routerStates);
-            topoNodes = cloneObj(stateStore[mode].topoNodes);
-            activeRouterKey = stateStore[mode].activeRouterKey;
+            routerStates = cloneObj(stateStore[currentMode].routerStates) || getDefaultRouterStates(currentMode);
+            topoNodes = cloneObj(stateStore[currentMode].topoNodes) || getDefaultTopoNodes(currentMode);
+            activeRouterKey = stateStore[currentMode].activeRouterKey || (currentMode === '6A' ? 'R1' : 'R0');
         } else {
             // First time initialization for this mode
-            stateStore[mode].initialized = true;
-            if (mode === '6A') {
-                activeRouterKey = 'R1';
-                routerStates.R0.hostname = 'Router0';
-                routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: '20.20.20.254', mask: '255.255.255.0', state: 'up', natRole: null };
-                routerStates.R0.interfaces['Serial0/1/0'] = { ip: '30.30.30.2', mask: '255.255.255.0', state: 'up', role: 'DCE', clockRate: 64000, natRole: null };
+            routerStates = getDefaultRouterStates(currentMode);
+            topoNodes = getDefaultTopoNodes(currentMode);
+            activeRouterKey = currentMode === '6A' ? 'R1' : 'R0';
 
-                routerStates.R1.hostname = 'Router1';
-                routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
-                routerStates.R1.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DTE', clockRate: 0, natRole: null };
-                routerStates.R1.staticNatRules = [];
-                routerStates.R1.staticRoutes = [];
-                routerStates.R1.activeTranslations = [];
-
-                topoNodes = {
-                    'PC0': { type: 'PC', label: 'PC0', ip: '20.20.20.1', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 100 },
-                    'PC1': { type: 'PC', label: 'PC1', ip: '20.20.20.2', subnet: '255.255.255.0', gateway: '20.20.20.254', x: 60, y: 220 },
-                    'SW0': { type: 'Switch', label: 'Switch0', x: 180, y: 160 },
-                    'R0':  { type: 'Router', label: 'Router0', x: 300, y: 160 },
-                    'R1':  { type: 'Router', label: 'Router1', x: 480, y: 160 },
-                    'SW1': { type: 'Switch', label: 'Switch1', x: 600, y: 160 },
-                    'PC2': { type: 'PC', label: 'PC2', ip: '', subnet: '', gateway: '', x: 720, y: 100 },
-                    'Server0': { type: 'Server', label: 'Server0', ip: '', subnet: '', gateway: '', x: 720, y: 220 }
-                };
-            } else {
-                activeRouterKey = 'R0';
-                routerStates.R0.hostname = 'Router0';
-                routerStates.R0.interfaces['GigabitEthernet0/0'] = { ip: null, mask: null, state: 'down', natRole: null };
-                routerStates.R0.interfaces['Serial0/1/0'] = { ip: null, mask: null, state: 'down', role: 'DCE', clockRate: 0, natRole: null };
-                routerStates.R0.accessLists = {};
-                routerStates.R0.dynamicNatPools = {};
-                routerStates.R0.dynamicNatBindings = [];
-                routerStates.R0.staticRoutes = [];
-                routerStates.R0.activeTranslations = [];
-
-                routerStates.R1.hostname = 'Router1';
-                routerStates.R1.interfaces['Serial0/1/0'] = { ip: '2.0.0.2', mask: '255.0.0.0', state: 'up', role: 'DTE', clockRate: 0, natRole: null };
-                routerStates.R1.interfaces['GigabitEthernet0/0'] = { ip: '3.0.0.1', mask: '255.0.0.0', state: 'up', natRole: null };
-
-                topoNodes = {
-                    'PC0': { type: 'PC', label: 'PC0', ip: '', subnet: '', gateway: '', x: 80, y: 110 },
-                    'PC1': { type: 'PC', label: 'PC1', ip: '', subnet: '', gateway: '', x: 80, y: 230 },
-                    'SW0': { type: 'Switch', label: 'Switch0', x: 220, y: 170 },
-                    'R0':  { type: 'Router', label: 'Router0', x: 360, y: 170 },
-                    'R1':  { type: 'Router', label: 'Router1', x: 540, y: 170 },
-                    'Server0': { type: 'Server', label: 'Server0', ip: '3.0.0.2', subnet: '255.0.0.0', gateway: '3.0.0.1', x: 700, y: 170 }
-                };
+            if (!stateStore[currentMode]) {
+                stateStore[currentMode] = {};
             }
-            stateStore[mode].routerStates = cloneObj(routerStates);
-            stateStore[mode].topoNodes = cloneObj(topoNodes);
-            stateStore[mode].activeRouterKey = activeRouterKey;
+            stateStore[currentMode].initialized = true;
+            stateStore[currentMode].routerStates = cloneObj(routerStates);
+            stateStore[currentMode].topoNodes = cloneObj(topoNodes);
+            stateStore[currentMode].activeRouterKey = activeRouterKey;
         }
 
         renderTopologyCanvas();
@@ -283,6 +330,14 @@
         const canvasContainer = document.getElementById('nat-topology-container');
         if (!canvasContainer) return;
 
+        // Safety fallback if topoNodes is not yet populated
+        if (!topoNodes || Object.keys(topoNodes).length === 0) {
+            topoNodes = getDefaultTopoNodes(currentMode);
+        }
+        if (!routerStates || !routerStates.R0 || !routerStates.R1) {
+            routerStates = getDefaultRouterStates(currentMode);
+        }
+
         canvasContainer.innerHTML = '';
         const canvas = document.createElement('div');
         canvas.style.cssText = 'position:relative; width:100%; height:320px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;';
@@ -292,6 +347,7 @@
         svg.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;';
         
         function drawLine(n1, n2, isSerial) {
+            if (!n1 || !n2 || typeof n1.x !== 'number' || typeof n2.x !== 'number') return;
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', n1.x + 24);
             line.setAttribute('y1', n1.y + 24);
@@ -304,25 +360,26 @@
         }
 
         if (currentMode === '6A') {
-            drawLine(topoNodes['PC0'], topoNodes['SW0'], false);
-            drawLine(topoNodes['PC1'], topoNodes['SW0'], false);
-            drawLine(topoNodes['SW0'], topoNodes['R0'], false);
-            drawLine(topoNodes['R0'], topoNodes['R1'], true);
-            drawLine(topoNodes['R1'], topoNodes['SW1'], false);
-            drawLine(topoNodes['SW1'], topoNodes['PC2'], false);
-            drawLine(topoNodes['SW1'], topoNodes['Server0'], false);
+            if (topoNodes['PC0'] && topoNodes['SW0']) drawLine(topoNodes['PC0'], topoNodes['SW0'], false);
+            if (topoNodes['PC1'] && topoNodes['SW0']) drawLine(topoNodes['PC1'], topoNodes['SW0'], false);
+            if (topoNodes['SW0'] && topoNodes['R0']) drawLine(topoNodes['SW0'], topoNodes['R0'], false);
+            if (topoNodes['R0'] && topoNodes['R1']) drawLine(topoNodes['R0'], topoNodes['R1'], true);
+            if (topoNodes['R1'] && topoNodes['SW1']) drawLine(topoNodes['R1'], topoNodes['SW1'], false);
+            if (topoNodes['SW1'] && topoNodes['PC2']) drawLine(topoNodes['SW1'], topoNodes['PC2'], false);
+            if (topoNodes['SW1'] && topoNodes['Server0']) drawLine(topoNodes['SW1'], topoNodes['Server0'], false);
         } else {
-            drawLine(topoNodes['PC0'], topoNodes['SW0'], false);
-            drawLine(topoNodes['PC1'], topoNodes['SW0'], false);
-            drawLine(topoNodes['SW0'], topoNodes['R0'], false);
-            drawLine(topoNodes['R0'], topoNodes['R1'], true);
-            drawLine(topoNodes['R1'], topoNodes['Server0'], false);
+            if (topoNodes['PC0'] && topoNodes['SW0']) drawLine(topoNodes['PC0'], topoNodes['SW0'], false);
+            if (topoNodes['PC1'] && topoNodes['SW0']) drawLine(topoNodes['PC1'], topoNodes['SW0'], false);
+            if (topoNodes['SW0'] && topoNodes['R0']) drawLine(topoNodes['SW0'], topoNodes['R0'], false);
+            if (topoNodes['R0'] && topoNodes['R1']) drawLine(topoNodes['R0'], topoNodes['R1'], true);
+            if (topoNodes['R1'] && topoNodes['Server0']) drawLine(topoNodes['R1'], topoNodes['Server0'], false);
         }
         canvas.appendChild(svg);
 
         // Render Device Nodes
         for (const id in topoNodes) {
             const n = topoNodes[id];
+            if (!n) continue;
             const isRouter = n.type === 'Router';
             const isSelected = isRouter && activeRouterKey === id;
             
@@ -334,7 +391,7 @@
             else if (id === 'Server0') isVerified = n.ip === (currentMode === '6A' ? '10.10.10.2' : '3.0.0.2');
             else if (isRouter) {
                 const r = routerStates[id];
-                isVerified = r && Object.values(r.interfaces).some(i => i.state === 'up');
+                isVerified = r && Object.values(r.interfaces).some(i => i.state === 'up' && i.ip);
             }
 
             const nodeDiv = document.createElement('div');
@@ -413,11 +470,12 @@
     }
 
     // ── CLI & Terminal Handling ─────────────────────────────────────
-    const terminalOutput = document.getElementById('nat-terminal-output');
-    const terminalInput = document.getElementById('nat-terminal-input');
-    const terminalPrompt = document.getElementById('nat-terminal-prompt');
+    function getTerminalOutput() { return document.getElementById('nat-terminal-output'); }
+    function getTerminalInput() { return document.getElementById('nat-terminal-input'); }
+    function getTerminalPrompt() { return document.getElementById('nat-terminal-prompt'); }
 
     function printLine(text) {
+        const terminalOutput = getTerminalOutput();
         if (!terminalOutput) return;
         const line = document.createElement('div');
         line.style.cssText = 'white-space:pre-wrap; line-height:1.4; color:#E2E8F0; font-family:monospace; font-size:0.85rem;';
@@ -427,15 +485,24 @@
     }
 
     function updatePrompt() {
+        const terminalPrompt = getTerminalPrompt();
         if (!terminalPrompt) return;
-        const rState = routerStates[activeRouterKey];
+        const rState = routerStates[activeRouterKey] || { hostname: 'Router1' };
         if (cliMode === 'user_exec') terminalPrompt.textContent = `${rState.hostname}>`;
         else if (cliMode === 'priv_exec') terminalPrompt.textContent = `${rState.hostname}#`;
         else if (cliMode === 'global_config') terminalPrompt.textContent = `${rState.hostname}(config)#`;
         else if (cliMode === 'if_config') terminalPrompt.textContent = `${rState.hostname}(config-if)#`;
     }
 
-    if (terminalInput) {
+    let terminalInitialized = false;
+    function initTerminal() {
+        if (terminalInitialized) return;
+        const terminalInput = getTerminalInput();
+        const terminalPrompt = getTerminalPrompt();
+        const terminalOutput = getTerminalOutput();
+        if (!terminalInput) return;
+        terminalInitialized = true;
+
         terminalInput.addEventListener('keydown', (e) => {
             // Ctrl+L to clear screen
             if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
@@ -1360,8 +1427,14 @@
         `;
     }
 
-    // ── Mode Switch Tabs (6A / 6B) ──────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
+    // ── Mode Switch Tabs (6A / 6B) & Resilient Bootstrapping ───────
+    let hasBooted = false;
+    function bootSimulation() {
+        if (hasBooted) return;
+        hasBooted = true;
+
+        initTerminal();
+
         const btn6A = document.getElementById('btn-mode-6a');
         const btn6B = document.getElementById('btn-mode-6b');
 
@@ -1406,6 +1479,12 @@
         initTopology(restoredMode);
         renderTaskGuide(restoredMode);
         updateResult();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootSimulation);
+    } else {
+        bootSimulation();
+    }
 
 })();

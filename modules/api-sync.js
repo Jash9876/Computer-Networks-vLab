@@ -59,7 +59,7 @@
 
         // 2. Authoritative PostgreSQL Observation & Result Restoration
         async restoreAuthoritativeHistory() {
-            const token = localStorage.getItem('vlab_token');
+            const token = localStorage.getItem('vlab_student_token') || localStorage.getItem('vlab_token');
             const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
 
             try {

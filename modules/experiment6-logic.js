@@ -405,6 +405,8 @@
             node.gateway = gwInput.value.trim();
             modal.style.display = 'none';
             renderTopologyCanvas();
+            renderTaskGuide(currentMode);
+            saveLocalSimulationState();
             checkAddressingMilestone();
             checkDynamicNatMilestone();
         };
@@ -519,6 +521,16 @@
         const parts = lower.split(/\s+/);
         const cmd   = parts[0];
         const rState = routerStates[activeRouterKey];
+
+        try {
+            executeCommandInternal(raw, lower, parts, cmd, rState);
+        } finally {
+            renderTaskGuide(currentMode);
+            saveLocalSimulationState();
+        }
+    }
+
+    function executeCommandInternal(raw, lower, parts, cmd, rState) {
 
         if (cmd === '?' || cmd === 'help') {
             printLine('Available Cisco IOS commands:');
@@ -1111,6 +1123,68 @@
         }
     }
 
+    // ── Live Progressive Completion Predicates ────────────────────
+    function checkStepStatus(mode) {
+        if (mode === '6A') {
+            const pc0 = topoNodes['PC0'];
+            const pc1 = topoNodes['PC1'];
+            const pc2 = topoNodes['PC2'];
+            const s0  = topoNodes['Server0'];
+            const r1  = routerStates.R1;
+
+            // Step 1: All 4 hosts have correct IP and Gateway
+            const isPc0Ok = pc0 && pc0.ip === '20.20.20.1' && pc0.gateway === '20.20.20.254';
+            const isPc1Ok = pc1 && pc1.ip === '20.20.20.2' && pc1.gateway === '20.20.20.254';
+            const isPc2Ok = pc2 && pc2.ip === '10.10.10.1' && pc2.gateway === '10.10.10.254';
+            const isS0Ok  = s0  && s0.ip === '10.10.10.2' && s0.gateway === '10.10.10.254';
+            const step1 = isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok;
+
+            // Step 2: Router1 NAT Boundaries designated
+            const hasInside  = r1.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && r1.interfaces['GigabitEthernet0/0']?.state === 'up';
+            const hasOutside = r1.interfaces['Serial0/1/0']?.natRole === 'outside' && r1.interfaces['Serial0/1/0']?.state === 'up';
+            const step2 = hasInside && hasOutside;
+
+            // Step 3: Static NAT Mappings & Return Static Route
+            const hasMap1 = r1.staticNatRules.some(r => r.localIp === '10.10.10.1' && r.globalIp === '30.30.30.10');
+            const hasMap2 = r1.staticNatRules.some(r => r.localIp === '10.10.10.2' && r.globalIp === '30.30.30.20');
+            const hasRoute = r1.staticRoutes.some(r => r.network === '20.20.20.0');
+            const step3 = hasMap1 && hasMap2 && hasRoute;
+
+            // Step 4: Verification Ping Executed Successfully
+            const step4 = verifiedMilestones.has('6A_NAT_VERIFY') || r1.activeTranslations.length > 0;
+
+            return { step1, step2, step3, step4 };
+        } else {
+            const pc0 = topoNodes['PC0'];
+            const pc1 = topoNodes['PC1'];
+            const s0  = topoNodes['Server0'];
+            const r0  = routerStates.R0;
+
+            // Step 1: 6B Host Addressing & Gateways
+            const isPc0Ok = pc0 && pc0.ip === '10.0.0.2' && pc0.gateway === '10.0.0.1';
+            const isPc1Ok = pc1 && pc1.ip === '10.0.0.3' && pc1.gateway === '10.0.0.1';
+            const isS0Ok  = s0  && s0.ip === '3.0.0.2' && s0.gateway === '3.0.0.1';
+            const step1 = isPc0Ok && isPc1Ok && isS0Ok;
+
+            // Step 2: Router0 NAT roles & DCE Clock Rate
+            const hasInside = r0.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && r0.interfaces['GigabitEthernet0/0']?.state === 'up';
+            const hasOutside = r0.interfaces['Serial0/1/0']?.natRole === 'outside' && r0.interfaces['Serial0/1/0']?.state === 'up' && r0.interfaces['Serial0/1/0']?.clockRate === 64000;
+            const step2 = hasInside && hasOutside;
+
+            // Step 3: ACL 1, Pool DYNAT, Binding, and Static Route
+            const hasAcl = r0.accessLists[1] && r0.accessLists[1].some(a => a.net === '10.0.0.0' && a.wildcard === '0.255.255.255');
+            const hasPool = r0.dynamicNatPools['DYNAT'] && r0.dynamicNatPools['DYNAT'].startIp === '2.0.0.10' && r0.dynamicNatPools['DYNAT'].endIp === '2.0.0.20';
+            const hasBinding = r0.dynamicNatBindings.some(b => b.listNum === 1 && b.poolName === 'DYNAT');
+            const hasRoute = r0.staticRoutes.some(r => r.network === '3.0.0.0' && r.nextHop === '2.0.0.2');
+            const step3 = Boolean(hasAcl && hasPool && hasBinding && hasRoute);
+
+            // Step 4: Dynamic NAT Verification Trace & Ping
+            const step4 = verifiedMilestones.has('6B_DYN_NAT_VERIFY') || r0.activeTranslations.some(t => t.type === 'dynamic');
+
+            return { step1, step2, step3, step4 };
+        }
+    }
+
     // ── Interactive Guided Task Guide ───────────────────────────────
     function renderTaskGuide(mode) {
         const titleEl = document.getElementById('nat-guide-title');
@@ -1118,14 +1192,9 @@
 
         if (!stepsEl) return;
 
-        const m = verifiedMilestones;
+        const { step1, step2, step3, step4 } = checkStepStatus(mode);
 
         if (mode === '6A') {
-            const step1Done = m.has('6A_TOPOLOGY_IP');
-            const step2Done = Boolean(routerStates.R1.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && routerStates.R1.interfaces['Serial0/1/0']?.natRole === 'outside');
-            const step3Done = m.has('6A_STATIC_NAT');
-            const step4Done = m.has('6A_NAT_VERIFY');
-
             if (titleEl) {
                 titleEl.innerHTML = `
                     <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
@@ -1134,11 +1203,11 @@
             }
             stepsEl.innerHTML = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
-                    <div style="background:${step1Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step1 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step1Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step1 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 1</span>
-                                <span>${step1Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step1 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Host &amp; Interface Addressing</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1149,11 +1218,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step2Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step2 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step2Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step2 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 2</span>
-                                <span>${step2Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step2 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Designate NAT Boundaries</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1164,11 +1233,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step3Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step3 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step3Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step3 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 3</span>
-                                <span>${step3Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step3 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Configure Static Mappings &amp; Route</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1179,11 +1248,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step4Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step4 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step4Done ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step4 ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 4</span>
-                                <span>${step4Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step4 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">End-to-End Verification</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1196,11 +1265,6 @@
                 </div>
             `;
         } else {
-            const step1Done = m.has('6B_TOPOLOGY_IP');
-            const step2Done = Boolean(routerStates.R0.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && routerStates.R0.interfaces['Serial0/1/0']?.natRole === 'outside');
-            const step3Done = m.has('6B_DYN_NAT_CFG');
-            const step4Done = m.has('6B_DYN_NAT_VERIFY');
-
             if (titleEl) {
                 titleEl.innerHTML = `
                     <span style="display:inline-block; width:8px; height:8px; background:var(--primary-color); border-radius:50%;"></span>
@@ -1209,11 +1273,11 @@
             }
             stepsEl.innerHTML = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem;">
-                    <div style="background:${step1Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step1 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step1 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step1Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step1 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 1</span>
-                                <span>${step1Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step1 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Host Addressing &amp; Gateways</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1224,11 +1288,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step2Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step2 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step2 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step2Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step2 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 2</span>
-                                <span>${step2Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step2 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Router Roles &amp; DCE Clock</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1239,11 +1303,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step3Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step3 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step3 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step3Done ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step3 ? '#15803D' : '#3B82F6'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 3</span>
-                                <span>${step3Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step3 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">ACL, NAT Pool &amp; Binding</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">
@@ -1254,11 +1318,11 @@
                         </div>
                     </div>
 
-                    <div style="background:${step4Done ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4Done ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="background:${step4 ? '#F0FDF4' : '#F8FAFC'}; border:1px solid ${step4 ? '#86EFAC' : '#E2E8F0'}; border-radius:8px; padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
                         <div>
-                            <div style="font-size:0.75rem; font-weight:700; color:${step4Done ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
+                            <div style="font-size:0.75rem; font-weight:700; color:${step4 ? '#15803D' : '#10B981'}; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem; display:flex; justify-content:space-between;">
                                 <span>Step 4</span>
-                                <span>${step4Done ? '✔ Completed' : 'Pending'}</span>
+                                <span>${step4 ? '✔ Completed' : 'Pending'}</span>
                             </div>
                             <div style="font-weight:700; color:#1E293B; font-size:0.88rem; margin-bottom:0.5rem;">Trace &amp; Verify Dynamic NAT</div>
                             <div style="font-size:0.8rem; color:#475569; line-height:1.6;">

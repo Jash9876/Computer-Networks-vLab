@@ -171,7 +171,7 @@
         // 2. Log Educational Event to Serverless API
         async logEvent(stage, eventType, payload = {}) {
             try {
-                const token = localStorage.getItem('vlab_token');
+                const token = localStorage.getItem('vlab_student_token') || localStorage.getItem('vlab_token');
                 const authHeaders = {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})

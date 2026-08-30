@@ -138,7 +138,8 @@
 
                         // Strict Authoritative Dual Condition
                         const isAcademicComplete = isSimComplete && isVivaPassed;
-                        const practicalDate = isSimComplete && data.progress && data.progress.completed_at ? new Date(data.progress.completed_at).toLocaleString() : 'In Progress';
+                        const practicalDateRaw = (data.progress && data.progress.completed_at) || (data.certificate && data.certificate.issued_at);
+                        const practicalDate = isSimComplete ? (practicalDateRaw ? new Date(practicalDateRaw).toLocaleString() : 'Completed ✔') : 'In Progress';
                         const certDate = isAcademicComplete && data.certificate && data.certificate.issued_at ? new Date(data.certificate.issued_at).toLocaleString() : null;
 
                         resTextEl.innerHTML = `

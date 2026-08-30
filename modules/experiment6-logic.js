@@ -1130,14 +1130,19 @@
             const pc1 = topoNodes['PC1'];
             const pc2 = topoNodes['PC2'];
             const s0  = topoNodes['Server0'];
+            const r0  = routerStates.R0;
             const r1  = routerStates.R1;
 
-            // Step 1: All 4 hosts have correct IP and Gateway
+            // Step 1: All 4 hosts + router interfaces addressed and brought UP
             const isPc0Ok = pc0 && pc0.ip === '20.20.20.1' && pc0.gateway === '20.20.20.254';
             const isPc1Ok = pc1 && pc1.ip === '20.20.20.2' && pc1.gateway === '20.20.20.254';
             const isPc2Ok = pc2 && pc2.ip === '10.10.10.1' && pc2.gateway === '10.10.10.254';
             const isS0Ok  = s0  && s0.ip === '10.10.10.2' && s0.gateway === '10.10.10.254';
-            const step1 = isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok;
+            
+            const isR1G0Ok = r1.interfaces['GigabitEthernet0/0']?.ip === '10.10.10.254' && r1.interfaces['GigabitEthernet0/0']?.state === 'up';
+            const isR1S0Ok = r1.interfaces['Serial0/1/0']?.ip === '30.30.30.3' && r1.interfaces['Serial0/1/0']?.state === 'up';
+            
+            const step1 = isPc0Ok && isPc1Ok && isPc2Ok && isS0Ok && isR1G0Ok && isR1S0Ok;
 
             // Step 2: Router1 NAT Boundaries designated
             const hasInside  = r1.interfaces['GigabitEthernet0/0']?.natRole === 'inside' && r1.interfaces['GigabitEthernet0/0']?.state === 'up';

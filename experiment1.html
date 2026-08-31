@@ -252,24 +252,29 @@
                 </div>
             </section>
 
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Evaluation</h2>
+                    <p>Answer the 5 questions below to test your understanding. A minimum score of <strong>70%</strong> is required for Academic Certification.</p>
+                    <div id="quiz-container">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1.5rem; background-color: #2563EB; color: white;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
             <!-- Result Section -->
             <section id="result" class="section">
                 <div class="card">
                     <h2 class="section-title">Result</h2>
-                    <p id="result-text">Loading...</p>
-                </div>
-            </section>
-
-            <!-- Quiz Section -->
-            <section id="quiz" class="section">
-                <div class="card">
-                    <h2 class="section-title">Viva Questions</h2>
-                    <div id="quiz-container">
-                        <!-- Populated by JS -->
+                    <div id="result-text" style="line-height: 1.8;">
+                        <p>Complete the practical simulation and viva evaluation to view your finalized laboratory result.</p>
                     </div>
-                    <button class="btn" id="submit-quiz" style="margin-top: 1rem;">Submit Quiz</button>
-                    <div id="quiz-results" class="quiz-results"></div>
-                    <button class="btn" id="view-cert-btn" style="margin-top: 1rem; display: none; background-color: #059669;">View Certificate</button>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #059669; color: white;">
+                        <i data-lucide="award"></i> View Academic Certificate
+                    </button>
                 </div>
             </section>
         </main>

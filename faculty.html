@@ -399,7 +399,7 @@
                     const p = pMap[expId];
                     const mCount = (p && p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
                     const reqCount = expTotalReq[expId] || 5;
-                    const isSimComplete = p && (p.isSimComplete === true || mCount >= reqCount || Number(p.event_count) >= reqCount);
+                    const isSimComplete = p && (p.isSimComplete === true || mCount >= reqCount);
                     const vivaScore = p ? (Number(p.final_score ?? p.score) || 0) : 0;
                     const isVivaPassed = vivaScore >= 70;
 
@@ -440,7 +440,7 @@
             });
 
             // Synchronize Overview Cards with authoritative matrix calculation
-            const maxPossible = students.length * 5;
+            const maxPossible = students.length * 6;
             const liveCompletionRate = maxPossible > 0 ? Math.round((liveTotalCompletedExps / maxPossible) * 100) : 0;
 
             document.getElementById('total-students').textContent = students.length;
@@ -547,7 +547,7 @@
                     const expId = p.experiment_id;
                     const reqCount = expTotalReq[expId] || 5;
                     const mCount = (p.completed_milestones && Array.isArray(p.completed_milestones)) ? p.completed_milestones.length : 0;
-                    const isSimComplete = p.isSimComplete === true || mCount >= reqCount || Number(p.event_count) >= reqCount;
+                    const isSimComplete = p.isSimComplete === true || mCount >= reqCount;
                     const vivaScore = Number(p.viva_score ?? p.final_score ?? p.score) || 0;
                     const isVivaPassed = vivaScore >= 70;
 

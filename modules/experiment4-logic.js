@@ -190,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 r0g0 === '192.168.10.1' && r0g1 === '192.168.11.1') {
                 fb4aIp.style.color = '#059669';
                 fb4aIp.textContent = '✔ Correct! Addressing plan for 4-A verified.';
+                obs('Addressing Match (4-A)', 'Matched PC & Router /24 Addresses', 'Passed');
             } else {
                 fb4aIp.style.color = '#DC2626';
                 fb4aIp.textContent = '✘ Incorrect mapping. Check subnet groupings for LAN 1 (192.168.10.0) and LAN 2 (192.168.11.0).';
@@ -217,6 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (c1 && c2 && c3 && c4 && c5) {
                 fb4aCli.style.color = '#059669';
                 fb4aCli.textContent = '✔ Excellent! Command syntax verified. Now apply this in the Router CLI.';
+                obs('Command Formulation (4-A)', 'Validated Router Interface IP Syntax', 'Passed');
             } else {
                 fb4aCli.style.color = '#DC2626';
                 fb4aCli.textContent = '✘ Please check syntax: enable -> configure terminal -> ip address 192.168.10.1 255.255.255.0 -> no shutdown.';
@@ -238,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (s0 === 'lan1' && s32 === 'lan2' && s64 === 'wan' && s96 === 'lan3' && s128 === 'lan4') {
                 fb4bSub.style.color = '#059669';
                 fb4bSub.textContent = '✔ Correct! All 5 subnets matched to their devices.';
+                obs('Subnet Allocation (4-B)', 'Assigned 5 Subnets (/27) to WAN/LANs', 'Passed');
             } else {
                 fb4bSub.style.color = '#DC2626';
                 fb4bSub.textContent = '✘ Mismatch in subnet assignment. Remember: .0=LAN1, .32=LAN2, .64=WAN, .96=LAN3, .128=LAN4.';
@@ -258,6 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (net === '192.168.10.96' && first === '192.168.10.97' && last === '192.168.10.126' && bcast === '192.168.10.127') {
                 fb4bCalc.style.color = '#059669';
                 fb4bCalc.textContent = '✔ Accurate! Subnet boundaries for 192.168.10.96/27 verified.';
+                obs('Subnet Calculation Challenge (4-B)', 'Calculated /27 Host and Broadcast Boundaries', 'Passed');
             } else {
                 fb4bCalc.style.color = '#DC2626';
                 fb4bCalc.textContent = '✘ Expected: Network=192.168.10.96, First=192.168.10.97, Last=192.168.10.126, Broadcast=192.168.10.127.';
@@ -278,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (r0role === 'DCE' && r0clock === '64000' && r1role === 'DTE' && r1clock === 'none') {
                 fb4bDce.style.color = '#059669';
                 fb4bDce.textContent = '✔ Correct! Router0 is DCE providing 64000 bps clock rate; Router1 is DTE.';
+                obs('DTE/DCE Role Specification (4-B)', 'Configured Router0 as DCE (64000) and Router1 as DTE', 'Passed');
             } else {
                 fb4bDce.style.color = '#DC2626';
                 fb4bDce.textContent = '✘ Incorrect setup. Router0 requires DCE + 64000; Router1 requires DTE + None.';
@@ -299,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 r1h1 === '192.168.10.65' && r1h2 === '192.168.10.65') {
                 fb4bRoutes.style.color = '#059669';
                 fb4bRoutes.textContent = '✔ Correct! Forward routes configured via 192.168.10.66 (R1) and return routes via 192.168.10.65 (R0).';
+                obs('Static Routing Formulation (4-B)', 'Formulated Next Hops (.66 forward, .65 return)', 'Passed');
             } else {
                 fb4bRoutes.style.color = '#DC2626';
                 fb4bRoutes.textContent = '✘ Check next hops: Router0 forwards via 192.168.10.66; Router1 returns via 192.168.10.65.';
@@ -445,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             topoFeedback.style.color = '#059669';
             topoFeedback.innerHTML = '✔ Topology 4-A Verified!<br>✓ PC0 ↔ Router0 (Crossover)<br>✓ PC1 ↔ Router0 (Crossover)<br>Double-click PCs to configure IP parameters, then launch the Router CLI.';
+            obs('Topology Builder (4-A)', 'Connected 2 PCs and 1 Router with Crossover', 'Verified');
             if (openTerminalBtn) openTerminalBtn.style.display = 'inline-block';
             if (openPingBtn)     openPingBtn.style.display     = 'inline-block';
 
@@ -494,6 +501,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             topoFeedback.style.color = '#059669';
             topoFeedback.innerHTML = '✔ WAN Topology 4-B Verified!<br>✓ PC0 & PC1 ↔ Router0 (LAN 1 & 2)<br>✓ Router0 ↔ Router1 (Serial WAN Link)<br>✓ PC2 & PC3 ↔ Router1 (LAN 3 & 4)<br>Ready for Subnet Analyzer & Dual Router CLI Configuration.';
+            obs('Topology Builder (4-B)', 'Constructed 4-PC 2-Router Serial WAN Topology', 'Verified');
             if (openTerminalBtn) openTerminalBtn.style.display = 'inline-block';
             if (openPingBtn)     openPingBtn.style.display     = 'inline-block';
             if (openSubnetBtn)   openSubnetBtn.style.display   = 'inline-block';
@@ -1030,6 +1038,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (received === total) {
                         pingOutput.innerHTML += `<br><span style="color:#34D399">Approximate round trip times: &lt;1ms</span>`;
                         showTroubleshooter('✔ Ping Successful! End-to-end connectivity verified across all hops and return path.', true);
+                        obs(`Ping Simulation (${currentMode})`, `Ping to ${destIp} Successful (4/4 Packets Received)`, 'Success');
                         updateResult();
                     } else {
                         showTroubleshooter(diag.reason, false);

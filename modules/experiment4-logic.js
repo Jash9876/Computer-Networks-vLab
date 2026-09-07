@@ -1,30 +1,62 @@
-// Experiment 4: Router IP Configuration & WAN Subnetting
-// Logic for both Part 4-A and Part 4-B
+// modules/experiment4-logic.js
+// Complete Logic Engine for Experiment 4:
+// - Exercise 4-A: Configuration of IP Address in Router
+// - Exercise 4-B: Subnetting in WAN Configuration (DTE & DCE)
+// Strictly follows Cisco IOS behavior: Static routing ONLY (no RIP), HWIC-2T module simulation,
+// user-calculated static route validation, and Cisco prompt execution.
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    // ── State ─────────────────────────────────────────────────────
-    let currentMode = '4A';
-    let cliMode = 'user_exec';
-    let cliInterface = null;
-    let activeRouterKey = 'R0'; // 'R0' or 'R1' — keys into routerStates
-    let cliHistory = [];
-    let historyIndex = -1;
+    // ─────────────────────────────────────────────────────────────
+    // 1. STATE MANAGEMENT
+    // ─────────────────────────────────────────────────────────────
+    let currentPart = 'A'; // 'A' or 'B'
 
-    // Two independent router state objects
-    const routerStates = {
+    // Topology Graphs (local to Part A and Part B)
+    const topoA = { nodes: {}, edges: [], counters: { PC: 0, Router: 0 } };
+    const topoB = { nodes: {}, edges: [], counters: { PC: 0, Router: 0 } };
+
+    // Router State Machines
+    // Part A Router0
+    const router4A = {
+        hostname: 'Router0',
+        cliMode: 'user_exec', // 'user_exec' | 'priv_exec' | 'global_config' | 'if_config'
+        cliInterface: null,
+        history: [],
+        historyIndex: -1,
+        interfaces: {
+            'GigabitEthernet0/0': { ip: '', mask: '', state: 'down' },
+            'GigabitEthernet0/1': { ip: '', mask: '', state: 'down' }
+        }
+    };
+
+    // Part B Dual Routers
+    let activeRouterKey4B = 'R0'; // 'R0' or 'R1'
+    const router4B = {
         R0: {
             hostname: 'Router0',
+            cliMode: 'user_exec',
+            cliInterface: null,
+            history: [],
+            historyIndex: -1,
+            hwicInstalled: false,
+            powerOn: true,
             interfaces: {
                 'GigabitEthernet0/0': { ip: '', mask: '', state: 'down' },
                 'GigabitEthernet0/1': { ip: '', mask: '', state: 'down' },
                 'Serial0/1/0':        { ip: '', mask: '', state: 'down', clockRate: 0, role: 'DCE' }
             },
-            routes: []
+            routes: [] // { network, mask, nextHop }
         },
         R1: {
             hostname: 'Router1',
+            cliMode: 'user_exec',
+            cliInterface: null,
+            history: [],
+            historyIndex: -1,
+            hwicInstalled: false,
+            powerOn: true,
             interfaces: {
                 'GigabitEthernet0/0': { ip: '', mask: '', state: 'down' },
                 'GigabitEthernet0/1': { ip: '', mask: '', state: 'down' },
@@ -34,1137 +66,1216 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // ── DOM refs ──────────────────────────────────────────────────
-    const mode4ABtn        = document.getElementById('mode-4a-btn');
-    const mode4BBtn        = document.getElementById('mode-4b-btn');
-    const part4AStages     = document.getElementById('part-4a-stages');
-    const part4BStages     = document.getElementById('part-4b-stages');
-    const topoInstructions = document.getElementById('topo-instructions');
-    const cableSelect      = document.getElementById('cable-type-select');
-    const checkTopoBtn     = document.getElementById('check-topology');
-    const resetTopoBtn     = document.getElementById('reset-topology');
-    const topoFeedback     = document.getElementById('topology-feedback');
-    const openTerminalBtn  = document.getElementById('open-terminal-btn');
-    const openPingBtn      = document.getElementById('open-ping-btn');
-    const openSubnetBtn    = document.getElementById('open-subnet-btn');
+    // Milestone completion tracker
+    const achievedMilestones = new Set();
 
-    const subnetSection  = document.getElementById('subnet-section');
-    const closeSubnetBtn = document.getElementById('close-subnet-btn');
-    const subnetDetails  = document.getElementById('subnet-details');
-    const subnetTitle    = document.getElementById('subnet-title');
-    const subnetNetwork  = document.getElementById('subnet-network');
-    const subnetBroadcast= document.getElementById('subnet-broadcast');
-    const subnetFirst    = document.getElementById('subnet-first');
-    const subnetLast     = document.getElementById('subnet-last');
-    const subnetBlocks   = document.querySelectorAll('.subnet-block-btn');
-
-    const cliSection            = document.getElementById('cli-section');
-    const cliTitle              = document.getElementById('cli-title');
-    const closeCliBtn           = document.getElementById('close-cli-btn');
-    const terminalContainer     = document.getElementById('terminal');
-    const terminalOutput        = document.getElementById('terminal-output');
-    const terminalInput         = document.getElementById('terminal-input');
-    const terminalPrompt        = document.getElementById('terminal-prompt');
-    const validateRouterBtn     = document.getElementById('validate-router-btn');
-    const routerValidationOutput= document.getElementById('router-validation-output');
-
-    // Router selector (4B - to switch between R0 and R1)
-    let routerSwitcher = null;
-
-    const pingSection           = document.getElementById('ping-section');
-    const closePingBtn          = document.getElementById('close-ping-btn');
-    const pingSource            = document.getElementById('ping-source');
-    const pingDest              = document.getElementById('ping-dest');
-    const sendPingBtn           = document.getElementById('send-ping-btn');
-    const pingOutput            = document.getElementById('ping-output');
-    const troubleshooterOutput  = document.getElementById('troubleshooter-output');
-    const resultText            = document.getElementById('result-text');
-
-    // ── Helpers ───────────────────────────────────────────────────
-    function nodes() {
-        return (window.Topology && window.Topology.nodes) ? window.Topology.nodes : {};
-    }
-
-    function edges() {
-        return (window.Topology && window.Topology.edges) ? window.Topology.edges : [];
-    }
-
-    function getPrompt() {
-        const h = routerStates[activeRouterKey].hostname;
-        switch (cliMode) {
-            case 'user_exec':    return `${h}>`;
-            case 'priv_exec':    return `${h}#`;
-            case 'global_config':return `${h}(config)#`;
-            case 'if_config':    return `${h}(config-if)#`;
-            default:             return `${h}>`;
+    function reportMilestone(milestoneId) {
+        if (!achievedMilestones.has(milestoneId)) {
+            achievedMilestones.add(milestoneId);
+            if (typeof window.addObservation === 'function') {
+                window.addObservation('Experiment 4', `Milestone: ${milestoneId}`, 'Verified');
+            }
+            updateResultText();
         }
     }
 
-    function updatePrompt() {
-        if (terminalPrompt) terminalPrompt.textContent = getPrompt() + ' ';
-    }
-
-    function printLine(text) {
-        if (!terminalOutput) return;
-        terminalOutput.textContent += text + '\n';
-        if (terminalContainer) terminalContainer.scrollTop = terminalContainer.scrollHeight;
-    }
-
-    function clearTerminal() {
-        if (terminalOutput) terminalOutput.textContent = '';
-    }
-
-    function obs(action, result) {
-        if (typeof addObservation === 'function') addObservation('Router CLI', action, result);
-    }
-
+    // ─────────────────────────────────────────────────────────────
+    // 2. HELPER FUNCTIONS
+    // ─────────────────────────────────────────────────────────────
     function normaliseIf(raw) {
         if (!raw) return null;
         const s = String(raw).trim().toLowerCase().replace(/\s+/g, ' ');
-
-        // GigabitEthernet 0/0
-        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/0|(?:gi|g)\s*0\/0|0\/0)$/i.test(s)) {
-            return 'GigabitEthernet0/0';
-        }
-
-        // GigabitEthernet 0/1
-        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/1|(?:gi|g)\s*0\/1|0\/1)$/i.test(s)) {
-            return 'GigabitEthernet0/1';
-        }
-
-        // Serial 0/1/0
-        if (/^(?:serial\s*(?:se|s)?\s*0\/1\/0|(?:se|s)\s*0\/1\/0|0\/1\/0)$/i.test(s)) {
-            return 'Serial0/1/0';
-        }
-
+        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/0|(?:gi|g)\s*0\/0|0\/0)$/i.test(s)) return 'GigabitEthernet0/0';
+        if (/^(?:gigabitethernet\s*(?:gi|g)?\s*0\/1|(?:gi|g)\s*0\/1|0\/1)$/i.test(s)) return 'GigabitEthernet0/1';
+        if (/^(?:serial\s*(?:se|s)?\s*0\/1\/0|(?:se|s)\s*0\/1\/0|0\/1\/0)$/i.test(s)) return 'Serial0/1/0';
         return null;
     }
 
-    // Convert IP and Mask to Network Address
     function calculateNetwork(ipStr, maskStr) {
         if (!ipStr || !maskStr) return '';
         const ipParts = ipStr.split('.').map(Number);
         const maskParts = maskStr.split('.').map(Number);
         if (ipParts.length !== 4 || maskParts.length !== 4) return '';
-        const netParts = ipParts.map((p, i) => p & maskParts[i]);
-        return netParts.join('.');
+        return ipParts.map((p, i) => p & maskParts[i]).join('.');
     }
 
-    function updateDynamicTopologyLabels() {
-        for (let id in nodes()) {
-            const n = nodes()[id];
-            if (n.type === 'Router') {
-                const rKey = (n.label === 'Router1') ? 'R1' : 'R0';
-                const rState = routerStates[rKey];
-                let infoHtml = `<img src="assets/icons/router.svg" width="24" height="24" style="margin-bottom: 2px; pointer-events: none;"><br><span style="pointer-events: none; font-weight:bold;">${n.label}</span>`;
-                
-                for (let ifName in rState.interfaces) {
-                    const iface = rState.interfaces[ifName];
-                    if (iface.ip) {
-                        const shortName = ifName.replace('GigabitEthernet', 'G').replace('Serial', 'S');
-                        const isUp = iface.state === 'up';
-                        const dotColor = isUp ? '#10B981' : '#EF4444';
-                        infoHtml += `<div style="font-size:0.65rem; line-height:1.1; margin-top:2px;"><span style="color:${dotColor}">●</span> ${shortName}: ${iface.ip}</div>`;
+    function getPartPrompt(part, routerKey) {
+        if (part === 'A') {
+            const h = router4A.hostname;
+            switch (router4A.cliMode) {
+                case 'user_exec':     return `${h}>`;
+                case 'priv_exec':     return `${h}#`;
+                case 'global_config': return `${h}(config)#`;
+                case 'if_config':     return `${h}(config-if)#`;
+                default:              return `${h}>`;
+            }
+        } else {
+            const r = router4B[routerKey];
+            const h = r.hostname;
+            switch (r.cliMode) {
+                case 'user_exec':     return `${h}>`;
+                case 'priv_exec':     return `${h}#`;
+                case 'global_config': return `${h}(config)#`;
+                case 'if_config':     return `${h}(config-if)#`;
+                default:              return `${h}>`;
+            }
+        }
+    }
+
+    function printTerminal(termOutput, text) {
+        if (!termOutput) return;
+        termOutput.textContent += text + '\n';
+        termOutput.scrollTop = termOutput.scrollHeight;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. TAB NAVIGATION (EXERCISE 4-A vs 4-B)
+    // ─────────────────────────────────────────────────────────────
+    const navBtns = document.querySelectorAll('.exp4-nav-btn');
+    const partACont = document.getElementById('exp4-part-a');
+    const partBCont = document.getElementById('exp4-part-b');
+    const resetBtn = document.getElementById('exp4-reset-btn');
+
+    function switchPart(part) {
+        currentPart = part;
+        navBtns.forEach(btn => {
+            const bPart = btn.getAttribute('data-part');
+            if (bPart === part) {
+                btn.style.backgroundColor = 'var(--primary-color)';
+                btn.style.color = 'white';
+            } else {
+                btn.style.backgroundColor = 'var(--secondary-color)';
+                btn.style.color = 'white';
+            }
+        });
+
+        if (part === 'A') {
+            if (partACont) partACont.style.display = 'block';
+            if (partBCont) partBCont.style.display = 'none';
+            window.Topology = topoA;
+        } else {
+            if (partACont) partACont.style.display = 'none';
+            if (partBCont) partBCont.style.display = 'block';
+            window.Topology = topoB;
+        }
+    }
+
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const p = btn.getAttribute('data-part');
+            if (p) switchPart(p);
+        });
+    });
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Reset all progress in Experiment 4? Canvas, CLI configurations, and routes will be cleared.')) {
+                location.reload();
+            }
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. CANVAS DND & WIRING ENGINE (Part A and Part B isolated)
+    // ─────────────────────────────────────────────────────────────
+    function setupCanvas(partPrefix, topoState, is4B) {
+        const canvas = document.getElementById(`topology-canvas-${partPrefix}`);
+        const svgLayer = document.getElementById(`connection-layer-${partPrefix}`);
+        const connectBtn = document.getElementById(`connect-mode-btn-${partPrefix}`);
+        const cableSelect = document.getElementById(`cable-type-select-${partPrefix}`);
+        const checkBtn = document.getElementById(`check-topology-${partPrefix}`);
+        const resetCanvasBtn = document.getElementById(`reset-topology-${partPrefix}`);
+        const feedback = document.getElementById(`topology-feedback-${partPrefix}`);
+        const toolPc = document.getElementById(`node-pc-${partPrefix}`);
+        const toolRouter = document.getElementById(`node-router-${partPrefix}`);
+
+        let isConnectMode = false;
+        let selectedNodeForConnect = null;
+
+        function drawConnections() {
+            if (!svgLayer) return;
+            svgLayer.innerHTML = '';
+            topoState.edges.forEach(edge => {
+                const n1 = topoState.nodes[edge.sourceId];
+                const n2 = topoState.nodes[edge.targetId];
+                if (!n1 || !n2) return;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', n1.x);
+                line.setAttribute('y1', n1.y);
+                line.setAttribute('x2', n2.x);
+                line.setAttribute('y2', n2.y);
+
+                if (edge.cableType === 'crossover') {
+                    line.setAttribute('stroke', '#D97706');
+                    line.setAttribute('stroke-dasharray', '6,4');
+                    line.setAttribute('stroke-width', '3');
+                } else if (edge.cableType === 'serial') {
+                    line.setAttribute('stroke', '#DC2626');
+                    line.setAttribute('stroke-dasharray', '8,4');
+                    line.setAttribute('stroke-width', '4');
+                } else {
+                    line.setAttribute('stroke', '#005BAC');
+                    line.setAttribute('stroke-width', '3');
+                }
+
+                line.style.cursor = 'pointer';
+                line.addEventListener('click', () => {
+                    const idx = topoState.edges.indexOf(edge);
+                    if (idx > -1) {
+                        topoState.edges.splice(idx, 1);
+                        drawConnections();
+                    }
+                });
+                svgLayer.appendChild(line);
+            });
+        }
+
+        if (connectBtn) {
+            connectBtn.addEventListener('click', () => {
+                isConnectMode = !isConnectMode;
+                if (isConnectMode) {
+                    connectBtn.style.backgroundColor = 'var(--accent-color)';
+                    connectBtn.innerHTML = '<i data-lucide="mouse-pointer"></i> Enable Move Mode';
+                    canvas.style.cursor = 'crosshair';
+                } else {
+                    connectBtn.style.backgroundColor = 'var(--secondary-color)';
+                    connectBtn.innerHTML = '<i data-lucide="link"></i> Enable Connect Mode';
+                    canvas.style.cursor = 'default';
+                    if (selectedNodeForConnect) {
+                        selectedNodeForConnect.style.boxShadow = '';
+                        selectedNodeForConnect = null;
                     }
                 }
-                n.element.innerHTML = infoHtml;
-            }
+                if (window.lucide) lucide.createIcons();
+            });
+        }
+
+        function createNode(type, icon, x, y) {
+            topoState.counters[type] = (topoState.counters[type] || 0) + 1;
+            const index = topoState.counters[type] - 1;
+            const id = `${type.toLowerCase()}_${partPrefix}_${index}`;
+            const label = `${type}${index}`;
+
+            const el = document.createElement('div');
+            el.className = 'network-node';
+            el.id = id;
+            el.style.position = 'absolute';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.width = '64px';
+            el.style.height = '64px';
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.background = 'white';
+            el.style.border = '2px solid var(--primary-color)';
+            el.style.borderRadius = '8px';
+            el.style.cursor = 'grab';
+            el.style.userSelect = 'none';
+            el.style.zIndex = '10';
+
+            el.innerHTML = `
+                <img src="assets/icons/${icon}.svg" width="28" height="28" style="pointer-events:none;">
+                <span style="font-size:0.75rem; font-weight:700; color:#1E293B; pointer-events:none;">${label}</span>
+            `;
+
+            topoState.nodes[id] = {
+                id,
+                type,
+                label,
+                element: el,
+                x: x + 32,
+                y: y + 32,
+                ip: '',
+                subnet: '',
+                gateway: ''
+            };
+
+            // Dragging
+            let isDragging = false;
+            let startX, startY, initX, initY;
+
+            el.addEventListener('mousedown', (e) => {
+                if (isConnectMode) {
+                    e.stopPropagation();
+                    if (!selectedNodeForConnect) {
+                        selectedNodeForConnect = el;
+                        el.style.boxShadow = '0 0 0 3px #10B981';
+                    } else if (selectedNodeForConnect !== el) {
+                        const srcId = selectedNodeForConnect.id;
+                        const tgtId = el.id;
+                        const cable = cableSelect ? cableSelect.value : 'crossover';
+
+                        const exists = topoState.edges.some(ed => 
+                            (ed.sourceId === srcId && ed.targetId === tgtId) ||
+                            (ed.sourceId === tgtId && ed.targetId === srcId)
+                        );
+
+                        if (!exists) {
+                            topoState.edges.push({ sourceId: srcId, targetId: tgtId, cableType: cable });
+                            drawConnections();
+                        }
+
+                        selectedNodeForConnect.style.boxShadow = '';
+                        selectedNodeForConnect = null;
+                    }
+                    return;
+                }
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initX = parseInt(el.style.left, 10);
+                initY = parseInt(el.style.top, 10);
+                el.style.cursor = 'grabbing';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const newX = Math.max(0, Math.min(initX + dx, canvas.clientWidth - 64));
+                const newY = Math.max(0, Math.min(initY + dy, canvas.clientHeight - 64));
+                el.style.left = `${newX}px`;
+                el.style.top = `${newY}px`;
+                topoState.nodes[id].x = newX + 32;
+                topoState.nodes[id].y = newY + 32;
+                drawConnections();
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    el.style.cursor = 'grab';
+                }
+            });
+
+            // Double-click to open IP Configuration (for PCs)
+            el.addEventListener('dblclick', () => {
+                if (type === 'PC') {
+                    openIpModal(topoState.nodes[id], partPrefix);
+                }
+            });
+
+            canvas.appendChild(el);
+            drawConnections();
+        }
+
+        // Palette drag
+        [toolPc, toolRouter].forEach(tool => {
+            if (!tool) return;
+            tool.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', tool.getAttribute('data-type'));
+                e.dataTransfer.setData('icon', tool.getAttribute('data-icon'));
+            });
+        });
+
+        if (canvas) {
+            canvas.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+            canvas.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const type = e.dataTransfer.getData('text/plain');
+                const icon = e.dataTransfer.getData('icon') || (type === 'PC' ? 'pc' : 'router');
+                const rect = canvas.getBoundingClientRect();
+                const dropX = e.clientX - rect.left - 32;
+                const dropY = e.clientY - rect.top - 32;
+                createNode(type, icon, Math.max(0, dropX), Math.max(0, dropY));
+            });
+        }
+
+        // Reset canvas
+        if (resetCanvasBtn) {
+            resetCanvasBtn.addEventListener('click', () => {
+                Object.keys(topoState.nodes).forEach(k => {
+                    topoState.nodes[k].element.remove();
+                });
+                topoState.nodes = {};
+                topoState.edges = [];
+                topoState.counters.PC = 0;
+                topoState.counters.Router = 0;
+                drawConnections();
+                if (feedback) feedback.textContent = '';
+            });
+        }
+
+        // Topology Check Button
+        if (checkBtn) {
+            checkBtn.addEventListener('click', () => {
+                validateTopology(partPrefix, topoState, is4B, feedback);
+            });
         }
     }
 
-    // ── Interactive Preparation Stages Listeners ─────────────────
-    // 4-A Stage 1: IP & Gateway Matching
-    const check4aIpBtn = document.getElementById('check-4a-ip-matching');
-    const fb4aIp = document.getElementById('feedback-4a-ip-matching');
-    if (check4aIpBtn) {
-        check4aIpBtn.addEventListener('click', () => {
-            const p0ip = document.getElementById('match-pc0-ip').value;
-            const p0gw = document.getElementById('match-pc0-gw').value;
-            const p1ip = document.getElementById('match-pc1-ip').value;
-            const p1gw = document.getElementById('match-pc1-gw').value;
-            const r0g0 = document.getElementById('match-r0-g00').value;
-            const r0g1 = document.getElementById('match-r0-g01').value;
+    // IP Modal Handler
+    const ipModal = document.getElementById('ip-config-modal');
+    const ipDevName = document.getElementById('ip-config-device-name');
+    const ipInput = document.getElementById('ip-address-input');
+    const maskInput = document.getElementById('subnet-mask-input');
+    const gwInput = document.getElementById('gateway-input');
+    const saveIpBtn = document.getElementById('save-ip-config');
+    const closeIpBtn = document.getElementById('close-ip-config');
+    const ipError = document.getElementById('ip-config-error');
+    let currentEditingNode = null;
 
-            if (p0ip === '192.168.10.2' && p0gw === '192.168.10.1' &&
-                p1ip === '192.168.11.2' && p1gw === '192.168.11.1' &&
-                r0g0 === '192.168.10.1' && r0g1 === '192.168.11.1') {
-                fb4aIp.style.color = '#059669';
-                fb4aIp.textContent = '✔ Correct! Addressing plan for 4-A verified.';
-                obs('Addressing Match (4-A)', 'Matched PC & Router /24 Addresses', 'Passed');
-            } else {
-                fb4aIp.style.color = '#DC2626';
-                fb4aIp.textContent = '✘ Incorrect mapping. Check subnet groupings for LAN 1 (192.168.10.0) and LAN 2 (192.168.11.0).';
+    function openIpModal(nodeObj, partPrefix) {
+        currentEditingNode = nodeObj;
+        if (ipDevName) ipDevName.textContent = `${nodeObj.label} (${partPrefix === 'A' ? 'Exercise 4-A /24' : 'Exercise 4-B /27'})`;
+        if (ipInput) ipInput.value = nodeObj.ip || '';
+        if (maskInput) maskInput.value = nodeObj.subnet || (partPrefix === 'A' ? '255.255.255.0' : '255.255.255.224');
+        if (gwInput) gwInput.value = nodeObj.gateway || '';
+        if (ipError) ipError.textContent = '';
+        if (ipModal) ipModal.style.display = 'flex';
+    }
+
+    if (closeIpBtn) {
+        closeIpBtn.addEventListener('click', () => {
+            if (ipModal) ipModal.style.display = 'none';
+        });
+    }
+
+    if (saveIpBtn) {
+        saveIpBtn.addEventListener('click', () => {
+            if (!currentEditingNode) return;
+            const ip = ipInput.value.trim();
+            const mask = maskInput.value.trim();
+            const gw = gwInput.value.trim();
+
+            const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+            if (!ip || !ipRegex.test(ip)) {
+                ipError.textContent = 'Invalid IP Address format.';
+                return;
             }
-        });
-    }
-
-    // 4-A Stage 2: CLI Command Fill-in
-    const check4aCliBtn = document.getElementById('check-4a-cli-fill');
-    const fb4aCli = document.getElementById('feedback-4a-cli-fill');
-    if (check4aCliBtn) {
-        check4aCliBtn.addEventListener('click', () => {
-            const f1 = (document.getElementById('cmd-fill-1').value || '').trim().toLowerCase();
-            const f2 = (document.getElementById('cmd-fill-2').value || '').trim().toLowerCase();
-            const f3 = (document.getElementById('cmd-fill-3').value || '').trim();
-            const f4 = (document.getElementById('cmd-fill-4').value || '').trim();
-            const f5 = (document.getElementById('cmd-fill-5').value || '').trim().toLowerCase();
-
-            const c1 = (f1 === 'enable' || f1 === 'en');
-            const c2 = (f2 === 'configure terminal' || f2 === 'conf t' || f2 === 'config t');
-            const c3 = (f3 === '192.168.10.1');
-            const c4 = (f4 === '255.255.255.0');
-            const c5 = (f5 === 'no shutdown' || f5 === 'no shut');
-
-            if (c1 && c2 && c3 && c4 && c5) {
-                fb4aCli.style.color = '#059669';
-                fb4aCli.textContent = '✔ Excellent! Command syntax verified. Now apply this in the Router CLI.';
-                obs('Command Formulation (4-A)', 'Validated Router Interface IP Syntax', 'Passed');
-            } else {
-                fb4aCli.style.color = '#DC2626';
-                fb4aCli.textContent = '✘ Please check syntax: enable -> configure terminal -> ip address 192.168.10.1 255.255.255.0 -> no shutdown.';
+            if (!mask || !ipRegex.test(mask)) {
+                ipError.textContent = 'Invalid Subnet Mask format.';
+                return;
             }
-        });
-    }
-
-    // 4-B Stage 1: Subnet Matching
-    const check4bSubBtn = document.getElementById('check-4b-subnet-matching');
-    const fb4bSub = document.getElementById('feedback-4b-subnet-matching');
-    if (check4bSubBtn) {
-        check4bSubBtn.addEventListener('click', () => {
-            const s0 = document.getElementById('match-sub-0').value;
-            const s32 = document.getElementById('match-sub-32').value;
-            const s64 = document.getElementById('match-sub-64').value;
-            const s96 = document.getElementById('match-sub-96').value;
-            const s128 = document.getElementById('match-sub-128').value;
-
-            if (s0 === 'lan1' && s32 === 'lan2' && s64 === 'wan' && s96 === 'lan3' && s128 === 'lan4') {
-                fb4bSub.style.color = '#059669';
-                fb4bSub.textContent = '✔ Correct! All 5 subnets matched to their devices.';
-                obs('Subnet Allocation (4-B)', 'Assigned 5 Subnets (/27) to WAN/LANs', 'Passed');
-            } else {
-                fb4bSub.style.color = '#DC2626';
-                fb4bSub.textContent = '✘ Mismatch in subnet assignment. Remember: .0=LAN1, .32=LAN2, .64=WAN, .96=LAN3, .128=LAN4.';
+            if (!gw || !ipRegex.test(gw)) {
+                ipError.textContent = 'Invalid Default Gateway format.';
+                return;
             }
+
+            currentEditingNode.ip = ip;
+            currentEditingNode.subnet = mask;
+            currentEditingNode.gateway = gw;
+
+            if (ipModal) ipModal.style.display = 'none';
         });
     }
 
-    // 4-B Stage 2: Subnet Calculation Challenge
-    const check4bCalcBtn = document.getElementById('check-4b-calc');
-    const fb4bCalc = document.getElementById('feedback-4b-calc');
-    if (check4bCalcBtn) {
-        check4bCalcBtn.addEventListener('click', () => {
-            const net = (document.getElementById('calc-net').value || '').trim();
-            const first = (document.getElementById('calc-first').value || '').trim();
-            const last = (document.getElementById('calc-last').value || '').trim();
-            const bcast = (document.getElementById('calc-bcast').value || '').trim();
-
-            if (net === '192.168.10.96' && first === '192.168.10.97' && last === '192.168.10.126' && bcast === '192.168.10.127') {
-                fb4bCalc.style.color = '#059669';
-                fb4bCalc.textContent = '✔ Accurate! Subnet boundaries for 192.168.10.96/27 verified.';
-                obs('Subnet Calculation Challenge (4-B)', 'Calculated /27 Host and Broadcast Boundaries', 'Passed');
-            } else {
-                fb4bCalc.style.color = '#DC2626';
-                fb4bCalc.textContent = '✘ Expected: Network=192.168.10.96, First=192.168.10.97, Last=192.168.10.126, Broadcast=192.168.10.127.';
-            }
-        });
-    }
-
-    // 4-B Stage 3: DTE/DCE Setup
-    const check4bDceBtn = document.getElementById('check-4b-dce');
-    const fb4bDce = document.getElementById('feedback-4b-dce');
-    if (check4bDceBtn) {
-        check4bDceBtn.addEventListener('click', () => {
-            const r0role = document.getElementById('match-r0-role').value;
-            const r0clock = document.getElementById('match-r0-clock').value;
-            const r1role = document.getElementById('match-r1-role').value;
-            const r1clock = document.getElementById('match-r1-clock').value;
-
-            if (r0role === 'DCE' && r0clock === '64000' && r1role === 'DTE' && r1clock === 'none') {
-                fb4bDce.style.color = '#059669';
-                fb4bDce.textContent = '✔ Correct! Router0 is DCE providing 64000 bps clock rate; Router1 is DTE.';
-                obs('DTE/DCE Role Specification (4-B)', 'Configured Router0 as DCE (64000) and Router1 as DTE', 'Passed');
-            } else {
-                fb4bDce.style.color = '#DC2626';
-                fb4bDce.textContent = '✘ Incorrect setup. Router0 requires DCE + 64000; Router1 requires DTE + None.';
-            }
-        });
-    }
-
-    // 4-B Stage 4: Static Routes (Forward and Return)
-    const check4bRoutesBtn = document.getElementById('check-4b-routes');
-    const fb4bRoutes = document.getElementById('feedback-4b-routes');
-    if (check4bRoutesBtn) {
-        check4bRoutesBtn.addEventListener('click', () => {
-            const h1 = document.getElementById('route-r0-hop1').value;
-            const h2 = document.getElementById('route-r0-hop2').value;
-            const r1h1 = document.getElementById('route-r1-hop1').value;
-            const r1h2 = document.getElementById('route-r1-hop2').value;
-
-            if (h1 === '192.168.10.66' && h2 === '192.168.10.66' &&
-                r1h1 === '192.168.10.65' && r1h2 === '192.168.10.65') {
-                fb4bRoutes.style.color = '#059669';
-                fb4bRoutes.textContent = '✔ Correct! Forward routes configured via 192.168.10.66 (R1) and return routes via 192.168.10.65 (R0).';
-                obs('Static Routing Formulation (4-B)', 'Formulated Next Hops (.66 forward, .65 return)', 'Passed');
-            } else {
-                fb4bRoutes.style.color = '#DC2626';
-                fb4bRoutes.textContent = '✘ Check next hops: Router0 forwards via 192.168.10.66; Router1 returns via 192.168.10.65.';
-            }
-        });
-    }
-
-    // ── Mode switching ────────────────────────────────────────────
-    function setMode(mode) {
-        if (currentMode !== mode) {
-            currentMode = mode;
-            resetExperimentState();
-        }
-
-        if (mode === '4A') {
-            mode4ABtn.style.cssText = 'padding:.25rem .75rem;font-size:.875rem;background-color:var(--primary-color);color:white;';
-            mode4BBtn.style.cssText = 'padding:.25rem .75rem;font-size:.875rem;background-color:var(--secondary-color);color:#E5E7EB;';
-            if (part4AStages) part4AStages.style.display = 'block';
-            if (part4BStages) part4BStages.style.display = 'none';
-            topoInstructions.innerHTML = 'Drag <strong>2 PCs (PC0, PC1)</strong> and <strong>1 Router (Router0)</strong> onto the canvas, then connect them with <strong>Crossover</strong> cables.';
-            cableSelect.innerHTML = '<option value="crossover">Crossover</option>';
-            if (openSubnetBtn) openSubnetBtn.style.display = 'none';
-            if (subnetSection) subnetSection.style.display = 'none';
-        } else {
-            mode4BBtn.style.cssText = 'padding:.25rem .75rem;font-size:.875rem;background-color:var(--primary-color);color:white;';
-            mode4ABtn.style.cssText = 'padding:.25rem .75rem;font-size:.875rem;background-color:var(--secondary-color);color:#E5E7EB;';
-            if (part4AStages) part4AStages.style.display = 'none';
-            if (part4BStages) part4BStages.style.display = 'block';
-            topoInstructions.innerHTML = 'Drag <strong>4 PCs (PC0..PC3)</strong> and <strong>2 Routers (Router0, Router1)</strong> onto the canvas. Connect PCs → Routers with <strong>Crossover</strong>, and Router0 ↔ Router1 with <strong>Serial DCE</strong>.';
-            cableSelect.innerHTML = '<option value="crossover">Crossover</option><option value="serial">Serial DCE</option>';
-            if (openSubnetBtn) openSubnetBtn.style.display = 'inline-block';
-        }
-        clearPanels();
-    }
-
-    function resetExperimentState() {
-        const resetBtn = document.getElementById('reset-topology');
-        if (resetBtn) resetBtn.click();
-        
-        routerStates.R0 = {
-            hostname: 'Router0',
-            interfaces: {
-                'GigabitEthernet0/0': { ip: '', mask: '', state: 'down' },
-                'GigabitEthernet0/1': { ip: '', mask: '', state: 'down' },
-                'Serial0/1/0':        { ip: '', mask: '', state: 'down', clockRate: 0, role: 'DCE' }
-            },
-            routes: []
-        };
-        routerStates.R1 = {
-            hostname: 'Router1',
-            interfaces: {
-                'GigabitEthernet0/0': { ip: '', mask: '', state: 'down' },
-                'GigabitEthernet0/1': { ip: '', mask: '', state: 'down' },
-                'Serial0/1/0':        { ip: '', mask: '', state: 'down', clockRate: 0, role: 'DTE' }
-            },
-            routes: []
-        };
-
-        cliMode = 'user_exec';
-        cliInterface = null;
-        activeRouterKey = 'R0';
-        cliHistory = [];
-        historyIndex = -1;
-        
-        const termOutput = document.getElementById('terminal-output');
-        if (termOutput) {
-            termOutput.innerHTML = '<div>Router con0 is now available</div><div><br></div><div>Press RETURN to get started.</div>';
-        }
-
-        // Clear Stage 1 & 2 inputs/feedback in 4A & 4B
-        const allSelects = document.querySelectorAll('.ip-match-select, .subnet-match-select, #match-r0-role, #match-r0-clock, #match-r1-role, #match-r1-clock, #route-r0-hop1, #route-r0-hop2');
-        allSelects.forEach(s => s.value = '');
-        
-        const allFillInputs = document.querySelectorAll('#cmd-fill-1, #cmd-fill-2, #cmd-fill-3, #cmd-fill-4, #cmd-fill-5, #calc-net, #calc-first, #calc-last, #calc-bcast, #ping-dest');
-        allFillInputs.forEach(inp => inp.value = '');
-        
-        const allFeedbackSpans = document.querySelectorAll('#feedback-4a-ip-matching, #feedback-4a-cli-fill, #feedback-4b-subnet-matching, #feedback-4b-calc, #feedback-4b-dce, #feedback-4b-routes, #router-validation-output, #troubleshooter-output');
-        allFeedbackSpans.forEach(sp => {
-            sp.textContent = '';
-            sp.style.display = 'none';
-        });
-
-        if (resultText) {
-            resultText.innerHTML = 'Part 4-A: Pending.<br><br>Part 4-B: Pending.';
-        }
-    }
-
-    function clearPanels() {
-        topoFeedback.textContent = '';
-        if (openTerminalBtn)  openTerminalBtn.style.display  = 'none';
-        if (openPingBtn)      openPingBtn.style.display      = 'none';
-        if (openSubnetBtn && currentMode === '4A') openSubnetBtn.style.display = 'none';
-        if (cliSection)       cliSection.style.display       = 'none';
-        if (pingSection)      pingSection.style.display      = 'none';
-        if (subnetSection)    subnetSection.style.display    = 'none';
-    }
-
-    mode4ABtn.addEventListener('click', () => setMode('4A'));
-    mode4BBtn.addEventListener('click', () => setMode('4B'));
-
-    // ── Topology check with strict Graph & Cable Validation ───────
-    checkTopoBtn.addEventListener('click', () => {
-        const allNodes = nodes();
-        const allEdges = edges();
-
-        let pcList = [], routerList = [];
-        for (let id in allNodes) {
-            const n = allNodes[id];
-            if (n.type === 'PC') pcList.push({ id, label: n.label || '' });
-            if (n.type === 'Router') routerList.push({ id, label: n.label || '' });
-        }
+    // ─────────────────────────────────────────────────────────────
+    // 5. TOPOLOGY VALIDATION (PART A & PART B)
+    // ─────────────────────────────────────────────────────────────
+    function validateTopology(partPrefix, topoState, is4B, feedbackEl) {
+        const pcs = Object.values(topoState.nodes).filter(n => n.type === 'PC');
+        const routers = Object.values(topoState.nodes).filter(n => n.type === 'Router');
 
         function isConnected(id1, id2, cableReq) {
-            return allEdges.some(e => 
+            return topoState.edges.some(e =>
                 ((e.sourceId === id1 && e.targetId === id2) || (e.sourceId === id2 && e.targetId === id1)) &&
                 (!cableReq || e.cableType === cableReq)
             );
         }
 
-        if (currentMode === '4A') {
-            if (pcList.length !== 2 || routerList.length !== 1) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = `✘ Need exactly 2 PCs and 1 Router on canvas. (Found ${pcList.length} PC(s), ${routerList.length} Router(s))`;
+        if (!is4B) {
+            if (pcs.length !== 2 || routers.length !== 1) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = `✘ Need exactly 2 PCs (PC0, PC1) and 1 Router (Router0). (Found ${pcs.length} PC(s), ${routers.length} Router(s))`;
                 return;
             }
 
-            const r0 = routerList[0];
-            const pc0 = pcList.find(p => p.label === 'PC0') || pcList[0];
-            const pc1 = pcList.find(p => p.label === 'PC1') || pcList[1];
+            const r0 = routers[0];
+            const p0 = pcs.find(p => p.label === 'PC0') || pcs[0];
+            const p1 = pcs.find(p => p.label === 'PC1') || pcs[1];
 
-            const p0Conn = isConnected(pc0.id, r0.id, 'crossover');
-            const p1Conn = isConnected(pc1.id, r0.id, 'crossover');
-
-            if (!p0Conn) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC0 is not connected to Router0 with a Crossover cable.';
+            if (!isConnected(p0.id, r0.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = `✘ ${p0.label} must be connected to ${r0.label} via a Copper Cross-over cable.`;
                 return;
             }
-            if (!p1Conn) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC1 is not connected to Router0 with a Crossover cable.';
+            if (!isConnected(p1.id, r0.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = `✘ ${p1.label} must be connected to ${r0.label} via a Copper Cross-over cable.`;
                 return;
             }
 
-            topoFeedback.style.color = '#059669';
-            topoFeedback.innerHTML = '✔ Topology 4-A Verified!<br>✓ PC0 ↔ Router0 (Crossover)<br>✓ PC1 ↔ Router0 (Crossover)<br>Double-click PCs to configure IP parameters, then launch the Router CLI.';
-            obs('Topology Builder (4-A)', 'Connected 2 PCs and 1 Router with Crossover', 'Verified');
-            if (openTerminalBtn) openTerminalBtn.style.display = 'inline-block';
-            if (openPingBtn)     openPingBtn.style.display     = 'inline-block';
+            feedbackEl.style.color = '#059669';
+            feedbackEl.innerHTML = '✔ Topology 4-A Verified!<br>✓ PC0 &harr; Router0 (Copper Cross-over)<br>✓ PC1 &harr; Router0 (Copper Cross-over)<br>Now configure PC IP parameters and Router0 interfaces in Stage 2 &amp; 3.';
+            reportMilestone('4A_TOPOLOGY_COMPLETE');
 
         } else {
-            // Part 4-B: 4 PCs and 2 Routers
-            if (pcList.length !== 4 || routerList.length !== 2) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = `✘ Need exactly 4 PCs (PC0..PC3) and 2 Routers (Router0, Router1). (Found ${pcList.length} PC(s), ${routerList.length} Router(s))`;
+            if (pcs.length !== 4 || routers.length !== 2) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = `✘ Need exactly 4 PCs (PC0..PC3) and 2 Routers (Router0, Router1). (Found ${pcs.length} PC(s), ${routers.length} Router(s))`;
                 return;
             }
 
-            const r0 = routerList.find(r => r.label === 'Router0') || routerList[0];
-            const r1 = routerList.find(r => r.label === 'Router1') || routerList[1];
+            const r0 = routers.find(r => r.label === 'Router0') || routers[0];
+            const r1 = routers.find(r => r.label === 'Router1') || routers[1];
+            const p0 = pcs.find(p => p.label === 'PC0');
+            const p1 = pcs.find(p => p.label === 'PC1');
+            const p2 = pcs.find(p => p.label === 'PC2');
+            const p3 = pcs.find(p => p.label === 'PC3');
 
-            const pc0 = pcList.find(p => p.label === 'PC0');
-            const pc1 = pcList.find(p => p.label === 'PC1');
-            const pc2 = pcList.find(p => p.label === 'PC2');
-            const pc3 = pcList.find(p => p.label === 'PC3');
-
-            const serialConn = isConnected(r0.id, r1.id, 'serial');
-            if (!serialConn) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ Router0 and Router1 must be connected using a Serial DCE cable.';
+            if (!isConnected(r0.id, r1.id, 'serial')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = '✘ Router0 and Router1 must be connected with a Serial DCE cable.';
                 return;
             }
 
-            if (pc0 && !isConnected(pc0.id, r0.id, 'crossover')) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC0 must be connected to Router0 via Crossover cable.';
+            if (p0 && !isConnected(p0.id, r0.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = '✘ PC0 must be connected to Router0 via Copper Cross-over cable.';
                 return;
             }
-            if (pc1 && !isConnected(pc1.id, r0.id, 'crossover')) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC1 must be connected to Router0 via Crossover cable.';
+            if (p1 && !isConnected(p1.id, r0.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = '✘ PC1 must be connected to Router0 via Copper Cross-over cable.';
                 return;
             }
-            if (pc2 && !isConnected(pc2.id, r1.id, 'crossover')) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC2 must be connected to Router1 via Crossover cable.';
+            if (p2 && !isConnected(p2.id, r1.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = '✘ PC2 must be connected to Router1 via Copper Cross-over cable.';
                 return;
             }
-            if (pc3 && !isConnected(pc3.id, r1.id, 'crossover')) {
-                topoFeedback.style.color = '#DC2626';
-                topoFeedback.textContent = '✘ PC3 must be connected to Router1 via Crossover cable.';
+            if (p3 && !isConnected(p3.id, r1.id, 'crossover')) {
+                feedbackEl.style.color = '#DC2626';
+                feedbackEl.textContent = '✘ PC3 must be connected to Router1 via Copper Cross-over cable.';
                 return;
             }
 
-            topoFeedback.style.color = '#059669';
-            topoFeedback.innerHTML = '✔ WAN Topology 4-B Verified!<br>✓ PC0 & PC1 ↔ Router0 (LAN 1 & 2)<br>✓ Router0 ↔ Router1 (Serial WAN Link)<br>✓ PC2 & PC3 ↔ Router1 (LAN 3 & 4)<br>Ready for Subnet Analyzer & Dual Router CLI Configuration.';
-            obs('Topology Builder (4-B)', 'Constructed 4-PC 2-Router Serial WAN Topology', 'Verified');
-            if (openTerminalBtn) openTerminalBtn.style.display = 'inline-block';
-            if (openPingBtn)     openPingBtn.style.display     = 'inline-block';
-            if (openSubnetBtn)   openSubnetBtn.style.display   = 'inline-block';
+            feedbackEl.style.color = '#059669';
+            feedbackEl.innerHTML = '✔ WAN Topology 4-B Verified!<br>✓ PC0 &amp; PC1 &harr; Router0 (LAN subnets .0/27 and .32/27)<br>✓ Router0 &harr; Router1 (Serial WAN link .64/27)<br>✓ PC2 &amp; PC3 &harr; Router1 (LAN subnets .96/27 and .128/27)<br>Proceed to HWIC-2T hardware installation in Stage 2.';
+            reportMilestone('4B_TOPOLOGY_COMPLETE');
         }
-    });
+    }
 
-    // ── Subnet Analyzer ───────────────────────────────────────────
-    if (openSubnetBtn)  openSubnetBtn.addEventListener('click',  () => { subnetSection.style.display = 'block'; });
-    if (closeSubnetBtn) closeSubnetBtn.addEventListener('click', () => { subnetSection.style.display = 'none';  });
+    // Initialize both canvases
+    setupCanvas('4a', topoA, false);
+    setupCanvas('4b', topoB, true);
 
-    subnetBlocks.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            subnetBlocks.forEach(b => {
-                b.style.backgroundColor = 'var(--secondary-color)';
-                b.style.color = '#E5E7EB';
-            });
-            e.target.style.backgroundColor = 'var(--primary-color)';
-            e.target.style.color = 'white';
+    // ─────────────────────────────────────────────────────────────
+    // 6. HWIC-2T HARDWARE MODULE SIMULATION (PART B)
+    // ─────────────────────────────────────────────────────────────
+    const r0PwrBtn = document.getElementById('r0-power-toggle-btn');
+    const r0HwicBtn = document.getElementById('r0-insert-hwic-btn');
+    const r0PwrBadge = document.getElementById('r0-power-badge');
+    const r0HwicStatus = document.getElementById('r0-hwic-status');
 
-            const base = parseInt(e.target.dataset.subnet);
-            subnetDetails.style.display = 'block';
-            subnetTitle.textContent     = `Subnet: 192.168.10.${base}/27`;
-            subnetNetwork.textContent   = `192.168.10.${base}`;
-            subnetBroadcast.textContent = `192.168.10.${base + 31}`;
-            subnetFirst.textContent     = `192.168.10.${base + 1}`;
-            subnetLast.textContent      = `192.168.10.${base + 30}`;
+    const r1PwrBtn = document.getElementById('r1-power-toggle-btn');
+    const r1HwicBtn = document.getElementById('r1-insert-hwic-btn');
+    const r1PwrBadge = document.getElementById('r1-power-badge');
+    const r1HwicStatus = document.getElementById('r1-hwic-status');
+    const hwicFeedback = document.getElementById('hwic-feedback');
+
+    function updateHwicUI() {
+        if (r0PwrBadge) {
+            r0PwrBadge.textContent = router4B.R0.powerOn ? 'POWER ON' : 'POWER OFF';
+            r0PwrBadge.style.background = router4B.R0.powerOn ? '#10B981' : '#64748B';
+        }
+        if (r0PwrBtn) r0PwrBtn.textContent = router4B.R0.powerOn ? 'Toggle Power (OFF)' : 'Toggle Power (ON)';
+        if (r0HwicStatus) {
+            if (router4B.R0.hwicInstalled) {
+                r0HwicStatus.textContent = 'HWIC-2T Installed (Serial0/1/0 & Serial0/1/1 active)';
+                r0HwicStatus.style.color = '#059669';
+            } else {
+                r0HwicStatus.textContent = 'Empty (Serial0/1/0 unavailable)';
+                r0HwicStatus.style.color = '#DC2626';
+            }
+        }
+
+        if (r1PwrBadge) {
+            r1PwrBadge.textContent = router4B.R1.powerOn ? 'POWER ON' : 'POWER OFF';
+            r1PwrBadge.style.background = router4B.R1.powerOn ? '#10B981' : '#64748B';
+        }
+        if (r1PwrBtn) r1PwrBtn.textContent = router4B.R1.powerOn ? 'Toggle Power (OFF)' : 'Toggle Power (ON)';
+        if (r1HwicStatus) {
+            if (router4B.R1.hwicInstalled) {
+                r1HwicStatus.textContent = 'HWIC-2T Installed (Serial0/1/0 & Serial0/1/1 active)';
+                r1HwicStatus.style.color = '#059669';
+            } else {
+                r1HwicStatus.textContent = 'Empty (Serial0/1/0 unavailable)';
+                r1HwicStatus.style.color = '#DC2626';
+            }
+        }
+
+        if (router4B.R0.hwicInstalled && router4B.R1.hwicInstalled && router4B.R0.powerOn && router4B.R1.powerOn) {
+            if (hwicFeedback) {
+                hwicFeedback.style.color = '#059669';
+                hwicFeedback.textContent = '✔ HWIC-2T modules successfully installed and powered on in both Routers! Serial0/1/0 is now available for configuration.';
+            }
+            reportMilestone('4B_SERIAL_CONFIGURED');
+        }
+    }
+
+    if (r0PwrBtn) {
+        r0PwrBtn.addEventListener('click', () => {
+            router4B.R0.powerOn = !router4B.R0.powerOn;
+            updateHwicUI();
         });
-    });
-
-    // ── Router CLI ────────────────────────────────────────────────
-    function buildRouterSwitcher() {
-        const existing = document.getElementById('exp4-router-switcher');
-        if (existing) { existing.remove(); }
-
-        if (currentMode === '4B') {
-            const sw = document.createElement('div');
-            sw.id = 'exp4-router-switcher';
-            sw.style.cssText = 'margin-bottom:.75rem; display:flex; align-items:center; gap:.5rem; font-size:.875rem;';
-            sw.innerHTML = `
-                <strong>Active Router:</strong>
-                <button class="btn" id="sw-r0" style="padding:.2rem .6rem;font-size:.8rem;background-color:var(--primary-color);">Router0</button>
-                <button class="btn" id="sw-r1" style="padding:.2rem .6rem;font-size:.8rem;background-color:var(--secondary-color);">Router1</button>
-            `;
-            cliSection.insertBefore(sw, cliSection.querySelector('p'));
-            routerSwitcher = sw;
-
-            sw.querySelector('#sw-r0').addEventListener('click', () => switchRouter('R0'));
-            sw.querySelector('#sw-r1').addEventListener('click', () => switchRouter('R1'));
-        }
     }
-
-    function switchRouter(key) {
-        activeRouterKey = key;
-        cliMode = 'user_exec';
-        cliInterface = null;
-        clearTerminal();
-        cliTitle.textContent = routerStates[key].hostname + ' CLI';
-        updatePrompt();
-        printLine(`Connected to ${routerStates[key].hostname}.`);
-        printLine('');
-
-        const r0Btn = document.getElementById('sw-r0');
-        const r1Btn = document.getElementById('sw-r1');
-        if (r0Btn && r1Btn) {
-            r0Btn.style.backgroundColor = key === 'R0' ? 'var(--primary-color)' : 'var(--secondary-color)';
-            r1Btn.style.backgroundColor = key === 'R1' ? 'var(--primary-color)' : 'var(--secondary-color)';
-        }
-    }
-
-    if (openTerminalBtn) {
-        openTerminalBtn.addEventListener('click', () => {
-            cliSection.style.display = 'block';
-            activeRouterKey = 'R0';
-            cliMode = 'user_exec';
-            cliInterface = null;
-            clearTerminal();
-            buildRouterSwitcher();
-            cliTitle.textContent = routerStates['R0'].hostname + ' CLI';
-            printLine('Connected to Router0. Type ? for help.');
-            printLine('');
-            updatePrompt();
-            terminalInput.focus();
+    if (r0HwicBtn) {
+        r0HwicBtn.addEventListener('click', () => {
+            if (router4B.R0.powerOn) {
+                alert('Cannot insert HWIC-2T while power is ON! Turn off the router power first (Step 2 in manual).');
+                return;
+            }
+            router4B.R0.hwicInstalled = true;
+            updateHwicUI();
         });
     }
 
-    if (closeCliBtn) closeCliBtn.addEventListener('click', () => { cliSection.style.display = 'none'; });
+    if (r1PwrBtn) {
+        r1PwrBtn.addEventListener('click', () => {
+            router4B.R1.powerOn = !router4B.R1.powerOn;
+            updateHwicUI();
+        });
+    }
+    if (r1HwicBtn) {
+        r1HwicBtn.addEventListener('click', () => {
+            if (router4B.R1.powerOn) {
+                alert('Cannot insert HWIC-2T while power is ON! Turn off the router power first (Step 2 in manual).');
+                return;
+            }
+            router4B.R1.hwicInstalled = true;
+            updateHwicUI();
+        });
+    }
 
-    if (terminalInput) {
-        terminalInput.addEventListener('keydown', (e) => {
+    // ─────────────────────────────────────────────────────────────
+    // 7. ROUTER CLI SIMULATOR (4A)
+    // ─────────────────────────────────────────────────────────────
+    const termOut4A = document.getElementById('terminal-output-4a');
+    const termIn4A = document.getElementById('terminal-input-4a');
+    const termPrompt4A = document.getElementById('terminal-prompt-4a');
+    const checkR0Btn4A = document.getElementById('check-r0-config-4a');
+    const fbR04A = document.getElementById('feedback-r0-4a');
+
+    function updatePrompt4A() {
+        if (termPrompt4A) termPrompt4A.textContent = getPartPrompt('A') + ' ';
+    }
+
+    function initTerminal4A() {
+        if (!termOut4A) return;
+        termOut4A.textContent = 'Router con0 is now available\n\nPress RETURN to get started.\n';
+        updatePrompt4A();
+    }
+    initTerminal4A();
+
+    if (termIn4A) {
+        termIn4A.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const raw = terminalInput.value;
+                const raw = termIn4A.value;
                 const cmd = raw.trim();
-                terminalInput.value = '';
+                termIn4A.value = '';
 
-                printLine(getPrompt() + ' ' + raw);
+                printTerminal(termOut4A, getPartPrompt('A') + ' ' + raw);
 
-                if (cmd !== '') {
-                    cliHistory.unshift(cmd);
-                    if (cliHistory.length > 50) cliHistory.pop();
+                if (cmd) {
+                    router4A.history.unshift(cmd);
+                    if (router4A.history.length > 30) router4A.history.pop();
+                    processCmd4A(cmd);
                 }
-                historyIndex = -1;
-
-                if (cmd) processCommand(cmd);
-                updatePrompt();
-                terminalInput.focus();
+                router4A.historyIndex = -1;
+                updatePrompt4A();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (historyIndex < cliHistory.length - 1) historyIndex++;
-                terminalInput.value = cliHistory[historyIndex] || '';
+                if (router4A.historyIndex < router4A.history.length - 1) router4A.historyIndex++;
+                termIn4A.value = router4A.history[router4A.historyIndex] || '';
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                if (historyIndex > 0) historyIndex--;
-                else historyIndex = -1;
-                terminalInput.value = historyIndex >= 0 ? cliHistory[historyIndex] : '';
+                if (router4A.historyIndex > 0) router4A.historyIndex--;
+                else router4A.historyIndex = -1;
+                termIn4A.value = router4A.historyIndex >= 0 ? router4A.history[router4A.historyIndex] : '';
             }
         });
-
-        terminalContainer && terminalContainer.addEventListener('click', () => terminalInput.focus());
     }
 
-    // ── Command processor ─────────────────────────────────────────
-    function processCommand(raw) {
+    function processCmd4A(raw) {
         const lower = raw.toLowerCase().trim();
         const parts = lower.split(/\s+/);
-        const cmd   = parts[0];
-        const rState = routerStates[activeRouterKey];
+        const cmd = parts[0];
 
         if (cmd === '?' || cmd === 'help') {
-            if (cliMode === 'user_exec') {
-                printLine('Available commands:');
-                printLine('  enable             - Enter privileged EXEC mode');
-                printLine('  ping <ip-address>  - Test connectivity to a destination host or interface');
-                printLine('  help / ?           - Show available commands');
-            } else if (cliMode === 'priv_exec') {
-                printLine('Available commands:');
-                printLine('  configure terminal       - Enter global config mode');
-                printLine('  show ip route            - Show routing table');
-                printLine('  show ip interface brief  - Show interface summary');
-                printLine('  show controllers serial 0/1/0 - Show DCE/DTE and clock rate');
-                printLine('  ping <ip-address>        - Test connectivity to a destination host or interface');
-                printLine('  disable                  - Return to user EXEC');
-                printLine('  exit                     - Return to user EXEC');
-                printLine('  help / ?                 - Show available commands');
-            } else if (cliMode === 'global_config') {
-                printLine('Available commands:');
-                printLine('  interface <g0/0|g0/1|s0/1/0>    - Enter interface config');
-                printLine('  ip route <net> <mask> <nexthop> - Add static route');
-                printLine('  hostname <name>                  - Set hostname');
-                printLine('  exit / end                       - Return to priv EXEC');
-                printLine('  help / ?                         - Show available commands');
-            } else if (cliMode === 'if_config') {
-                printLine('Available commands:');
-                printLine('  ip address <ip> <mask>  - Set IP address');
-                printLine('  clock rate <rate>       - Set clock rate (DCE only, e.g. 64000)');
-                printLine('  no shutdown             - Bring interface up');
-                printLine('  shutdown                - Bring interface down');
-                printLine('  exit                    - Return to global config');
-                printLine('  help / ?                - Show available commands');
-            }
+            printTerminal(termOut4A, 'Available commands: enable, configure terminal, interface <g0/0|g0/1>, ip address <ip> <mask>, no shutdown, show ip interface brief, show ip route, exit, end');
             return;
         }
 
-        // CLI Ping Handler (Authoritative Evaluation via evaluatePingState)
-        function handleCliPing(targetIp) {
-            if (!targetIp) {
-                printLine('% Incomplete command. Usage: ping <ip-address>');
-                return;
-            }
-            printLine('Type escape sequence to abort.');
-            printLine(`Sending 5, 100-byte ICMP Echos to ${targetIp}, timeout is 2 seconds:`);
-
-            // 1. Direct match on active router's own interfaces
-            let isSelf = false;
-            for (const ifName in rState.interfaces) {
-                const iface = rState.interfaces[ifName];
-                if (iface.ip === targetIp && iface.state === 'up') {
-                    isSelf = true;
-                    break;
-                }
-            }
-
-            if (isSelf) {
-                printLine('!!!!!');
-                printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms');
-                obs(`ping ${targetIp}`, 'CLI Ping Success (Self interface)');
-                updateResult();
-                return;
-            }
-
-            // 2. Derive source PC node connected to this router to evaluate path using single source of truth
-            let sourceNode = null, sourceId = null;
-            for (const id in nodes()) {
-                const n = nodes()[id];
-                if (n.type === 'PC' && n.gateway) {
-                    for (const ifName in rState.interfaces) {
-                        if (rState.interfaces[ifName].ip === n.gateway && rState.interfaces[ifName].state === 'up') {
-                            sourceNode = n;
-                            sourceId = id;
-                            break;
-                        }
-                    }
-                }
-                if (sourceNode) break;
-            }
-
-            // If no PC is connected, use the active router interface as the source
-            if (!sourceNode) {
-                const primaryIf = rState.interfaces['GigabitEthernet0/0'].ip
-                    ? rState.interfaces['GigabitEthernet0/0']
-                    : rState.interfaces['Serial0/1/0'];
-
-                sourceNode = {
-                    type: 'Router',
-                    ip: primaryIf.ip || '',
-                    subnet: primaryIf.mask || (currentMode === '4A' ? '255.255.255.0' : '255.255.255.224'),
-                    gateway: primaryIf.ip || ''
-                };
-                sourceId = activeRouterKey;
-            }
-
-            // Execute unified evaluator
-            const diag = evaluatePingState(sourceNode, targetIp, sourceId);
-
-            if (diag.success) {
-                printLine('!!!!!');
-                printLine('Success rate is 100 percent (5/5), round-trip min/avg/max = 2/5/12 ms');
-                obs(`ping ${targetIp}`, 'CLI Ping Success');
-                updateResult();
-            } else {
-                printLine('.....');
-                printLine(`Success rate is 0 percent (0/5) (${diag.reason || 'Destination host unreachable'})`);
-                obs(`ping ${targetIp}`, 'CLI Ping Timed Out');
-            }
-        }
-
-        if (cliMode === 'user_exec') {
+        if (router4A.cliMode === 'user_exec') {
             if (cmd === 'enable' || cmd === 'en') {
-                cliMode = 'priv_exec';
-                obs('enable', 'Entered privileged EXEC');
-            } else if (cmd === 'ping') {
-                handleCliPing(parts[1]);
+                router4A.cliMode = 'priv_exec';
             } else {
-                printLine(`% Unknown command: "${raw}". Type ? for help.`);
+                printTerminal(termOut4A, `% Unknown command: "${raw}". Type "enable" to enter privileged mode.`);
             }
-
-        } else if (cliMode === 'priv_exec') {
-            if ((cmd === 'configure' && (parts[1] === 'terminal' || parts[1] === 't' || !parts[1])) || cmd === 'conf') {
-                cliMode = 'global_config';
-                printLine('Enter configuration commands, one per line. End with CNTL/Z.');
-            } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'route') {
-                printRoutingTable(rState);
+        } else if (router4A.cliMode === 'priv_exec') {
+            if ((cmd === 'configure' && (parts[1] === 'terminal' || parts[1] === 't')) || cmd === 'conf' || cmd === 'conft') {
+                router4A.cliMode = 'global_config';
+                printTerminal(termOut4A, 'Enter configuration commands, one per line. End with CNTL/Z.');
             } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'interface' && parts[3] === 'brief') {
-                printInterfaceBrief(rState);
-            } else if (cmd === 'show' && parts[1] === 'controllers' && parts[2] === 'serial') {
-                printControllers(rState);
-            } else if (cmd === 'show' && parts[1] === 'running-config') {
-                printRunningConfig(rState);
-            } else if (cmd === 'ping') {
-                handleCliPing(parts[1]);
-            } else if (cmd === 'disable') {
-                cliMode = 'user_exec';
-            } else if (cmd === 'exit') {
-                cliMode = 'user_exec';
+                printInterfaceBrief4A();
+            } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'route') {
+                printRoutingTable4A();
+            } else if (cmd === 'disable' || cmd === 'exit') {
+                router4A.cliMode = 'user_exec';
             } else {
-                printLine(`% Unknown command: "${raw}". Type ? for help.`);
+                printTerminal(termOut4A, `% Unknown command: "${raw}". Type ? for help.`);
             }
-
-        } else if (cliMode === 'global_config') {
+        } else if (router4A.cliMode === 'global_config') {
             if (cmd === 'interface' || cmd === 'int') {
                 const ifKey = normaliseIf(parts.slice(1).join(' '));
-                if (!ifKey) {
-                    printLine('% Invalid input. Valid interfaces: GigabitEthernet0/0 (g0/0), GigabitEthernet0/1 (g0/1), Serial0/1/0 (s0/1/0)');
-                    return;
-                }
-                cliInterface = ifKey;
-                cliMode = 'if_config';
-                obs(`interface ${ifKey}`, 'Entered IF config');
-            } else if (cmd === 'ip' && parts[1] === 'route') {
-                const originalParts = raw.trim().split(/\s+/);
-                if (originalParts.length >= 5) {
-                    const network = originalParts[2];
-                    const mask    = originalParts[3];
-                    const nexthop = originalParts[4];
-                    
-                    rState.routes = rState.routes.filter(r => !(r.network === network && r.mask === mask));
-                    rState.routes.push({ network, mask, nextHop: nexthop, type: 'static' });
-                    printLine('');
-                    obs(`ip route ${network} ${mask} ${nexthop}`, 'Static route added');
+                if (ifKey && (ifKey === 'GigabitEthernet0/0' || ifKey === 'GigabitEthernet0/1')) {
+                    router4A.cliInterface = ifKey;
+                    router4A.cliMode = 'if_config';
                 } else {
-                    printLine('% Incomplete command. Syntax: ip route <network> <mask> <next-hop>');
+                    printTerminal(termOut4A, '% Invalid interface. Valid interfaces for Part A: GigabitEthernet0/0, GigabitEthernet0/1');
                 }
-            } else if (cmd === 'hostname') {
-                if (parts[1]) {
-                    rState.hostname = raw.trim().split(/\s+/)[1];
-                    printLine('');
-                } else {
-                    printLine('% Incomplete command.');
-                }
-            } else if (cmd === 'exit') {
-                cliMode = 'priv_exec';
-            } else if (cmd === 'end') {
-                cliMode = 'priv_exec';
-                printLine('');
+            } else if (cmd === 'exit' || cmd === 'end') {
+                router4A.cliMode = 'priv_exec';
             } else {
-                printLine(`% Unknown command: "${raw}". Type ? for help.`);
+                printTerminal(termOut4A, `% Unknown command: "${raw}". Type ? for help.`);
             }
-
-        } else if (cliMode === 'if_config') {
+        } else if (router4A.cliMode === 'if_config') {
+            const iface = router4A.interfaces[router4A.cliInterface];
             if (cmd === 'ip' && parts[1] === 'address') {
-                const originalParts = raw.trim().split(/\s+/);
-                if (originalParts.length >= 4) {
-                    rState.interfaces[cliInterface].ip   = originalParts[2];
-                    rState.interfaces[cliInterface].mask = originalParts[3];
-                    printLine('');
-                    updateDynamicTopologyLabels();
-                    obs(`ip address on ${cliInterface}`, `Set to ${originalParts[2]}`);
+                const rawParts = raw.trim().split(/\s+/);
+                if (rawParts.length >= 4) {
+                    iface.ip = rawParts[2];
+                    iface.mask = rawParts[3];
                 } else {
-                    printLine('% Incomplete command. Syntax: ip address <ip> <mask>');
-                }
-            } else if (cmd === 'clock' && parts[1] === 'rate') {
-                if (cliInterface !== 'Serial0/1/0') {
-                    printLine('% Error: Clock rate can only be configured on Serial interfaces.');
-                } else if (rState.interfaces['Serial0/1/0'].role !== 'DCE') {
-                    printLine('% Error: Clock rate can only be applied to DCE cable ends.');
-                } else {
-                    const rate = parseInt(parts[2]);
-                    if (rate > 0) {
-                        rState.interfaces['Serial0/1/0'].clockRate = rate;
-                        printLine('');
-                        obs('clock rate', `Configured ${rate} on DCE`);
-                    } else {
-                        printLine('% Syntax: clock rate <speed> (e.g. 64000)');
-                    }
+                    printTerminal(termOut4A, '% Incomplete command. Syntax: ip address <ip> <subnet-mask>');
                 }
             } else if (cmd === 'no' && parts[1] === 'shutdown') {
-                rState.interfaces[cliInterface].state = 'up';
-                printLine(`%LINK-5-CHANGED: Interface ${cliInterface}, changed state to up`);
-                if (cliInterface === 'Serial0/1/0' && rState.interfaces['Serial0/1/0'].role === 'DCE' && rState.interfaces['Serial0/1/0'].clockRate !== 64000) {
-                    printLine(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${cliInterface}, changed state to down (DCE clock missing)`);
-                } else {
-                    printLine(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${cliInterface}, changed state to up`);
-                }
-                updateDynamicTopologyLabels();
-                obs(`no shutdown on ${cliInterface}`, 'Interface up');
+                iface.state = 'up';
+                printTerminal(termOut4A, `%LINK-5-CHANGED: Interface ${router4A.cliInterface}, changed state to up`);
+                printTerminal(termOut4A, `%LINEPROTO-5-UPDOWN: Line protocol on Interface ${router4A.cliInterface}, changed state to up`);
             } else if (cmd === 'shutdown') {
-                rState.interfaces[cliInterface].state = 'down';
-                printLine(`%LINK-5-CHANGED: Interface ${cliInterface}, changed state to administratively down`);
-                updateDynamicTopologyLabels();
+                iface.state = 'down';
+                printTerminal(termOut4A, `%LINK-5-CHANGED: Interface ${router4A.cliInterface}, changed state to administratively down`);
             } else if (cmd === 'exit') {
-                cliMode = 'global_config';
-                cliInterface = null;
+                router4A.cliMode = 'global_config';
+                router4A.cliInterface = null;
             } else if (cmd === 'end') {
-                cliMode = 'priv_exec';
-                cliInterface = null;
-                printLine('');
+                router4A.cliMode = 'priv_exec';
+                router4A.cliInterface = null;
             } else {
-                printLine(`% Unknown command: "${raw}". Type ? for help.`);
+                printTerminal(termOut4A, `% Unknown command: "${raw}". Type ? for help.`);
             }
         }
     }
 
-    // ── Accurate Show Commands ────────────────────────────────────
-    function printRoutingTable(rState) {
-        printLine('Codes: C - connected, S - static, R - RIP, M - mobile');
-        printLine('       * - candidate default');
-        printLine('');
-        printLine('Gateway of last resort is not set');
-        printLine('');
+    function printInterfaceBrief4A() {
+        printTerminal(termOut4A, 'Interface                  IP-Address      OK? Method Status                Protocol');
+        for (const ifName in router4A.interfaces) {
+            const iface = router4A.interfaces[ifName];
+            const ip = iface.ip || 'unassigned     ';
+            const status = iface.state === 'up' ? 'up                    ' : 'administratively down ';
+            const proto = iface.state === 'up' ? 'up' : 'down';
+            printTerminal(termOut4A, `${ifName.padEnd(27)}${ip.padEnd(16)}YES manual ${status}${proto}`);
+        }
+    }
+
+    function printRoutingTable4A() {
+        printTerminal(termOut4A, 'Codes: C - connected, S - static, R - RIP, M - mobile\nGateway of last resort is not set\n');
         let hasAny = false;
+        for (const ifName in router4A.interfaces) {
+            const iface = router4A.interfaces[ifName];
+            if (iface.state === 'up' && iface.ip && iface.mask) {
+                const net = calculateNetwork(iface.ip, iface.mask);
+                printTerminal(termOut4A, `C    ${net}/24 is directly connected, ${ifName}`);
+                hasAny = true;
+            }
+        }
+        if (!hasAny) printTerminal(termOut4A, '     (no active routes in table)');
+    }
+
+    if (checkR0Btn4A) {
+        checkR0Btn4A.addEventListener('click', () => {
+            const g00 = router4A.interfaces['GigabitEthernet0/0'];
+            const g01 = router4A.interfaces['GigabitEthernet0/1'];
+
+            const g00Ok = g00.ip === '192.168.10.1' && g00.mask === '255.255.255.0' && g00.state === 'up';
+            const g01Ok = g01.ip === '192.168.11.1' && g01.mask === '255.255.255.0' && g01.state === 'up';
+
+            if (g00Ok && g01Ok) {
+                fbR04A.style.color = '#059669';
+                fbR04A.textContent = '✔ Router0 Interfaces GigabitEthernet0/0 and 0/1 are correctly configured and UP!';
+                reportMilestone('4A_ROUTER_CONFIGURED');
+            } else {
+                fbR04A.style.color = '#DC2626';
+                fbR04A.textContent = '✘ Interface requirements not met. G0/0: 192.168.10.1/24 (no shutdown), G0/1: 192.168.11.1/24 (no shutdown).';
+            }
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 8. PC COMMAND PROMPT & PING VERIFICATION (4A)
+    // ─────────────────────────────────────────────────────────────
+    const sendPing4ABtn = document.getElementById('send-ping-4a');
+    const cmdOut4A = document.getElementById('cmd-output-4a');
+    const pingFb4A = document.getElementById('ping-feedback-4a');
+
+    if (sendPing4ABtn) {
+        sendPing4ABtn.addEventListener('click', () => {
+            const srcDev = document.getElementById('ping-src-4a').value;
+            const destIp = document.getElementById('ping-dest-4a').value.trim();
+
+            const pcs = Object.values(topoA.nodes).filter(n => n.type === 'PC');
+
+            cmdOut4A.innerHTML = `C:\\&gt; ping ${destIp}<br><br>Pinging ${destIp} with 32 bytes of data:<br>`;
+            pingFb4A.textContent = '';
+
+            const g00 = router4A.interfaces['GigabitEthernet0/0'];
+            const g01 = router4A.interfaces['GigabitEthernet0/1'];
+
+            const pc0 = pcs.find(p => p.label === 'PC0');
+            const pc1 = pcs.find(p => p.label === 'PC1');
+
+            let success = false;
+            let failureReason = '';
+
+            if (!pc0 || !pc1) {
+                failureReason = 'PCs missing from topology.';
+            } else if (!pc0.ip || !pc1.ip) {
+                failureReason = 'Double-click PCs on canvas to configure IP parameters first.';
+            } else if (g00.state !== 'up' || g01.state !== 'up') {
+                failureReason = 'Router0 interfaces are down. Configure them in Router CLI with "no shutdown".';
+            } else if (g00.ip !== '192.168.10.1' || g01.ip !== '192.168.11.1') {
+                failureReason = 'Router0 interface IP addresses do not match the addressing table.';
+            } else if (srcDev === 'PC1' && destIp === '192.168.10.2') {
+                if (pc1.gateway === '192.168.11.1' && pc0.gateway === '192.168.10.1') success = true;
+                else failureReason = 'Check default gateways on PC0 and PC1.';
+            } else if (srcDev === 'PC0' && destIp === '192.168.11.2') {
+                if (pc0.gateway === '192.168.10.1' && pc1.gateway === '192.168.11.1') success = true;
+                else failureReason = 'Check default gateways on PC0 and PC1.';
+            } else {
+                failureReason = `Destination ${destIp} is unreachable.`;
+            }
+
+            let count = 0;
+            const timer = setInterval(() => {
+                count++;
+                if (success) {
+                    cmdOut4A.innerHTML += `Reply from ${destIp}: bytes=32 time&lt;1ms TTL=127<br>`;
+                } else {
+                    cmdOut4A.innerHTML += `Request timed out.<br>`;
+                }
+                cmdOut4A.scrollTop = cmdOut4A.scrollHeight;
+
+                if (count >= 4) {
+                    clearInterval(timer);
+                    cmdOut4A.innerHTML += `<br>Ping statistics for ${destIp}:<br>&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = 4, Received = ${success ? 4 : 0}, Lost = ${success ? 0 : 4} (${success ? 0 : 100}% loss)<br>`;
+                    if (success) {
+                        cmdOut4A.innerHTML += `Approximate round trip times in milli-seconds:<br>&nbsp;&nbsp;&nbsp;&nbsp;Minimum = 0ms, Maximum = 1ms, Average = 0ms<br><br>C:\\&gt; _`;
+                        pingFb4A.style.color = '#059669';
+                        pingFb4A.textContent = '✔ Ping Successful! Packets routed through Router0 across both subnets.';
+                        reportMilestone('4A_CONNECTIVITY_VERIFIED');
+                    } else {
+                        cmdOut4A.innerHTML += `<br>C:\\&gt; _`;
+                        pingFb4A.style.color = '#DC2626';
+                        pingFb4A.textContent = `✘ Ping Failed: ${failureReason}`;
+                    }
+                    cmdOut4A.scrollTop = cmdOut4A.scrollHeight;
+                }
+            }, 400);
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 9. DUAL ROUTER CLI SIMULATOR (4B)
+    // ─────────────────────────────────────────────────────────────
+    const termOut4B = document.getElementById('terminal-output-4b');
+    const termIn4B = document.getElementById('terminal-input-4b');
+    const termPrompt4B = document.getElementById('terminal-prompt-4b');
+    const swR0Btn4B = document.getElementById('sw-r0-4b');
+    const swR1Btn4B = document.getElementById('sw-r1-4b');
+    const clockBadge4B = document.getElementById('exp4b-serial-clock-badge');
+
+    function updatePrompt4B() {
+        if (termPrompt4B) termPrompt4B.textContent = getPartPrompt('B', activeRouterKey4B) + ' ';
+    }
+
+    function switchRouter4B(key) {
+        activeRouterKey4B = key;
+        if (swR0Btn4B && swR1Btn4B) {
+            swR0Btn4B.style.backgroundColor = key === 'R0' ? 'var(--primary-color)' : 'var(--secondary-color)';
+            swR1Btn4B.style.backgroundColor = key === 'R1' ? 'var(--primary-color)' : 'var(--secondary-color)';
+        }
+        printTerminal(termOut4B, `\n--- Switched to ${router4B[key].hostname} CLI ---\n`);
+        updatePrompt4B();
+    }
+
+    if (swR0Btn4B) swR0Btn4B.addEventListener('click', () => switchRouter4B('R0'));
+    if (swR1Btn4B) swR1Btn4B.addEventListener('click', () => switchRouter4B('R1'));
+
+    function initTerminal4B() {
+        if (!termOut4B) return;
+        termOut4B.textContent = 'Router0 con0 is now available\n\nPress RETURN to get started.\n';
+        updatePrompt4B();
+    }
+    initTerminal4B();
+
+    if (termIn4B) {
+        termIn4B.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const raw = termIn4B.value;
+                const cmd = raw.trim();
+                termIn4B.value = '';
+
+                printTerminal(termOut4B, getPartPrompt('B', activeRouterKey4B) + ' ' + raw);
+
+                const currentR = router4B[activeRouterKey4B];
+                if (cmd) {
+                    currentR.history.unshift(cmd);
+                    if (currentR.history.length > 30) currentR.history.pop();
+                    processCmd4B(cmd, currentR);
+                }
+                currentR.historyIndex = -1;
+                updatePrompt4B();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const currentR = router4B[activeRouterKey4B];
+                if (currentR.historyIndex < currentR.history.length - 1) currentR.historyIndex++;
+                termIn4B.value = currentR.history[currentR.historyIndex] || '';
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const currentR = router4B[activeRouterKey4B];
+                if (currentR.historyIndex > 0) currentR.historyIndex--;
+                else currentR.historyIndex = -1;
+                termIn4B.value = currentR.historyIndex >= 0 ? currentR.history[currentR.historyIndex] : '';
+            }
+        });
+    }
+
+    function processCmd4B(raw, rState) {
+        const lower = raw.toLowerCase().trim();
+        const parts = lower.split(/\s+/);
+        const cmd = parts[0];
+
+        if (cmd === '?' || cmd === 'help') {
+            printTerminal(termOut4B, 'Available commands:\n  enable\n  configure terminal\n  interface <g0/0|g0/1|s0/1/0>\n  ip address <ip> <subnet-mask>\n  clock rate 64000 (DCE only)\n  no shutdown\n  ip route <dest-net> <dest-mask> <next-hop>\n  show ip route\n  show ip interface brief\n  exit / end');
+            return;
+        }
+
+        if (rState.cliMode === 'user_exec') {
+            if (cmd === 'enable' || cmd === 'en') {
+                rState.cliMode = 'priv_exec';
+            } else {
+                printTerminal(termOut4B, `% Unknown command: "${raw}". Type "enable" to enter privileged mode.`);
+            }
+        } else if (rState.cliMode === 'priv_exec') {
+            if ((cmd === 'configure' && (parts[1] === 'terminal' || parts[1] === 't')) || cmd === 'conf' || cmd === 'conft') {
+                rState.cliMode = 'global_config';
+                printTerminal(termOut4B, 'Enter configuration commands, one per line. End with CNTL/Z.');
+            } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'route') {
+                printRoutingTable4B(rState);
+            } else if (cmd === 'show' && parts[1] === 'ip' && parts[2] === 'interface' && parts[3] === 'brief') {
+                printInterfaceBrief4B(rState);
+            } else if (cmd === 'disable' || cmd === 'exit') {
+                rState.cliMode = 'user_exec';
+            } else {
+                printTerminal(termOut4B, `% Unknown command: "${raw}". Type ? for help.`);
+            }
+        } else if (rState.cliMode === 'global_config') {
+            if (cmd === 'interface' || cmd === 'int') {
+                const ifKey = normaliseIf(parts.slice(1).join(' '));
+                if (ifKey) {
+                    if (ifKey === 'Serial0/1/0' && !rState.hwicInstalled) {
+                        printTerminal(termOut4B, '% Interface Serial0/1/0 does not exist! Install HWIC-2T module in Stage 2 first.');
+                        return;
+                    }
+                    rState.cliInterface = ifKey;
+                    rState.cliMode = 'if_config';
+                } else {
+                    printTerminal(termOut4B, '% Invalid interface. Valid: GigabitEthernet0/0, GigabitEthernet0/1, Serial0/1/0');
+                }
+            } else if (cmd === 'ip' && parts[1] === 'route') {
+                const rawParts = raw.trim().split(/\s+/);
+                if (rawParts.length >= 5) {
+                    const network = rawParts[2];
+                    const mask = rawParts[3];
+                    const nextHop = rawParts[4];
+                    rState.routes = rState.routes.filter(r => !(r.network === network && r.mask === mask));
+                    rState.routes.push({ network, mask, nextHop });
+                    printTerminal(termOut4B, '');
+                    checkStaticRoutesCompletion();
+                } else {
+                    printTerminal(termOut4B, '% Incomplete command. Syntax: ip route <network> <mask> <next-hop>');
+                }
+            } else if (cmd === 'exit' || cmd === 'end') {
+                rState.cliMode = 'priv_exec';
+            } else {
+                printTerminal(termOut4B, `% Unknown command: "${raw}". Type ? for help.`);
+            }
+        } else if (rState.cliMode === 'if_config') {
+            const iface = rState.interfaces[rState.cliInterface];
+            if (cmd === 'ip' && parts[1] === 'address') {
+                const rawParts = raw.trim().split(/\s+/);
+                if (rawParts.length >= 4) {
+                    iface.ip = rawParts[2];
+                    iface.mask = rawParts[3];
+                    checkRoutersConfigured4B();
+                } else {
+                    printTerminal(termOut4B, '% Incomplete command. Syntax: ip address <ip> <subnet-mask>');
+                }
+            } else if (cmd === 'clock' && parts[1] === 'rate') {
+                if (rState.cliInterface !== 'Serial0/1/0') {
+                    printTerminal(termOut4B, '% Error: Clock rate can only be configured on Serial interfaces.');
+                } else if (iface.role !== 'DCE') {
+                    printTerminal(termOut4B, '% Error: Clock rate can only be applied to DCE cable ends (Router0).');
+                } else {
+                    const rate = parseInt(parts[2], 10);
+                    if (rate === 64000) {
+                        iface.clockRate = 64000;
+                        if (clockBadge4B) {
+                            clockBadge4B.textContent = 'DCE CLOCK: 64000 (SET)';
+                            clockBadge4B.style.background = '#10B981';
+                        }
+                        checkRoutersConfigured4B();
+                    } else {
+                        printTerminal(termOut4B, '% Syntax: clock rate 64000');
+                    }
+                }
+            } else if (cmd === 'no' && parts[1] === 'shutdown') {
+                iface.state = 'up';
+                printTerminal(termOut4B, `%LINK-5-CHANGED: Interface ${rState.cliInterface}, changed state to up`);
+                if (rState.cliInterface === 'Serial0/1/0' && iface.role === 'DCE' && iface.clockRate !== 64000) {
+                    printTerminal(termOut4B, `%LINEPROTO-5-UPDOWN: Line protocol on Interface ${rState.cliInterface}, changed state to down (DCE clock missing)`);
+                } else {
+                    printTerminal(termOut4B, `%LINEPROTO-5-UPDOWN: Line protocol on Interface ${rState.cliInterface}, changed state to up`);
+                }
+                checkRoutersConfigured4B();
+            } else if (cmd === 'shutdown') {
+                iface.state = 'down';
+                printTerminal(termOut4B, `%LINK-5-CHANGED: Interface ${rState.cliInterface}, changed state to administratively down`);
+            } else if (cmd === 'exit') {
+                rState.cliMode = 'global_config';
+                rState.cliInterface = null;
+            } else if (cmd === 'end') {
+                rState.cliMode = 'priv_exec';
+                rState.cliInterface = null;
+            } else {
+                printTerminal(termOut4B, `% Unknown command: "${raw}". Type ? for help.`);
+            }
+        }
+    }
+
+    function printRoutingTable4B(rState) {
+        printTerminal(termOut4B, 'Codes: L - local, C - connected, S - static, R - RIP, M - mobile');
+        printTerminal(termOut4B, '       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area\n');
+        printTerminal(termOut4B, 'Gateway of last resort is not set\n');
+        printTerminal(termOut4B, '192.168.10.0/24 is variably subnetted, 8 subnets, 2 masks');
+
         for (const ifName in rState.interfaces) {
             const iface = rState.interfaces[ifName];
             if (iface.state === 'up' && iface.ip && iface.mask) {
                 const net = calculateNetwork(iface.ip, iface.mask);
-                const cidr = iface.mask === '255.255.255.224' ? '27' : '24';
-                printLine(`C    ${net}/${cidr} is directly connected, ${ifName}`);
-                hasAny = true;
+                printTerminal(termOut4B, `C   ${net}/27 is directly connected, ${ifName}`);
+                printTerminal(termOut4B, `L   ${iface.ip}/32 is directly connected, ${ifName}`);
             }
         }
-        rState.routes.forEach(route => {
-            const cidr = route.mask === '255.255.255.224' ? '27' : '24';
-            printLine(`S    ${route.network}/${cidr} [1/0] via ${route.nextHop}`);
-            hasAny = true;
+
+        rState.routes.forEach(rt => {
+            printTerminal(termOut4B, `S   ${rt.network}/27 [1/0] via ${rt.nextHop}`);
         });
-        if (!hasAny) printLine('     (no active routes in table)');
     }
 
-    function printInterfaceBrief(rState) {
-        printLine('Interface                  IP-Address      OK? Method Status                Protocol');
+    function printInterfaceBrief4B(rState) {
+        printTerminal(termOut4B, 'Interface                  IP-Address      OK? Method Status                Protocol');
         for (const ifName in rState.interfaces) {
             const iface = rState.interfaces[ifName];
-            const ip    = iface.ip || 'unassigned    ';
-            let isLineUp = iface.state === 'up';
-            // In 4B Serial DCE requires clock rate
+            const ip = iface.ip || 'unassigned     ';
+            const isUp = iface.state === 'up';
+            let proto = isUp ? 'up' : 'down';
             if (ifName === 'Serial0/1/0' && iface.role === 'DCE' && iface.clockRate !== 64000) {
-                isLineUp = false;
+                proto = 'down';
             }
-            const proto = isLineUp ? 'up' : 'down';
-            const status= iface.state === 'up' ? 'up                   ' : 'administratively down';
-            printLine(`${ifName.padEnd(27)}${ip.padEnd(16)}YES manual ${status} ${proto}`);
+            const status = isUp ? 'up                    ' : 'administratively down ';
+            printTerminal(termOut4B, `${ifName.padEnd(27)}${ip.padEnd(16)}YES manual ${status}${proto}`);
         }
     }
 
-    function printControllers(rState) {
-        printLine('Interface Serial0/1/0');
-        const role = rState.interfaces['Serial0/1/0'].role;
-        const clock = rState.interfaces['Serial0/1/0'].clockRate;
-        printLine(`Hardware is PowerQUICC MPC860`);
-        printLine(`Cable type: ${role === 'DCE' ? 'V.35 DCE cable' : 'V.35 DTE cable'}`);
-        if (role === 'DCE') {
-            printLine(`Clock rate: ${clock > 0 ? clock : 'none configured'}`);
-        } else {
-            printLine(`Clock rate: (provided by remote DCE)`);
-        }
+    function checkRoutersConfigured4B() {
+        const r0 = router4B.R0;
+        const r1 = router4B.R1;
+
+        const r0Ok = r0.interfaces['GigabitEthernet0/0'].ip === '192.168.10.1' &&
+                     r0.interfaces['GigabitEthernet0/1'].ip === '192.168.10.33' &&
+                     r0.interfaces['Serial0/1/0'].ip === '192.168.10.65' &&
+                     r0.interfaces['Serial0/1/0'].clockRate === 64000 &&
+                     r0.interfaces['Serial0/1/0'].state === 'up';
+
+        if (r0Ok) reportMilestone('4B_ROUTER0_CONFIGURED');
+
+        const r1Ok = r1.interfaces['GigabitEthernet0/0'].ip === '192.168.10.97' &&
+                     r1.interfaces['GigabitEthernet0/1'].ip === '192.168.10.129' &&
+                     r1.interfaces['Serial0/1/0'].ip === '192.168.10.66' &&
+                     r1.interfaces['Serial0/1/0'].state === 'up';
+
+        if (r1Ok) reportMilestone('4B_ROUTER1_CONFIGURED');
     }
 
-    function printRunningConfig(rState) {
-        printLine('Building configuration...');
-        printLine('Current configuration:');
-        printLine(`hostname ${rState.hostname}`);
-        printLine('!');
-        for (const ifName in rState.interfaces) {
-            const iface = rState.interfaces[ifName];
-            printLine(`interface ${ifName}`);
-            if (iface.ip) printLine(` ip address ${iface.ip} ${iface.mask}`);
-            if (ifName === 'Serial0/1/0' && iface.role === 'DCE' && iface.clockRate > 0) {
-                printLine(` clock rate ${iface.clockRate}`);
-            }
-            printLine(` ${iface.state === 'up' ? 'no shutdown' : 'shutdown'}`);
-            printLine('!');
+    // ─────────────────────────────────────────────────────────────
+    // 10. STATIC ROUTE BUILDER & VALIDATOR (4B)
+    // ─────────────────────────────────────────────────────────────
+    const applyStaticBtn = document.getElementById('apply-static-routes-btn');
+    const staticFeedback = document.getElementById('static-routes-feedback');
+
+    function checkStaticRoutesCompletion() {
+        const r0 = router4B.R0;
+        const r1 = router4B.R1;
+
+        const r0Has96 = r0.routes.some(r => r.network === '192.168.10.96' && r.nextHop === '192.168.10.66');
+        const r0Has128 = r0.routes.some(r => r.network === '192.168.10.128' && r.nextHop === '192.168.10.66');
+        const r1Has0 = r1.routes.some(r => r.network === '192.168.10.0' && r.nextHop === '192.168.10.65');
+        const r1Has32 = r1.routes.some(r => r.network === '192.168.10.32' && r.nextHop === '192.168.10.65');
+
+        if (r0Has96 && r0Has128 && r1Has0 && r1Has32) {
+            reportMilestone('4B_STATIC_ROUTES_CONFIGURED');
+            return true;
         }
-        rState.routes.forEach(r => {
-            printLine(`ip route ${r.network} ${r.mask} ${r.nextHop}`);
+        return false;
+    }
+
+    if (applyStaticBtn) {
+        applyStaticBtn.addEventListener('click', () => {
+            const r0nh1 = (document.getElementById('route-r0-nh1').value || '').trim();
+            const r0nh2 = (document.getElementById('route-r0-nh2').value || '').trim();
+            const r1nh1 = (document.getElementById('route-r1-nh1').value || '').trim();
+            const r1nh2 = (document.getElementById('route-r1-nh2').value || '').trim();
+
+            const r0Valid = (r0nh1 === '192.168.10.66' && r0nh2 === '192.168.10.66');
+            const r1Valid = (r1nh1 === '192.168.10.65' && r1nh2 === '192.168.10.65');
+
+            if (r0Valid && r1Valid) {
+                router4B.R0.routes = [
+                    { network: '192.168.10.96', mask: '255.255.255.224', nextHop: '192.168.10.66' },
+                    { network: '192.168.10.128', mask: '255.255.255.224', nextHop: '192.168.10.66' }
+                ];
+                router4B.R1.routes = [
+                    { network: '192.168.10.0', mask: '255.255.255.224', nextHop: '192.168.10.65' },
+                    { network: '192.168.10.32', mask: '255.255.255.224', nextHop: '192.168.10.65' }
+                ];
+
+                staticFeedback.style.color = '#059669';
+                staticFeedback.textContent = '✔ Static routes verified and installed into both routers! Run "show ip route" in CLI to see "S" entries.';
+                reportMilestone('4B_STATIC_ROUTES_CONFIGURED');
+            } else {
+                staticFeedback.style.color = '#DC2626';
+                staticFeedback.textContent = '✘ Incorrect Next-Hop IPs! Router0 must point to Router1 Se0/1/0 (192.168.10.66), and Router1 must point to Router0 Se0/1/0 (192.168.10.65).';
+            }
         });
-        printLine('end');
     }
 
-    // ── Targeted Interface Validation ─────────────────────────────
-    if (validateRouterBtn) {
-        validateRouterBtn.addEventListener('click', () => {
-            const rState = routerStates[activeRouterKey];
-            let issues = [];
-            let ok = [];
+    // ─────────────────────────────────────────────────────────────
+    // 11. PC COMMAND PROMPT & END-TO-END PING (4B)
+    // ─────────────────────────────────────────────────────────────
+    const sendPing4BBtn = document.getElementById('send-ping-4b');
+    const cmdOut4B = document.getElementById('cmd-output-4b');
+    const pingFb4B = document.getElementById('ping-feedback-4b');
 
-            const reqIfs = (currentMode === '4A') 
-                ? ['GigabitEthernet0/0', 'GigabitEthernet0/1']
-                : ['GigabitEthernet0/0', 'GigabitEthernet0/1', 'Serial0/1/0'];
+    if (sendPing4BBtn) {
+        sendPing4BBtn.addEventListener('click', () => {
+            const srcDev = document.getElementById('ping-src-4b').value;
+            const destIp = document.getElementById('ping-dest-4b').value.trim();
 
-            reqIfs.forEach(ifName => {
-                const iface = rState.interfaces[ifName];
-                if (iface.ip && iface.mask && iface.state === 'up') {
-                    if (ifName === 'Serial0/1/0' && iface.role === 'DCE' && iface.clockRate !== 64000) {
-                        issues.push(`⚠ ${ifName}: IP configured & UP, but missing 'clock rate 64000' on DCE.`);
-                    } else {
-                        ok.push(`✔ ${ifName}: ${iface.ip} — UP`);
-                    }
-                } else if (iface.ip && iface.mask) {
-                    issues.push(`⚠ ${ifName}: ${iface.ip} — interface is SHUTDOWN. Run "no shutdown".`);
+            cmdOut4B.innerHTML = `C:\\&gt; ping ${destIp}<br><br>Pinging ${destIp} with 32 bytes of data:<br>`;
+            pingFb4B.textContent = '';
+
+            const pcs = Object.values(topoB.nodes).filter(n => n.type === 'PC');
+            const pcSrc = pcs.find(p => p.label === srcDev);
+            const pcDest = pcs.find(p => p.ip === destIp);
+
+            const r0 = router4B.R0;
+            const r1 = router4B.R1;
+
+            let success = false;
+            let failReason = '';
+
+            if (!pcSrc || !pcSrc.ip || !pcSrc.gateway) {
+                failReason = `Source device (${srcDev}) has no IP or default gateway configured.`;
+            } else if (!pcDest || !pcDest.gateway) {
+                failReason = `Destination host (${destIp}) is not configured on any PC in the topology.`;
+            } else if (pcSrc.subnet !== '255.255.255.224' || pcDest.subnet !== '255.255.255.224') {
+                failReason = 'Incorrect subnet mask! Both source and destination must use 255.255.255.224 (/27).';
+            } else if (r0.interfaces['Serial0/1/0'].state !== 'up' || r1.interfaces['Serial0/1/0'].state !== 'up') {
+                failReason = 'Serial WAN interface is down on one or both routers.';
+            } else if (r0.interfaces['Serial0/1/0'].clockRate !== 64000) {
+                failReason = 'Line protocol on Serial0/1/0 is down: Router0 (DCE) requires "clock rate 64000".';
+            } else {
+                const srcNet = calculateNetwork(pcSrc.ip, pcSrc.subnet);
+                const destNet = calculateNetwork(pcDest.ip, pcDest.subnet);
+
+                const r0HasForward = r0.routes.some(r => r.network === destNet && r.nextHop === '192.168.10.66');
+                const r1HasReturn = r1.routes.some(r => r.network === srcNet && r.nextHop === '192.168.10.65');
+
+                if ((destNet === '192.168.10.96' || destNet === '192.168.10.128') && !r0HasForward) {
+                    failReason = `Router0 has no static route for remote network ${destNet}/27.`;
+                } else if ((srcNet === '192.168.10.0' || srcNet === '192.168.10.32') && !r1HasReturn) {
+                    failReason = `Return path missing! Router1 has no static route back to ${srcNet}/27.`;
                 } else {
-                    issues.push(`✘ ${ifName}: not configured.`);
+                    success = true;
                 }
-            });
-
-            const allUp = issues.length === 0;
-            routerValidationOutput.style.cssText = `margin-top:1rem; padding:1rem; border-radius:6px; display:block;
-                background:${allUp ? '#D1FAE5' : '#FEF3C7'}; 
-                color:${allUp ? '#065F46' : '#92400E'};
-                border:1px solid ${allUp ? '#34D399' : '#FCD34D'};`;
-
-            routerValidationOutput.innerHTML =
-                `<strong>${rState.hostname} Validation ${allUp ? 'Passed ✔' : 'Issues Found ⚠'}</strong><br><br>` +
-                [...ok, ...issues].map(s => `${s}<br>`).join('') +
-                (allUp ? '<br>Required interfaces configured and operational!' : '<br>Fix the issues above and re-validate.');
-        });
-    }
-
-    // ── Ping Tool & Granular Deterministic Troubleshooter ────────
-    if (openPingBtn) {
-        openPingBtn.addEventListener('click', () => {
-            pingSection.style.display = 'block';
-            populatePingSources();
-        });
-    }
-    if (closePingBtn) closePingBtn.addEventListener('click', () => { pingSection.style.display = 'none'; });
-
-    function populatePingSources() {
-        if (!pingSource) return;
-        pingSource.innerHTML = '<option value="">-- Select Source PC --</option>';
-        for (const id in nodes()) {
-            const n = nodes()[id];
-            if (n.type === 'PC') {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = `${n.label || id}  (IP: ${n.ip || 'not set'})`;
-                pingSource.appendChild(opt);
-            }
-        }
-    }
-
-    if (sendPingBtn) {
-        sendPingBtn.addEventListener('click', () => {
-            const srcId  = pingSource ? pingSource.value : '';
-            const destIp = pingDest   ? pingDest.value.trim() : '';
-
-            pingOutput.innerHTML = '';
-            if (troubleshooterOutput) { troubleshooterOutput.style.display = 'none'; }
-
-            if (!srcId) {
-                pingOutput.innerHTML = '<span style="color:#F87171">Select a source PC first.</span><br>';
-                return;
-            }
-            if (!destIp) {
-                pingOutput.innerHTML = '<span style="color:#F87171">Enter a destination IP address.</span><br>';
-                return;
             }
 
-            const srcNode = nodes()[srcId];
-            if (!srcNode || !srcNode.ip) {
-                pingOutput.innerHTML = '<span style="color:#F87171">Source PC has no IP configured. Double-click it to set one.</span><br>';
-                return;
-            }
-
-            pingOutput.innerHTML = `Pinging ${destIp} with 32 bytes of data:<br><br>`;
-
-            const diag = evaluatePingState(srcNode, destIp, srcId);
-            let sent = 0, received = 0;
-            const total = 4;
-
-            const interval = setInterval(() => {
-                if (sent >= total) {
-                    clearInterval(interval);
-                    pingOutput.innerHTML += `<br>Ping statistics for ${destIp}:<br>`;
-                    pingOutput.innerHTML += `&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = ${total}, Received = ${received}, Lost = ${total - received} (${Math.round((total - received) / total * 100)}% loss)<br>`;
-                    if (received === total) {
-                        pingOutput.innerHTML += `<br><span style="color:#34D399">Approximate round trip times: &lt;1ms</span>`;
-                        showTroubleshooter('✔ Ping Successful! End-to-end connectivity verified across all hops and return path.', true);
-                        obs(`Ping Simulation (${currentMode})`, `Ping to ${destIp} Successful (4/4 Packets Received)`, 'Success');
-                        updateResult();
+            let count = 0;
+            const timer = setInterval(() => {
+                count++;
+                if (success) {
+                    if (count === 1) {
+                        cmdOut4B.innerHTML += `Request timed out.<br>`;
                     } else {
-                        showTroubleshooter(diag.reason, false);
-                    }
-                    return;
-                }
-
-                if (diag.success) {
-                    pingOutput.innerHTML += `Reply from ${destIp}: bytes=32 time&lt;1ms TTL=128<br>`;
-                    received++;
-                    if (sent === 0 && window.animatePacket && diag.route && diag.route.length >= 2) {
-                        window.animatePacket(diag.route[0], diag.route[diag.route.length - 1], diag.route);
+                        cmdOut4B.innerHTML += `Reply from ${destIp}: bytes=32 time=1ms TTL=126<br>`;
                     }
                 } else {
-                    pingOutput.innerHTML += `Request timed out.<br>`;
+                    cmdOut4B.innerHTML += `Request timed out.<br>`;
                 }
-                sent++;
-            }, 500);
+                cmdOut4B.scrollTop = cmdOut4B.scrollHeight;
+
+                if (count >= 4) {
+                    clearInterval(timer);
+                    const received = success ? 3 : 0;
+                    const lost = 4 - received;
+                    cmdOut4B.innerHTML += `<br>Ping statistics for ${destIp}:<br>&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = 4, Received = ${received}, Lost = ${lost} (${lost * 25}% loss)<br>`;
+                    if (success) {
+                        cmdOut4B.innerHTML += `Approximate round trip times in milli-seconds:<br>&nbsp;&nbsp;&nbsp;&nbsp;Minimum = 1ms, Maximum = 2ms, Average = 1ms<br><br>C:\\&gt; _`;
+                        pingFb4B.style.color = '#059669';
+                        pingFb4B.textContent = '✔ Ping Successful! Static routes verified across the WAN serial link.';
+                        reportMilestone('4B_CONNECTIVITY_VERIFIED');
+                    } else {
+                        cmdOut4B.innerHTML += `<br>C:\\&gt; _`;
+                        pingFb4B.style.color = '#DC2626';
+                        pingFb4B.textContent = `✘ Ping Failed: ${failReason}`;
+                    }
+                    cmdOut4B.scrollTop = cmdOut4B.scrollHeight;
+                }
+            }, 400);
         });
     }
 
-    function evaluatePingState(srcNode, destIp, srcId) {
-        let destNode = null, destId = null;
-        for (const id in nodes()) {
-            if (nodes()[id].ip === destIp) { destNode = nodes()[id]; destId = id; break; }
-        }
+    // ─────────────────────────────────────────────────────────────
+    // 12. RESULT TAB UPDATER
+    // ─────────────────────────────────────────────────────────────
+    function updateResultText() {
+        const resTextEl = document.getElementById('result-text');
+        if (!resTextEl) return;
 
-        if (!srcNode.ip || !srcNode.subnet) {
-            return { success: false, reason: 'Source PC has incomplete IP configuration.' };
-        }
+        const has4A = achievedMilestones.has('4A_CONNECTIVITY_VERIFIED');
+        const has4B = achievedMilestones.has('4B_CONNECTIVITY_VERIFIED');
 
-        if (currentMode === '4A') {
-            if (!srcNode.gateway) return { success: false, reason: 'Source PC has no Default Gateway configured.' };
-            
-            const r0 = routerStates['R0'];
-            const g00 = r0.interfaces['GigabitEthernet0/0'];
-            const g01 = r0.interfaces['GigabitEthernet0/1'];
-
-            if (g00.state !== 'up' || !g00.ip) return { success: false, reason: 'Router0 GigabitEthernet0/0 is DOWN or unassigned.' };
-            if (g01.state !== 'up' || !g01.ip) return { success: false, reason: 'Router0 GigabitEthernet0/1 is DOWN or unassigned.' };
-
-            if (srcNode.gateway !== g00.ip && srcNode.gateway !== g01.ip) {
-                return { success: false, reason: `Source Default Gateway (${srcNode.gateway}) does not match Router0 interface.` };
-            }
-
-            if (!destNode) return { success: false, reason: `Destination host ${destIp} is unreachable (device not found).` };
-            if (!destNode.gateway) return { success: false, reason: `Destination host has no Default Gateway configured.` };
-            if (destNode.gateway !== g00.ip && destNode.gateway !== g01.ip) {
-                return { success: false, reason: `Destination Default Gateway does not match Router0 interface.` };
-            }
-
-            let r0Id = null;
-            for (const id in nodes()) { if (nodes()[id].type === 'Router') { r0Id = id; break; } }
-            return { success: true, route: [srcId, r0Id, destId].filter(Boolean) };
-
-        } else {
-            // Part 4-B: Strict /27 Subnetting & Dual Router Routing
-            if (!srcNode.gateway) return { success: false, reason: 'Source PC has no Default Gateway configured.' };
-            if (srcNode.subnet !== '255.255.255.224') return { success: false, reason: 'Source PC does not have the correct /27 mask (255.255.255.224).' };
-
-            const r0 = routerStates['R0'];
-            const r1 = routerStates['R1'];
-
-            // Check WAN serial link & clock rate
-            if (r0.interfaces['Serial0/1/0'].state !== 'up') return { success: false, reason: 'Router0 Serial0/1/0 interface is administratively DOWN.' };
-            if (r1.interfaces['Serial0/1/0'].state !== 'up') return { success: false, reason: 'Router1 Serial0/1/0 interface is administratively DOWN.' };
-            if (r0.interfaces['Serial0/1/0'].clockRate !== 64000) return { success: false, reason: 'Serial link down: Router0 (DCE) requires "clock rate 64000".' };
-
-            if (!destNode) return { success: false, reason: `Destination host with IP ${destIp} not found.` };
-            if (destNode.subnet !== '255.255.255.224') return { success: false, reason: `Destination host has incorrect /27 mask (${destNode.subnet}).` };
-
-            const srcNet = calculateNetwork(srcNode.ip, srcNode.subnet);
-            const destNet = calculateNetwork(destNode.ip, destNode.subnet);
-
-            // Forward route verification (R0 -> R1)
-            const r0HasForwardRoute = r0.routes.some(r => r.network === destNet && r.mask === '255.255.255.224' && r.nextHop === '192.168.10.66');
-            if (!r0HasForwardRoute && (destNet === '192.168.10.96' || destNet === '192.168.10.128')) {
-                return { success: false, reason: `Router0 has no valid static route to remote network ${destNet}/27 via next hop 192.168.10.66.` };
-            }
-
-            // Return route verification (R1 -> R0)
-            const r1HasReturnRoute = r1.routes.some(r => r.network === srcNet && r.mask === '255.255.255.224' && r.nextHop === '192.168.10.65');
-            if (!r1HasReturnRoute && (srcNet === '192.168.10.0' || srcNet === '192.168.10.32')) {
-                return { success: false, reason: `Return path missing: Router1 has no static route back to source network ${srcNet}/27 via next hop 192.168.10.65.` };
-            }
-
-            let r0Id = null, r1Id = null;
-            for (const id in nodes()) {
-                if (nodes()[id].type === 'Router') {
-                    if (nodes()[id].label === 'Router0') r0Id = id;
-                    if (nodes()[id].label === 'Router1') r1Id = id;
-                }
-            }
-
-            return { success: true, route: [srcId, r0Id, r1Id, destId].filter(Boolean) };
-        }
+        resTextEl.innerHTML = `
+            <strong>Exercise 4 Practical Evaluation Status:</strong><br><br>
+            • <strong>Part 4-A (Configuration of IP Address in Router):</strong> ${has4A ? '<span style="color:#059669; font-weight:bold;">Completed &amp; Verified ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress</span>'}<br>
+            • <strong>Part 4-B (Subnetting in WAN Configuration):</strong> ${has4B ? '<span style="color:#059669; font-weight:bold;">Completed &amp; Verified ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress</span>'}<br><br>
+            <em>${has4A && has4B ? 'Thus, the implementation of IP addressing &amp; subnetting in WAN is done and verified in Packet Tracer.' : 'Complete both parts and submit the viva evaluation to generate your academic certificate.'}</em>
+        `;
     }
 
-    function showTroubleshooter(msg, success) {
-        if (!troubleshooterOutput) return;
-        troubleshooterOutput.style.cssText = `display:block; margin-top:1rem; padding:1rem; border-radius:6px;
-            background:${success ? '#D1FAE5' : '#FEE2E2'};
-            color:${success ? '#065F46' : '#991B1B'};
-            border:1px solid ${success ? '#34D399' : '#F87171'};`;
-        troubleshooterOutput.innerHTML = `<strong>Troubleshooter Diagnostic:</strong><br>${msg}`;
-    }
-
-    // ── Result update ─────────────────────────────────────────────
-    function updateResult() {
-        if (!resultText) return;
-        if (currentMode === '4A') {
-            resultText.innerHTML = 'Part 4-A: The implementation of router IP addressing and connectivity is completed and verified.<br><br>Part 4-B: Pending.';
-        } else {
-            resultText.innerHTML = 'Part 4-A: The implementation of router IP addressing and connectivity is completed and verified.<br><br>Part 4-B: Thus, the implementation of IP addressing &amp; subnetting in WAN is done and verified.';
-        }
-    }
-
-    // ── IP Config Modal save ──────────────────────────────────────
-    const saveIpBtn = document.getElementById('save-ip-config');
-    if (saveIpBtn) {
-        saveIpBtn.addEventListener('click', () => {
-            setTimeout(populatePingSources, 100);
-        });
-    }
-
-    // ── Init ──────────────────────────────────────────────────────
-    setMode('4A');
-    updatePrompt();
+    // Initial load
+    switchPart('A');
 });

@@ -115,7 +115,7 @@
                 <div id="overall-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; color: #64748B;">
-                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 6</span>
+                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 7</span>
                 <span>Active Semester: 2025–26</span>
             </div>
         </div>
@@ -198,6 +198,19 @@
                 <div>
                     <span class="badge" id="badge-exp6">Loading...</span>
                     <a href="experiment6.html" class="btn" id="btn-exp6" style="text-decoration: none;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 7 -->
+            <div class="exp-card" id="card-exp7">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 7</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">RIP v1 &amp; v2 Dynamic Routing Configuration</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure RIP v1 (classful) and RIP v2 (classless) dynamic routing across a multi-router topology with live Cisco IOS CLI simulation.</p>
+                </div>
+                <div>
+                    <span class="badge" id="badge-exp7">Loading...</span>
+                    <a href="experiment7.html" class="btn" id="btn-exp7" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
         </div>
@@ -366,7 +379,7 @@
                     const expList = data.experiments || data.detailedProgress || [];
 
                     if (Array.isArray(expList)) {
-                        for (let i = 1; i <= 6; i++) {
+                        for (let i = 1; i <= 7; i++) {
                             const p = expList.find(e => Number(e.experiment_id) === i);
                             if (!p) continue;
 
@@ -387,7 +400,7 @@
             }
 
             // Update UI
-            const totalExp = 6;
+            const totalExp = 7;
             const completedCount = validatedCompleted.length;
             const percent = Math.round((completedCount / totalExp) * 100);
 
@@ -399,26 +412,40 @@
             if (percentEl) percentEl.textContent = `${percent}%`;
             if (barEl) barEl.style.width = `${percent}%`;
 
-            for (let i = 1; i <= 6; i++) {
+            for (let i = 1; i <= 7; i++) {
                 const badge = document.getElementById(`badge-exp${i}`);
+                const btn   = document.getElementById(`btn-exp${i}`);
                 if (!badge) continue;
                 const isCompleted = validatedCompleted.includes(i);
                 const isInProgress = inProgressExpIds.includes(i);
-                
+                const isUnlocked = i === 1 || validatedCompleted.includes(i - 1);
+
                 if (isCompleted) {
                     badge.className = 'badge completed';
                     badge.innerHTML = '✔ Completed';
+                    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
                 } else if (isInProgress) {
                     badge.className = 'badge inprogress';
                     badge.style.background = '#FEF3C7';
                     badge.style.color = '#D97706';
                     badge.innerHTML = 'In Progress';
-                } else if (i === 1 || validatedCompleted.includes(i - 1)) {
+                    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+                } else if (isUnlocked) {
                     badge.className = 'badge inprogress';
+                    badge.style.background = '';
+                    badge.style.color = '';
                     badge.innerHTML = 'Ready to Start';
+                    if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
                 } else {
                     badge.className = 'badge locked';
                     badge.innerHTML = '🔒 Locked';
+                    // Prevent navigation for locked experiments
+                    if (btn) {
+                        btn.style.opacity = '0.45';
+                        btn.style.pointerEvents = 'none';
+                        btn.style.cursor = 'not-allowed';
+                        btn.title = 'Complete the previous experiment to unlock this.';
+                    }
                 }
             }
         }
@@ -435,8 +462,8 @@
             localStorage.removeItem('vlab_progression');
             sessionStorage.clear();
 
-            // Clear all experiment observation caches (1 to 6)
-            for (let i = 1; i <= 6; i++) {
+            // Clear all experiment observation caches (1 to 7)
+            for (let i = 1; i <= 7; i++) {
                 localStorage.removeItem(`vlab_obs_exp_${i}`);
                 localStorage.removeItem(`vlab_score_exp${i}`);
             }

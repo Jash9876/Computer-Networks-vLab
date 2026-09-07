@@ -99,9 +99,14 @@
                             1: ['CABLES_STUDIED', 'COMMANDS_EXECUTED', 'PT_UI_EXPLORED'],
                             2: ['IPV4_CONFIGURED', 'SUBNET_CALCULATED', 'PINOUT_CRIMPED', 'CABLE_TESTED'],
                             3: ['CONSOLE_CONNECTED', 'TERMINAL_CONFIGURED', 'HOSTNAME_SET', 'INTERFACES_CONFIGURED'],
-                            4: ['SUBNET_DESIGNED', 'TOPOLOGY_WIRED', 'ROUTER_CONFIGURED', 'PING_VERIFIED'],
+                            4: [
+                                '4A_TOPOLOGY_COMPLETE', '4A_ROUTER_CONFIGURED', '4A_CONNECTIVITY_VERIFIED',
+                                '4B_TOPOLOGY_COMPLETE', '4B_SERIAL_CONFIGURED', '4B_ROUTER0_CONFIGURED',
+                                '4B_ROUTER1_CONFIGURED', '4B_STATIC_ROUTES_CONFIGURED', '4B_CONNECTIVITY_VERIFIED'
+                            ],
                             5: ['TOPOLOGY_CONFIGURED', 'STATIC_ROUTE_R0', 'STATIC_ROUTE_R1', 'DEFAULT_ROUTE_SET', 'CONNECTIVITY_VERIFIED'],
-                            6: ['6A_TOPOLOGY_IP', '6A_STATIC_NAT', '6A_NAT_VERIFY', '6B_DYN_NAT_CFG', '6B_DYN_NAT_VERIFY']
+                            6: ['6A_TOPOLOGY_IP', '6A_STATIC_NAT', '6A_NAT_VERIFY', '6B_DYN_NAT_CFG', '6B_DYN_NAT_VERIFY'],
+                            7: ['7A_TOPOLOGY', '7A_ROUTER0_RIP', '7A_ROUTER1_RIP', '7A_CONVERGED', '7A_CONNECTIVITY', '7B_TOPOLOGY', '7B_ROUTER0_RIPV2', '7B_ROUTER1_RIPV2', '7B_CONVERGED', '7B_CONNECTIVITY']
                         };
 
                         const requiredList = EXP_CATALOGS[this.experimentId] || [];

@@ -18,7 +18,8 @@ const AUTHORITATIVE_MILESTONES = {
     3: ['CONSOLE_CONNECTED', 'TERMINAL_CONFIGURED', 'HOSTNAME_SET', 'INTERFACES_CONFIGURED'],
     4: ['SUBNET_DESIGNED', 'TOPOLOGY_WIRED', 'ROUTER_CONFIGURED', 'PING_VERIFIED'],
     5: ['TOPOLOGY_CONFIGURED', 'STATIC_ROUTE_R0', 'STATIC_ROUTE_R1', 'DEFAULT_ROUTE_SET', 'CONNECTIVITY_VERIFIED'],
-    6: ['6A_TOPOLOGY_IP', '6A_STATIC_NAT', '6A_NAT_VERIFY', '6B_DYN_NAT_CFG', '6B_DYN_NAT_VERIFY']
+    6: ['6A_TOPOLOGY_IP', '6A_STATIC_NAT', '6A_NAT_VERIFY', '6B_DYN_NAT_CFG', '6B_DYN_NAT_VERIFY'],
+    7: ['7A_TOPOLOGY', '7A_ROUTER0_RIP', '7A_ROUTER1_RIP', '7A_CONVERGED', '7A_CONNECTIVITY', '7B_TOPOLOGY', '7B_ROUTER0_RIPV2', '7B_ROUTER1_RIPV2', '7B_CONVERGED', '7B_CONNECTIVITY']
 };
 
 function resolveMilestone(expId, stage, eventType, payload) {
@@ -66,6 +67,31 @@ function resolveMilestone(expId, stage, eventType, payload) {
             if (stg.includes('Default Routing') || eventType === 'DEFAULT_ROUTE_CONFIGURED') res.push('DEFAULT_ROUTE_SET');
             if (stg.includes('Traceroute') || stg.includes('Packet Journey') || eventType === 'TRACEROUTE_EXECUTED') res.push('CONNECTIVITY_VERIFIED');
             break;
+        case 7: {
+            const actLower = act.toLowerCase();
+            const stgLower = stg.toLowerCase();
+            if (stgLower.includes('topology') || actLower.includes('topology') || eventType === 'TOPOLOGY_VALIDATED') {
+                res.push('7A_TOPOLOGY');
+                res.push('7B_TOPOLOGY');
+            }
+            if (actLower.includes('router rip') || actLower.includes('network') || act.includes('Router0') || act.includes('RIP v1') || act.includes('RIP Configuration')) {
+                res.push('7A_ROUTER0_RIP');
+                res.push('7A_ROUTER1_RIP');
+            }
+            if (actLower.includes('version 2') || actLower.includes('no auto-summary') || act.includes('RIP v2') || act.includes('WAN Serial Link Restored')) {
+                res.push('7B_ROUTER0_RIPV2');
+                res.push('7B_ROUTER1_RIPV2');
+            }
+            if (actLower.includes('converge') || act.includes('Route learned') || act.includes('Routing table verified') || act.includes('reconverged')) {
+                res.push('7A_CONVERGED');
+                res.push('7B_CONVERGED');
+            }
+            if (actLower.includes('packet journey') || eventType === 'PING_SUCCESS' || actLower.includes('ping') || act.includes('Delivered')) {
+                res.push('7A_CONNECTIVITY');
+                res.push('7B_CONNECTIVITY');
+            }
+            break;
+        }
     }
     const validList = AUTHORITATIVE_MILESTONES[expId] || [];
     return res.filter(m => validList.includes(m));

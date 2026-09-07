@@ -4,6 +4,33 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
+// Load local development environment variables from .env.local
+if (process.env.NODE_ENV !== 'production') {
+    const envPath = path.join(__dirname, '.env.local');
+
+    if (fs.existsSync(envPath)) {
+        const envLines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+
+        for (const line of envLines) {
+            const trimmed = line.trim();
+
+            if (!trimmed || trimmed.startsWith('#')) continue;
+
+            const separator = trimmed.indexOf('=');
+            if (separator === -1) continue;
+
+            const key = trimmed.slice(0, separator).trim();
+            let value = trimmed.slice(separator + 1).trim();
+
+            value = value.replace(/^['"]|['"]$/g, '');
+
+            if (!process.env[key]) {
+                process.env[key] = value;
+            }
+        }
+    }
+}
+
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname);
 
@@ -25,20 +52,11 @@ const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     let pathname = parsedUrl.pathname;
 
-    // 1. API Route Handler (Emulates Vercel Serverless Functions)
+    // 1. API Route Handler (Routes all /api/* through the unified gateway api/index.js)
     if (pathname.startsWith('/api/')) {
-        const apiRelativePath = pathname.replace(/^\/api\//, '');
-        const apiFilePath = path.join(ROOT_DIR, 'api', `${apiRelativePath}.js`);
-        const apiIndexPath = path.join(ROOT_DIR, 'api', apiRelativePath, 'index.js');
+        const targetModule = path.join(ROOT_DIR, 'api', 'index.js');
 
-        let targetModule = null;
-        if (fs.existsSync(apiFilePath)) {
-            targetModule = apiFilePath;
-        } else if (fs.existsSync(apiIndexPath)) {
-            targetModule = apiIndexPath;
-        }
-
-        if (targetModule) {
+        if (fs.existsSync(targetModule)) {
             try {
                 // Collect request body
                 let bodyData = '';
@@ -59,8 +77,12 @@ const server = http.createServer(async (req, res) => {
                     res.end(JSON.stringify(obj));
                 };
 
-                // Clear require cache for live reload
-                delete require.cache[require.resolve(targetModule)];
+                // Clear require cache for live reload of api and lib modules
+                Object.keys(require.cache).forEach(key => {
+                    if (key.includes(path.join(__dirname, 'api')) || key.includes(path.join(__dirname, 'lib'))) {
+                        delete require.cache[key];
+                    }
+                });
                 const handler = require(targetModule);
                 return await handler(req, res);
             } catch (err) {

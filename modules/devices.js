@@ -1,6 +1,7 @@
 // Module 4: Device Topology Builder
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (document.title.includes('Exercise 7')) return;
     const draggables = document.querySelectorAll('#topo-tools .draggable-item');
     const canvas = document.getElementById('topology-canvas');
     const svgLayer = document.getElementById('connection-layer');
@@ -408,10 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedback.style.color = '#EF4444';
                     feedback.textContent = 'Topology incorrect. Build either a P2P network (2 PCs) or a Simple LAN (2 PCs + 1 Switch).';
                 }
-            } else if (document.title.includes('Exercise 3') || document.title.includes('Exercise 4')) {
-                // Exp 3/4 Validation
-                // This block just prevents the Exp 1 fallback from running.
-                // Let the experiment-specific handler take over (it listens to the same click).
+            } else if (document.title.includes('Exercise 3') || document.title.includes('Exercise 4') || document.title.includes('Exercise 5') || document.title.includes('Exercise 7')) {
+                // Exp 3/4/5/7 Validation: Let the experiment-specific logic handler process validation
                 return;
             } else {
                 // Exp 1 Validation

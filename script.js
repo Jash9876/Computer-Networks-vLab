@@ -37,7 +37,13 @@ function loadData() {
     const procEl = document.getElementById('procedure-content');
     if (procEl) procEl.innerHTML = experimentData.procedure;
 
-    // Set loading placeholder for observation table and result
+    // Static Observation / Expected Results content (if provided by the data file)
+    const obsStaticEl = document.getElementById('observation-static-content');
+    if (obsStaticEl && experimentData.observations) {
+        obsStaticEl.innerHTML = experimentData.observations;
+    }
+
+    // Set loading placeholder for simulation observation table and result
     const obsContainer = document.getElementById('observation-content');
     if (obsContainer) {
         obsContainer.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: #64748B;">⏳ <em>Restoring your academic observation record from database...</em></div>';
@@ -48,9 +54,7 @@ function loadData() {
     }
 
     // Hydrate existing offline cache as fallback
-    if (observations.length > 0) {
-        updateObservationTable();
-    }
+    updateObservationTable();
 
     // Quiz
     setupQuiz();
@@ -71,6 +75,9 @@ function setupNavigation() {
             const targetId = item.getAttribute('data-target');
             const targetSec = document.getElementById(targetId);
             if (targetSec) targetSec.classList.add('active');
+            if (targetId === 'observation') {
+                updateObservationTable();
+            }
         });
     });
 }
@@ -85,22 +92,59 @@ function getExpKey() {
 const observations = (function() {
     try {
         const saved = localStorage.getItem(getExpKey());
-        return saved ? JSON.parse(saved) : [];
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map(item => ({
+            time: item.time || new Date().toLocaleTimeString(),
+            moduleName: item.moduleName || item.category || "Simulation",
+            action: item.action || item.detail || "",
+            result: item.result || item.outcome || "OK"
+        })).filter(o => o.moduleName !== 'Lab Start');
     } catch(e) {
         return [];
     }
 })();
 
+window.observations = observations;
 window.isHydrated = false;
 
 window.setObservations = function(newObs) {
     if (Array.isArray(newObs)) {
-        observations.length = 0;
-        newObs.forEach(o => observations.push(o));
-        try {
-            localStorage.setItem(getExpKey(), JSON.stringify(observations));
-        } catch(e) {}
-        updateObservationTable();
+        const validNew = newObs.filter(o => (o.moduleName || o.category) !== 'Lab Start');
+        if (validNew.length > 0) {
+            // Merge authoritative records with local observations, avoiding duplicates
+            const existingKeys = new Set();
+            const merged = [];
+            validNew.forEach(o => {
+                const key = `${o.time}_${o.moduleName || o.category}_${o.action || o.detail}`;
+                existingKeys.add(key);
+                merged.push({
+                    time: o.time || new Date().toLocaleTimeString(),
+                    moduleName: o.moduleName || o.category || "Simulation",
+                    action: o.action || o.detail || "",
+                    result: o.result || o.outcome || "OK"
+                });
+            });
+            observations.forEach(o => {
+                const key = `${o.time}_${o.moduleName || o.category}_${o.action || o.detail}`;
+                if (!existingKeys.has(key)) {
+                    existingKeys.add(key);
+                    merged.push(o);
+                }
+            });
+            observations.length = 0;
+            merged.forEach(o => observations.push(o));
+            try {
+                localStorage.setItem(getExpKey(), JSON.stringify(observations));
+            } catch(e) {}
+            updateObservationTable();
+        } else if (observations.length > 0) {
+            // Keep local observations if server returns empty
+            updateObservationTable();
+        } else {
+            updateObservationTable();
+        }
     }
     window.isHydrated = true;
 };
@@ -119,11 +163,24 @@ function addObservation(moduleName, action, result) {
     updateObservationTable();
 }
 
+window.addObservation = addObservation;
+window.updateObservationTable = updateObservationTable;
+window.getExpKey = getExpKey;
+
 function updateObservationTable() {
     const container = document.getElementById('observation-content');
     if (!container) return;
-    if (observations.length === 0) {
+    
+    // Filter out any artificial/fake initial entries
+    const validObservations = observations.filter(obs => {
+        const mod = obs.moduleName || obs.category || '';
+        return mod !== 'Lab Start';
+    });
+
+    if (validObservations.length === 0) {
         container.innerHTML = "<p>No observations recorded yet. Start interacting with the Simulation.</p>";
+        const exportBtn = document.getElementById('export-csv');
+        if (exportBtn) exportBtn.style.display = 'none';
         return;
     }
     let html = `
@@ -139,13 +196,16 @@ function updateObservationTable() {
             <tbody>
     `;
 
-    observations.forEach(obs => {
+    validObservations.forEach(obs => {
+        const mod = obs.moduleName || obs.category || 'Simulation';
+        const act = obs.action || obs.detail || '';
+        const res = obs.result || obs.outcome || 'OK';
         html += `
             <tr>
                 <td>${obs.time}</td>
-                <td>${obs.moduleName}</td>
-                <td>${obs.action}</td>
-                <td>${obs.result}</td>
+                <td>${mod}</td>
+                <td>${act}</td>
+                <td>${res}</td>
             </tr>
         `;
     });
@@ -162,13 +222,17 @@ function updateObservationTable() {
 const exportCsvBtn = document.getElementById('export-csv');
 if (exportCsvBtn) {
     exportCsvBtn.addEventListener('click', () => {
-        if (observations.length === 0) return;
+        const validObservations = observations.filter(obs => {
+            const mod = obs.moduleName || obs.category || '';
+            return mod !== 'Lab Start';
+        });
+        if (validObservations.length === 0) return;
         
-        let csv = 'Time,Module,Action,Result\n';
-        observations.forEach(obs => {
-            const mod = `"${(obs.moduleName || '').replace(/"/g, '""')}"`;
-            const act = `"${(obs.action || '').replace(/"/g, '""')}"`;
-            const res = `"${(obs.result || '').replace(/"/g, '""')}"`;
+        let csv = 'Time,Module,Action,Result / Output\n';
+        validObservations.forEach(obs => {
+            const mod = `"${(obs.moduleName || obs.category || '').replace(/"/g, '""')}"`;
+            const act = `"${(obs.action || obs.detail || '').replace(/"/g, '""')}"`;
+            const res = `"${(obs.result || obs.outcome || '').replace(/"/g, '""')}"`;
             csv += `${obs.time},${mod},${act},${res}\n`;
         });
         
@@ -284,11 +348,76 @@ function evaluateQuiz() {
         }
     });
 
-    const token = localStorage.getItem('vlab_token');
+    const token = localStorage.getItem('vlab_student_token') || localStorage.getItem('vlab_token');
     const authHeaders = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
+
+    function renderLocalEvaluationFallback() {
+        let localScore = 0;
+        const totalQ = quizList.length || 5;
+        const localDetails = [];
+
+        quizList.forEach((q, idx) => {
+            const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+            const selectedVal = selected ? parseInt(selected.value) : -1;
+            const isCorrect = selectedVal === q.correct;
+            if (isCorrect) localScore++;
+            localDetails.push({
+                questionIndex: idx,
+                correct: isCorrect,
+                correctIndex: q.correct
+            });
+        });
+
+        const pct = totalQ > 0 ? Math.round((localScore / totalQ) * 100) : 0;
+        const passed = pct >= 70;
+
+        resultsEl.innerHTML = `
+            <h3>Quiz Evaluation</h3>
+            <p><strong>Attempt:</strong> ${currentAttempt}</p>
+            <p><strong>Score:</strong> ${localScore} / ${totalQ} (${pct}%)</p>
+            <p style="font-size:0.9rem; color:#4B5563;">${passed ? '🎉 Great job! You have passed the quiz with ' + pct + '% (Minimum 70% required).' : '💡 You scored ' + pct + '%. A minimum of 70% (4 correct out of 5) is required to pass. Please review the theory and retry.'}</p>
+        `;
+
+        localDetails.forEach(det => {
+            const feedbackEl = document.getElementById(`feedback-q${det.questionIndex}`);
+            const qObj = quizList[det.questionIndex];
+            if (feedbackEl && qObj) {
+                feedbackEl.style.display = 'block';
+                if (det.correct) {
+                    feedbackEl.className = 'quiz-feedback correct';
+                    feedbackEl.textContent = `✔ Correct! ${qObj.explanation || ''}`;
+                } else {
+                    feedbackEl.className = 'quiz-feedback incorrect';
+                    if (currentAttempt === 1 && qObj.hint) {
+                        feedbackEl.innerHTML = `❌ <strong>Not quite. Hint:</strong> ${qObj.hint} <br><em>Re-evaluate your choice and click Submit Quiz again.</em>`;
+                    } else if (qObj.explanation) {
+                        feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> ${qObj.explanation}`;
+                    } else {
+                        feedbackEl.innerHTML = `❌ <strong>Incorrect.</strong> The correct answer was: <em>${qObj.options[det.correctIndex]}</em>`;
+                    }
+                }
+            }
+        });
+
+        const resTextEl = document.getElementById('result-text');
+        if (resTextEl) {
+            resTextEl.innerHTML = `
+                <strong>Academic Lab Evaluation:</strong><br><br>
+                • <strong>Current Quiz Score:</strong> ${localScore} / ${totalQ} (${pct}%)<br>
+                • <strong>Status:</strong> ${passed ? '<span style="color:#059669; font-weight:bold;">Passed ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress (Quiz Retry Required &ge; 70%)</span>'}<br>
+                • <strong>Passing Requirement:</strong> &ge; 70% (4 correct out of 5)<br>
+                • <strong>Interactive Modules Completed:</strong> ${typeof observations !== 'undefined' ? new Set(observations.map(o => o.moduleName)).size : 0} module(s).
+            `;
+        }
+
+        const certBtn = document.getElementById('view-cert-btn');
+        if (certBtn) {
+            certBtn.style.display = passed ? 'inline-block' : 'none';
+        }
+    }
 
     // Server-Side Secure Sync with Button State Release & Server-Authoritative Rendering
     fetch('/api/quiz/submit', {
@@ -314,7 +443,7 @@ function evaluateQuiz() {
                 <h3>Quiz Evaluation</h3>
                 <p><strong>Attempt:</strong> ${currentAttempt}</p>
                 <p><strong>Official Verified Score:</strong> ${officialScore} / ${officialTotal} (${officialPercentage}%)</p>
-                <p style="font-size:0.9rem; color:#4B5563;">${data.passed ? '🎉 Great job! You have passed the institutional quiz.' : '💡 Review the hints above and try re-answering incorrect questions.'}</p>
+                <p style="font-size:0.9rem; color:#4B5563;">${data.passed ? '🎉 Great job! You have passed the institutional quiz (' + officialPercentage + '% &ge; 70%).' : '💡 You scored ' + officialPercentage + '%. A minimum of 70% is required to pass. Review the hints above and try re-answering incorrect questions.'}</p>
             `;
 
             // 1b. Update question feedback boxes strictly according to server evaluation
@@ -351,10 +480,10 @@ function evaluateQuiz() {
                 const certBtn = document.getElementById('view-cert-btn');
                 if (certBtn) certBtn.style.display = 'inline-block';
             } else {
-                // If attempt did not earn a certificate, don't show the certificate button for this failed attempt
+                // If attempt did not earn a certificate, show button only if passed
                 const certBtn = document.getElementById('view-cert-btn');
-                if (certBtn && !data.passed) {
-                    certBtn.style.display = 'none';
+                if (certBtn) {
+                    certBtn.style.display = data.passed ? 'inline-block' : 'none';
                 }
             }
 
@@ -365,8 +494,8 @@ function evaluateQuiz() {
                     <strong>Academic Lab Evaluation:</strong><br><br>
                     • <strong>Current Quiz Score:</strong> ${officialScore} / ${data.totalQuestions || total} (${officialPercentage}%)<br>
                     • <strong>Status:</strong> ${data.passed ? '<span style="color:#059669; font-weight:bold;">Completed ✔</span>' : '<span style="color:#D97706; font-weight:bold;">In Progress (Quiz Retry Required &ge; 70%)</span>'}<br>
-                    • <strong>Certificate:</strong> ${data.certificateCode ? `<span style="font-family:monospace; color:#2563EB; font-weight:bold;">${data.certificateCode}</span>` : '<span style="color:#64748B;">Requires &ge; 70% Quiz Pass</span>'}<br>
-                    • <strong>Interactive Modules Completed:</strong> ${new Set(observations.map(o => o.moduleName)).size} module(s).
+                    • <strong>Certificate:</strong> ${data.certificateCode ? `<span style="font-family:monospace; color:#2563EB; font-weight:bold;">${data.certificateCode}</span>` : (data.passed ? '<span style="color:#059669;">Passed (&ge; 70%)</span>' : '<span style="color:#64748B;">Requires &ge; 70% Quiz Pass</span>')}<br>
+                    • <strong>Interactive Modules Completed:</strong> ${typeof observations !== 'undefined' ? new Set(observations.map(o => o.moduleName)).size : 0} module(s).
                 `;
             }
 
@@ -377,9 +506,14 @@ function evaluateQuiz() {
             if (window.VLabSync && typeof window.VLabSync.restoreAuthoritativeHistory === 'function') {
                 window.VLabSync.restoreAuthoritativeHistory();
             }
+        } else {
+            // If server returned non-success (e.g. guest or untracked), gracefully render local evaluation
+            renderLocalEvaluationFallback();
         }
     })
-    .catch(() => {})
+    .catch(() => {
+        renderLocalEvaluationFallback();
+    })
     .finally(() => {
         isQuizSubmitting = false;
         if (submitBtn) {

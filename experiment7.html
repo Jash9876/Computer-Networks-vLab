@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 7</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="modules/device-gate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <a href="dashboard.html"><img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 46px; object-fit: contain;"></a>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.2rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Computer Networks Lab &bull; Exercise 7</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="dashboard.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Dashboard</a>
+            <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); background: #EFF6FF; padding: 0.3rem 0.8rem; border-radius: 6px;">Exercise 7</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim"><i data-lucide="target"></i> Aim</div>
+            <div class="nav-item" data-target="theory"><i data-lucide="book-open"></i> Theory</div>
+            <div class="nav-item" data-target="procedure"><i data-lucide="clipboard-list"></i> Procedure</div>
+            <div class="nav-item" data-target="simulation"><i data-lucide="play-circle"></i> Simulation</div>
+            <div class="nav-item" data-target="observation"><i data-lucide="eye"></i> Observation</div>
+            <div class="nav-item" data-target="quiz"><i data-lucide="help-circle"></i> Quiz</div>
+            <div class="nav-item" data-target="result"><i data-lucide="check-square"></i> Result</div>
+        </nav>
+
+        <main class="content-area">
+
+            <!-- ═══════════════════ AIM ═══════════════════ -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;"><li>Loading...</li></ul>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ THEORY ═══════════════════ -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ PROCEDURE ═══════════════════ -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ SIMULATION ═══════════════════ -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h2 class="section-title" style="margin-bottom: 0.25rem;">Simulation: RIP v1 &amp; RIP v2 Dynamic Routing</h2>
+                            <p style="color: #64748B; font-size: 0.9rem; margin: 0;">Build the topology, configure Cisco IOS RIP, verify convergence, and simulate packet routing.</p>
+                        </div>
+                        <!-- Part Navigation Tabs -->
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                            <button class="btn exp7-nav-btn" data-part="A" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color); color:white;">Part A: RIP v1</button>
+                            <button class="btn exp7-nav-btn" data-part="B" style="padding: 0.35rem 0.75rem; font-size: 0.85rem; background-color: var(--secondary-color);">Part B: RIP v2</button>
+                            <button id="exp7-reset-btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background:#FFF1F2; color:#E11D48; border:1px solid #FECDD3; border-radius:6px; cursor:pointer;">↺ Reset Lab</button>
+                        </div>
+                    </div>
+
+                    <div class="sim-container">
+
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <!-- PART A: RIP v1 (Classful Routing)                             -->
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <div id="exp7-part-a" class="exp7-part-container">
+
+                            <!-- Part A intro banner -->
+                            <div style="background: linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%); color:white; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.25rem;">
+                                <div style="font-weight:700; font-size:1rem; margin-bottom:0.25rem;">Exercise 7.A — RIP v1: Classful Dynamic Routing</div>
+                                <div style="font-size:0.8rem; opacity:0.9;">Build the WAN topology &rarr; configure IP addresses &rarr; enable RIP v1 on Router0 &amp; Router1 &rarr; observe dynamic route learning &rarr; verify connectivity.</div>
+                            </div>
+
+                            <!-- STAGE 1: Topology Construction -->
+                            <div class="card" id="exp7a-topo-card">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:var(--primary-color); color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 1</span>
+                                    Physical Topology Construction
+                                </h3>
+                                <p id="exp7a-topo-instructions" style="font-size:0.875rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Drag <strong>4 PCs (PC0&hellip;PC3)</strong>, <strong>4 Switches (Switch0&hellip;Switch3)</strong>, and <strong>2 Routers (Router0, Router1)</strong> onto the canvas.<br>
+                                    Connect: PCs &rarr; Switches (Straight-Through), Switches &rarr; Routers (Straight-Through), Router0 &harr; Router1 (Serial DCE).
+                                </p>
+
+                                <div class="dnd-container" style="flex-direction: column;">
+                                    <!-- Device Palette -->
+                                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="topo-tools">
+                                        <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/pc.svg" width="28" height="28" alt="PC"><br><span style="font-size:0.72rem; font-weight:600;">PC</span>
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-switch" data-type="Switch" data-icon="switch" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/switch.svg" width="28" height="28" alt="Switch"><br><span style="font-size:0.72rem; font-weight:600;">Switch</span>
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/router.svg" width="28" height="28" alt="Router"><br><span style="font-size:0.72rem; font-weight:600;">Router</span>
+                                        </div>
+                                        <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 0.5rem;"></div>
+                                        <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color); font-size:0.85rem;">
+                                            <i data-lucide="link"></i> Enable Connect Mode
+                                        </button>
+                                        <select id="cable-type-select" style="padding: 0.45rem 0.6rem; font-family: inherit; font-size:0.85rem; border:1px solid #CBD5E1; border-radius:4px;">
+                                            <option value="straight">Copper Straight-Through</option>
+                                            <option value="serial">Serial DCE</option>
+                                            <option value="crossover">Copper Crossover</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Topology Canvas -->
+                                    <div class="topology-canvas" id="topology-canvas" style="position: relative; min-height: 380px; margin-top: 0.75rem;">
+                                        <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    </div>
+
+                                    <!-- Check Topology -->
+                                    <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                        <button class="btn" id="check-topology" style="background:var(--primary-color); color:white; padding:0.4rem 1rem;">Check Topology</button>
+                                        <button class="btn" id="reset-topology" style="background-color: var(--secondary-color); padding:0.4rem 1rem;">Reset Canvas</button>
+                                    </div>
+                                    <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold; font-size:0.9rem;"></p>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 2: IP Addressing Reference (shows after topology check) -->
+                            <div id="exp7a-ip-stage" style="display:none;">
+                                <div class="card">
+                                    <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                        <span style="background:#059669; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 2</span>
+                                        IP Addressing Plan &mdash; Part A: RIP v1 (/24 Classful Networks)
+                                    </h3>
+                                    <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.5rem;">Double-click any <strong>PC</strong> on the canvas to open IP configuration. Router interfaces are pre-assigned per the addressing plan below.</p>
+                                    <div style="overflow-x:auto;">
+                                        <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; margin-top:0.5rem;">
+                                            <thead>
+                                                <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                                    <th style="padding:0.45rem 0.6rem;">Device</th>
+                                                    <th style="padding:0.45rem 0.6rem;">Interface</th>
+                                                    <th style="padding:0.45rem 0.6rem;">IP Address</th>
+                                                    <th style="padding:0.45rem 0.6rem;">Subnet Mask</th>
+                                                    <th style="padding:0.45rem 0.6rem;">Default Gateway</th>
+                                                    <th style="padding:0.45rem 0.6rem;">Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#2563EB;">PC0</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.1</td><td style="padding:0.4rem 0.6rem;">LAN 0 &rarr; Switch0</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#059669;">PC1</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.11.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.11.1</td><td style="padding:0.4rem 0.6rem;">LAN 1 &rarr; Switch1</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router0</td><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">Gateway for PC0</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.11.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">Gateway for PC1</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">Serial0/1/0 (<strong>DCE</strong>)</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">10.0.0.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">WAN &mdash; clock rate 64000</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router1</td><td style="padding:0.4rem 0.6rem;">Serial0/1/0 (<strong>DTE</strong>)</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">10.0.0.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">WAN</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.12.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">Gateway for PC2</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.13.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem;">Gateway for PC3</td></tr>
+                                                <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#7C3AED;">PC2</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.12.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.12.1</td><td style="padding:0.4rem 0.6rem;">LAN 2 &rarr; Switch2</td></tr>
+                                                <tr><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#DB2777;">PC3</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.13.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.13.1</td><td style="padding:0.4rem 0.6rem;">LAN 3 &rarr; Switch3</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Module 2: Command Simulator / Router CLI -->
+                                <div class="card" id="exp7a-cli-card">
+                                    <h3>Module 2: Command Simulator</h3>
+                                    <p>Try running commands: <code>enable</code>, <code>configure terminal</code>, <code>router rip</code>, <code>network 192.168.10.0</code>, <code>show ip route</code></p>
+
+                                    <!-- Router Switcher -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <strong>Active Terminal:</strong>
+                                            <button class="btn" id="sw-r0" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--primary-color);">Router0</button>
+                                            <button class="btn" id="sw-r1" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--secondary-color);">Router1</button>
+                                        </div>
+                                        <span id="exp7a-convergence-badge" style="font-size:0.75rem; font-weight:700; padding:0.2rem 0.6rem; border-radius:4px; background:#D97706; color:white;">AWAITING RIP CONFIG</span>
+                                    </div>
+
+                                    <!-- Terminal -->
+                                    <div class="terminal" id="terminal" style="height: 320px; display: flex; flex-direction: column; overflow: hidden;">
+                                        <div class="terminal-output" id="terminal-output" style="flex: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 0;"></div>
+                                        <div class="terminal-input-line" style="flex-shrink: 0;">
+                                            <span class="terminal-prompt" id="terminal-prompt">Router0&gt; </span>
+                                            <input type="text" class="terminal-input" id="terminal-input" autocomplete="off" autocorrect="off" spellcheck="false">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STAGE 4: Live Routing Tables -->
+                                <div class="card">
+                                    <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                        <span style="background:#6D28D9; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 4</span>
+                                        Live Dynamic Routing Tables
+                                    </h3>
+                                    <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">Tables update dynamically as you configure RIP. <code style="color:#059669;">R</code> routes appear after both routers advertise their networks.</p>
+                                    <div id="exp7a-routing-tables" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem;"></div>
+                                </div>
+
+                                <!-- STAGE 5: Packet Routing Simulation -->
+                                <div class="card">
+                                    <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                        <span style="background:#0369A1; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 5</span>
+                                        RIP v1 Packet Routing Simulation
+                                    </h3>
+                                    <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">Trace how a packet travels hop-by-hop across the topology. Before RIP convergence, the packet will fail.</p>
+                                    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:0.75rem;">
+                                        <div>
+                                            <label style="font-size:0.8rem; font-weight:600;">Source Host:</label>
+                                            <select id="exp7a-journey-src" style="padding:0.35rem 0.5rem; border:1px solid #CBD5E1; border-radius:4px; font-size:0.85rem; margin-top:0.25rem; display:block;">
+                                                <option value="PC0">PC0 (192.168.10.2)</option>
+                                                <option value="PC1">PC1 (192.168.11.2)</option>
+                                                <option value="PC2">PC2 (192.168.12.2)</option>
+                                                <option value="PC3">PC3 (192.168.13.2)</option>
+                                            </select>
+                                        </div>
+                                        <div style="font-size:1.2rem; margin-top:1.1rem;">&#8594;</div>
+                                        <div>
+                                            <label style="font-size:0.8rem; font-weight:600;">Destination Host:</label>
+                                            <select id="exp7a-journey-dst" style="padding:0.35rem 0.5rem; border:1px solid #CBD5E1; border-radius:4px; font-size:0.85rem; margin-top:0.25rem; display:block;">
+                                                <option value="PC3">PC3 (192.168.13.2)</option>
+                                                <option value="PC2">PC2 (192.168.12.2)</option>
+                                                <option value="PC1">PC1 (192.168.11.2)</option>
+                                                <option value="PC0">PC0 (192.168.10.2)</option>
+                                            </select>
+                                        </div>
+                                        <button id="exp7a-start-journey" class="btn" style="margin-top:1.1rem; background-color:var(--primary-color); color:white;">Trace Packet Journey</button>
+                                    </div>
+                                    <div id="exp7a-journey-output" style="background:#1E293B; color:#E2E8F0; padding:1rem; border-radius:6px; font-family:monospace; font-size:0.82rem; line-height:1.7; min-height:100px;">
+                                        Select source and destination, then click Trace Packet Journey.
+                                    </div>
+                                </div>
+
+                                <!-- STAGE 6: WAN Failure Simulation -->
+                                <div class="card" style="background:#FFFBEB; border:1px solid #FDE68A;">
+                                    <h3 style="margin-top:0; color:#B45309; font-size:1rem;">⚡ Activity: RIP WAN Link Failure &amp; Reconvergence</h3>
+                                    <p style="font-size:0.85rem; color:#78350F; margin-bottom:0.75rem;">When the WAN serial link fails, RIP detects the timeout and withdraws learned routes from both routers' tables. Restore the link to observe automatic reconvergence.</p>
+                                    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                                        <button id="exp7a-fail-wan" class="btn" style="background:#DC2626; color:white;">⚠ Simulate WAN Failure</button>
+                                        <button id="exp7a-restore-wan" class="btn" style="background:#059669; color:white; display:none;">✔ Restore WAN Link</button>
+                                        <span id="exp7a-wan-status" style="font-size:0.8rem; font-weight:600; color:#059669;">WAN Serial Link: Operational (DCE/DTE Up)</span>
+                                    </div>
+                                </div>
+                            </div><!-- /exp7a-ip-stage -->
+                        </div><!-- /exp7-part-a -->
+
+
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <!-- PART B: RIP v2 (Classless /27 Subnetted)                      -->
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <div id="exp7-part-b" class="exp7-part-container" style="display:none;">
+
+                            <!-- Part B intro banner -->
+                            <div style="background: linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%); color:white; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.25rem;">
+                                <div style="font-weight:700; font-size:1rem; margin-bottom:0.25rem;">Exercise 7.B — RIP v2: Classless Routing with /27 Subnetting</div>
+                                <div style="font-size:0.8rem; opacity:0.9;">Build the same topology using /27 subnetted addresses &rarr; configure RIP v2 with <code>no auto-summary</code> &rarr; verify /27 routes appear with exact subnet masks.</div>
+                            </div>
+
+                            <!-- STAGE 1: Topology Note (reuse same canvas) -->
+                            <div class="card">
+                                <h3 style="margin-top:0; font-size:1rem; color:#0F172A; display:flex; align-items:center; gap:0.5rem;">
+                                    <span style="background:var(--primary-color); color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 1</span>
+                                    Topology Status
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin:0;">
+                                    Part B uses the same physical topology as Part A (4 PCs, 4 Switches, 2 Routers). 
+                                    <span id="exp7b-topo-note">Complete Part A topology validation first — Part B will use it automatically.</span>
+                                </p>
+                                <p id="exp7b-topo-ok" style="display:none; margin-top:0.5rem; font-weight:700; color:#059669;">✔ Topology validated from Part A. Proceed to RIP v2 configuration below.</p>
+                            </div>
+
+                            <!-- STAGE 2: Part B IP Addressing -->
+                            <div class="card" id="exp7b-config-stage">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#059669; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 2</span>
+                                    IP Addressing Plan &mdash; Part B: RIP v2 (/27 Subnetted Networks)
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.5rem;">All addresses are carved from <code>192.168.10.0/24</code> into /27 subnets (30 usable hosts each). RIP v1 cannot correctly handle this &mdash; RIP v2 with <code>no auto-summary</code> is required.</p>
+                                <div style="overflow-x:auto;">
+                                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; margin-top:0.5rem;">
+                                        <thead>
+                                            <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                                <th style="padding:0.45rem 0.6rem;">Device</th>
+                                                <th style="padding:0.45rem 0.6rem;">Interface</th>
+                                                <th style="padding:0.45rem 0.6rem;">IP Address</th>
+                                                <th style="padding:0.45rem 0.6rem;">Subnet Mask</th>
+                                                <th style="padding:0.45rem 0.6rem;">Default Gateway</th>
+                                                <th style="padding:0.45rem 0.6rem;">Subnet</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#2563EB;">PC0</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.2</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.0/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#059669;">PC1</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.34</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.33</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.32/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router0</td><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.0/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.33</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.32/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">Serial0/1/0 (<strong>DCE</strong>)</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.65</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.64/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router1</td><td style="padding:0.4rem 0.6rem;">Serial0/1/0 (<strong>DTE</strong>)</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.66</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.64/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/0</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.97</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.96/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;"><td style="padding:0.4rem 0.6rem;">GigabitEthernet0/1</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.129</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem;">—</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.128/27</td></tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#7C3AED;">PC2</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.98</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.97</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.96/27</td></tr>
+                                            <tr><td style="padding:0.4rem 0.6rem; font-weight:bold; color:#DB2777;">PC3</td><td style="padding:0.4rem 0.6rem;">NIC</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.130</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.224</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.10.129</td><td style="padding:0.4rem 0.6rem; font-family:monospace;">.128/27</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Module 2: Command Simulator / Router CLI -->
+                            <div class="card" id="exp7b-cli-card">
+                                <h3>Module 2: Command Simulator</h3>
+                                <p>Try running commands: <code>enable</code>, <code>configure terminal</code>, <code>router rip</code>, <code>version 2</code>, <code>network 192.168.10.0</code>, <code>no auto-summary</code>, <code>show ip route</code></p>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <strong>Active Terminal:</strong>
+                                        <button class="btn" id="sw-r0-b" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--primary-color);">Router0</button>
+                                        <button class="btn" id="sw-r1-b" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background-color: var(--secondary-color);">Router1</button>
+                                    </div>
+                                    <span id="exp7b-convergence-badge" style="font-size:0.75rem; font-weight:700; padding:0.2rem 0.6rem; border-radius:4px; background:#D97706; color:white;">AWAITING RIP v2 CONFIG</span>
+                                </div>
+
+                                <div class="terminal" id="terminal-b" style="height: 320px; display: flex; flex-direction: column; overflow: hidden;">
+                                    <div class="terminal-output" id="terminal-output-b" style="flex: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 0;"></div>
+                                    <div class="terminal-input-line" style="flex-shrink: 0;">
+                                        <span class="terminal-prompt" id="terminal-prompt-b">Router0&gt; </span>
+                                        <input type="text" class="terminal-input" id="terminal-input-b" autocomplete="off" autocorrect="off" spellcheck="false">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 4: Part B Routing Tables -->
+                            <div class="card">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#6D28D9; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 4</span>
+                                    Live Dynamic Routing Tables &mdash; /27 Subnets
+                                </h3>
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                    After convergence, note that <code>R</code> routes show exact <code>/27</code> subnet masks — proof that RIP v2 carries subnet-mask information in its updates.
+                                </p>
+                                <div id="exp7b-routing-tables" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem;"></div>
+                            </div>
+
+                            <!-- STAGE 5: Packet Simulation Part B -->
+                            <div class="card">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#0369A1; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 5</span>
+                                    RIP v2 Subnet-Aware Packet Routing Simulation
+                                </h3>
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">The router performs a longest-prefix match against /27 subnet entries to decide forwarding. Observe the subnet lookup at each hop.</p>
+                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:0.75rem;">
+                                    <div>
+                                        <label style="font-size:0.8rem; font-weight:600;">Source Host:</label>
+                                        <select id="exp7b-journey-src" style="padding:0.35rem 0.5rem; border:1px solid #CBD5E1; border-radius:4px; font-size:0.85rem; margin-top:0.25rem; display:block;">
+                                            <option value="PC0">PC0 (192.168.10.2/27)</option>
+                                            <option value="PC1">PC1 (192.168.10.34/27)</option>
+                                            <option value="PC2">PC2 (192.168.10.98/27)</option>
+                                            <option value="PC3">PC3 (192.168.10.130/27)</option>
+                                        </select>
+                                    </div>
+                                    <div style="font-size:1.2rem; margin-top:1.1rem;">&#8594;</div>
+                                    <div>
+                                        <label style="font-size:0.8rem; font-weight:600;">Destination Host:</label>
+                                        <select id="exp7b-journey-dst" style="padding:0.35rem 0.5rem; border:1px solid #CBD5E1; border-radius:4px; font-size:0.85rem; margin-top:0.25rem; display:block;">
+                                            <option value="PC3">PC3 (192.168.10.130/27)</option>
+                                            <option value="PC2">PC2 (192.168.10.98/27)</option>
+                                            <option value="PC1">PC1 (192.168.10.34/27)</option>
+                                            <option value="PC0">PC0 (192.168.10.2/27)</option>
+                                        </select>
+                                    </div>
+                                    <button id="exp7b-start-journey" class="btn" style="margin-top:1.1rem; background-color:#059669; color:white;">Trace Packet Journey</button>
+                                </div>
+                                <div id="exp7b-journey-output" style="background:#1E293B; color:#E2E8F0; padding:1rem; border-radius:6px; font-family:monospace; font-size:0.82rem; line-height:1.7; min-height:100px;">
+                                    Select source and destination, then click Trace Packet Journey.
+                                </div>
+                            </div>
+
+                            <!-- WAN failure simulation Part B -->
+                            <div class="card" style="background:#FFFBEB; border:1px solid #FDE68A;">
+                                <h3 style="margin-top:0; color:#B45309; font-size:1rem;">⚡ Activity: RIP v2 WAN Link Failure &amp; Reconvergence</h3>
+                                <p style="font-size:0.85rem; color:#78350F; margin-bottom:0.75rem;">Observe how RIP v2 dynamically withdraws and then reconverges /27 subnet routes when the WAN serial link is disrupted.</p>
+                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+                                    <button id="exp7b-fail-wan" class="btn" style="background:#DC2626; color:white;">⚠ Simulate WAN Failure</button>
+                                    <button id="exp7b-restore-wan" class="btn" style="background:#059669; color:white; display:none;">✔ Restore WAN Link</button>
+                                    <span id="exp7b-wan-status" style="font-size:0.8rem; font-weight:600; color:#059669;">WAN Serial Link: Operational (DCE/DTE Up)</span>
+                                </div>
+                            </div>
+
+                        </div><!-- /exp7-part-b -->
+
+                    </div><!-- /sim-container -->
+                </div><!-- /card -->
+            </section><!-- /simulation -->
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ QUIZ ═══════════════════ -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Evaluation</h2>
+                    <p style="font-size:0.9rem; color:#64748B; margin-bottom:1rem;">Answer all 5 questions. A minimum score of <strong>70%</strong> (4 correct out of 5) is required for a passing certificate. Each question is worth 20%.</p>
+                    <div id="quiz-container"></div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1.5rem; background-color: #2563EB; color: white;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ RESULT ═══════════════════ -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <div id="result-text" style="line-height:1.8;">
+                        <p>Complete the practical simulation activities and viva evaluation to view your laboratory result.</p>
+                    </div>
+                    <button class="btn" id="view-cert-btn" style="margin-top:1.5rem; display:none; background-color:#059669; color:white;">
+                        <i data-lucide="award"></i> View Academic Certificate
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- IP Configuration Modal -->
+    <div id="ip-config-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+        <div style="background:white; padding:1.5rem; border-radius:8px; width:360px; max-width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 id="ip-config-device-name" style="margin:0; color:#1E293B; font-size:1rem;">PC Configuration</h3>
+                <button id="close-ip-config" style="background:transparent; border:none; font-size:1.25rem; cursor:pointer; color:#94A3B8;">&times;</button>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block; font-size:0.8rem; color:#4B5563; margin-bottom:0.25rem; font-weight:500;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 192.168.10.2" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block; font-size:0.8rem; color:#4B5563; margin-bottom:0.25rem; font-weight:500;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.255.255.0" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block; font-size:0.8rem; color:#4B5563; margin-bottom:0.25rem; font-weight:500;">Default Gateway</label>
+                <input type="text" id="gateway-input" placeholder="e.g. 192.168.10.1" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button id="save-ip-config" data-node-id="" style="background:var(--primary-color); color:white; border:none; padding:0.4rem 1rem; border-radius:4px; cursor:pointer; font-family:inherit;">Save</button>
+            </div>
+            <p id="ip-config-error" style="color:#EF4444; font-size:0.8rem; margin-top:0.5rem; min-height:1em;"></p>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center;">
+        <div style="background:white; padding:2rem; border-radius:8px; width:700px; max-width:95%; text-align:center; border:8px solid #005BAC; position:relative; max-height:90vh; overflow-y:auto;">
+            <button id="close-cert" style="position:absolute; top:10px; right:14px; border:none; background:transparent; cursor:pointer; font-size:1.5rem; color:#64748B;">&times;</button>
+            <div id="cert-content" style="padding:1.5rem; border:2px solid #E5E7EB; border-radius:4px;">
+                <h1 style="color:#005BAC; margin-bottom:0.5rem; font-family:serif; font-size:2.2rem; letter-spacing:0.05em;">CERTIFICATE</h1>
+                <p style="font-size:1rem; margin-bottom:1.5rem; color:#64748B;">Computer Networks Virtual Laboratory &bull; SRM Institute</p>
+                <p style="font-size:0.9rem;">This is to certify that</p>
+                <h2 id="cert-name" style="margin:0.75rem 0; font-size:1.9rem; color:#1F2937; font-style:italic;">Student Name</h2>
+                <p style="font-size:0.9rem;">has successfully completed</p>
+                <h3 style="margin:0.75rem 0; color:#3B82F6; font-size:1.1rem;">Exercise 7 — Routing Information Protocol (RIP v1 &amp; RIP v2)</h3>
+                <div style="display:flex; justify-content:space-around; margin-top:2rem; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score">—</span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt">—</span></p>
+                        <p><strong>Certificate ID:</strong> <span id="cert-code" style="font-family: monospace; color: #2563EB; font-weight: bold;">—</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date">—</span></p>
+                        <div style="border-top:1px solid #9CA3AF; padding-top:0.5rem; margin-top:1.5rem; color:#64748B; font-size:0.85rem;">Laboratory Instructor</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top:1.5rem;" onclick="window.print()">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts — exact load order matches Experiment 5 -->
+    <script src="modules/api-sync.js"></script>
+    <script src="modules/platform-manager.js"></script>
+    <script src="data/experiment7.js"></script>
+    <script src="modules/cables.js"></script>
+    <script src="modules/devices.js"></script>
+    <script src="modules/packet-animation.js"></script>
+    <script src="modules/experiment7-logic.js"></script>
+    <script src="script.js"></script>
+    <script>
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            try { lucide.createIcons(); } catch(e) {}
+        }
+    </script>
+</body>
+</html>

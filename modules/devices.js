@@ -43,6 +43,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let isDeleteMode = false;
+    const deleteModeBtn = document.getElementById('delete-mode-btn');
+
+    function toggleDeleteMode() {
+        isDeleteMode = !isDeleteMode;
+        if (isDeleteMode) {
+            if (isConnectMode && connectModeBtn) {
+                isConnectMode = false;
+                connectModeBtn.style.backgroundColor = 'var(--secondary-color)';
+                connectModeBtn.innerHTML = `<i data-lucide="link"></i> Enable Connect Mode`;
+                if (cableTypeSelect) cableTypeSelect.style.display = 'none';
+            }
+            if (deleteModeBtn) {
+                deleteModeBtn.style.backgroundColor = '#EF4444';
+                deleteModeBtn.style.color = 'white';
+                deleteModeBtn.style.borderColor = '#DC2626';
+                deleteModeBtn.innerHTML = `<i data-lucide="x-circle"></i> Exit Delete Mode`;
+            }
+            if (canvas) canvas.style.cursor = 'not-allowed';
+        } else {
+            if (deleteModeBtn) {
+                deleteModeBtn.style.backgroundColor = '#FEF2F2';
+                deleteModeBtn.style.color = '#DC2626';
+                deleteModeBtn.style.borderColor = '#FECACA';
+                deleteModeBtn.innerHTML = `<i data-lucide="trash-2"></i> Delete Tool`;
+            }
+            if (canvas) canvas.style.cursor = 'default';
+        }
+
+        if (canvas) {
+            canvas.querySelectorAll('.btn-node-delete').forEach(d => {
+                d.style.display = isDeleteMode ? 'block' : 'none';
+            });
+            canvas.querySelectorAll('.btn-wire-delete').forEach(w => {
+                w.style.display = isDeleteMode ? 'flex' : 'none';
+            });
+        }
+        drawConnections();
+        if (window.lucide) lucide.createIcons();
+    }
+
+    if (deleteModeBtn) {
+        deleteModeBtn.addEventListener('click', toggleDeleteMode);
+    }
+
     // Make tools draggable
     draggables.forEach(tool => {
         tool.addEventListener('dragstart', (e) => {
@@ -117,7 +162,41 @@ document.addEventListener('DOMContentLoaded', () => {
         let isDragging = false;
         let startX, startY, initialX, initialY;
 
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-node-delete';
+        delBtn.title = `Delete ${nodes[id]?.label || 'device'}`;
+        delBtn.innerHTML = '&times;';
+        delBtn.style.cssText = "position:absolute; top:-7px; right:-7px; width:18px; height:18px; background:#EF4444; color:white; border:none; border-radius:50%; font-size:12px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:30; box-shadow:0 1px 3px rgba(0,0,0,0.3);";
+        delBtn.style.display = isDeleteMode ? "block" : "none";
+        node.appendChild(delBtn);
+
+        function removeNode() {
+            const label = nodes[id]?.label || nodes[id]?.type || id;
+            node.remove();
+            delete nodes[id];
+            for (let i = edges.length - 1; i >= 0; i--) {
+                if (edges[i].sourceId === id || edges[i].targetId === id) {
+                    edges.splice(i, 1);
+                }
+            }
+            drawConnections();
+            if (feedback) feedback.textContent = '';
+            if (typeof addObservation === 'function') {
+                addObservation("Topology Builder", "Deleted " + label, "Node removed");
+            }
+        }
+
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeNode();
+        });
+
         node.addEventListener('mousedown', (e) => {
+            if (isDeleteMode) {
+                e.stopPropagation();
+                removeNode();
+                return;
+            }
             if (isConnectMode) {
                 // Start drawing line
                 e.stopPropagation();
@@ -258,19 +337,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawConnections() {
         if (!svgLayer) return;
         svgLayer.innerHTML = '';
+        if (canvas) canvas.querySelectorAll('.btn-wire-delete').forEach(b => b.remove());
         
         edges.forEach(edge => {
             const n1 = nodes[edge.sourceId];
             const n2 = nodes[edge.targetId];
+            if (!n1 || !n2) return;
             
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', n1.x);
             line.setAttribute('y1', n1.y);
             line.setAttribute('x2', n2.x);
             line.setAttribute('y2', n2.y);
-            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-width', isDeleteMode ? '4' : '3');
             
-            if (edge.cableType === 'crossover') {
+            if (isDeleteMode) {
+                line.setAttribute('stroke', '#EF4444');
+                line.setAttribute('stroke-dasharray', '4,4');
+                line.style.cursor = 'not-allowed';
+            } else if (edge.cableType === 'crossover') {
                 line.setAttribute('stroke', '#D97706');
                 line.setAttribute('stroke-dasharray', '5,5');
             } else if (edge.cableType === 'console') {
@@ -284,17 +369,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute('stroke', '#005BAC');
             }
             
-            line.style.cursor = 'pointer';
-            line.addEventListener('click', () => {
-                // Remove line on click
+            line.style.cursor = isDeleteMode ? 'not-allowed' : 'pointer';
+
+            const midX = (n1.x + n2.x) / 2;
+            const midY = (n1.y + n2.y) / 2;
+            const delWireBtn = document.createElement('button');
+            delWireBtn.className = 'btn-wire-delete';
+            delWireBtn.title = 'Delete wire';
+            delWireBtn.innerHTML = '&times;';
+            delWireBtn.style.cssText = `position:absolute; left:${Math.round(midX - 11)}px; top:${Math.round(midY - 11)}px; width:22px; height:22px; background:#EF4444; color:white; border:2px solid white; border-radius:50%; font-size:15px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:15; box-shadow:0 1px 4px rgba(0,0,0,0.35); align-items:center; justify-content:center;`;
+            delWireBtn.style.display = isDeleteMode ? "flex" : "none";
+
+            function removeEdge() {
                 const index = edges.indexOf(edge);
                 if (index > -1) {
+                    const label1 = nodes[edge.sourceId]?.label || 'Device';
+                    const label2 = nodes[edge.targetId]?.label || 'Device';
                     edges.splice(index, 1);
                     drawConnections();
+                    if (feedback) feedback.textContent = '';
+                    if (typeof addObservation === 'function') {
+                        addObservation("Topology Cabling", `Removed cable between ${label1} and ${label2}`, "Cable removed");
+                    }
+                }
+            }
+
+            delWireBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeEdge();
+            });
+
+            line.addEventListener('click', () => {
+                if (isDeleteMode) {
+                    removeEdge();
                 }
             });
             
             svgLayer.appendChild(line);
+            if (canvas) canvas.appendChild(delWireBtn);
         });
     }
 

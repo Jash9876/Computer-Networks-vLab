@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 8</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="modules/device-gate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <a href="dashboard.html"><img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 46px; object-fit: contain;"></a>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.2rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Computer Networks Lab &bull; Exercise 8</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="dashboard.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Dashboard</a>
+            <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); background: #EFF6FF; padding: 0.3rem 0.8rem; border-radius: 6px;">Exercise 8</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <p id="aim-text">Loading...</p>
+                    
+                    <h3>Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <h2 class="section-title" style="margin-bottom:0.25rem;">Interactive OSPF Simulation</h2>
+                            <p style="color:#64748B; font-size:0.9rem; margin:0;">Configure Single Area (Area 0) and Multi-Area OSPF hierarchy with live Cisco IOS CLI.</p>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                            <button id="btn-mode-8a" class="btn" style="background:var(--primary-color); color:white; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:6px; cursor:pointer;">Part 8A: Single Area OSPF</button>
+                            <button id="btn-mode-8b" class="btn" style="background:#F1F5F9; color:#334155; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:6px; cursor:pointer;">Part 8B: Multi-Area OSPF</button>
+                            <button id="btn-reset-exp8" class="btn" style="background:#FFF1F2; color:#E11D48; border:1px solid #FECDD3; padding:0.4rem 0.8rem; font-size:0.85rem; border-radius:6px; cursor:pointer;" title="Clear local simulation state and restart from scratch">↺ Reset Lab</button>
+                        </div>
+                    </div>
+
+                    <div class="sim-container">
+
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <!-- PART 8A: Single Area OSPF (Area 0)                              -->
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <div id="exp8-part-a" class="exp8-part-container">
+                            <!-- Part 8A Intro Banner -->
+                            <div style="background: linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%); color:white; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.25rem;">
+                                <div style="font-weight:700; font-size:1rem; margin-bottom:0.25rem;">Exercise 8 - A: Configuration of Single Area OSPF (Area 0)</div>
+                                <div style="font-size:0.8rem; opacity:0.9;">Construct the 3-Router mesh topology &rarr; assign IP addressing &rarr; configure OSPF Area 0 on Routers 1, 2, and 3 &rarr; verify neighbor adjacencies and end-to-end ping.</div>
+                            </div>
+
+                            <!-- STAGE 1: Topology Construction (8A) -->
+                            <div class="card" id="exp8a-topo-card">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:var(--primary-color); color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 1</span>
+                                    Physical Topology Construction (Part 8A)
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Drag <strong>2 PCs (PC0, PC1)</strong> and <strong>3 Routers (Router1, Router2, Router3)</strong> onto the canvas.<br>
+                                    Connect them with cables:
+                                    <strong>PC0 &rarr; Router1</strong> (Copper Crossover), 
+                                    <strong>Router1 &rarr; Router2</strong> (Copper Crossover), 
+                                    <strong>Router2 &rarr; Router3</strong> (Copper Crossover), 
+                                    <strong>Router1 &harr; Router3</strong> (Serial DCE), and 
+                                    <strong>Router3 &rarr; PC1</strong> (Copper Crossover).
+                                </p>
+
+                                <div class="dnd-container" style="flex-direction: column;">
+                                    <!-- Device Palette -->
+                                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="topo-tools-8a">
+                                        <div class="draggable-item" draggable="true" id="node-pc-8a" data-type="PC" data-icon="pc" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/pc.svg" width="28" height="28" alt="PC"><br><span style="font-size:0.72rem; font-weight:600;">PC</span>
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-router-8a" data-type="Router" data-icon="router" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/router.svg" width="28" height="28" alt="Router"><br><span style="font-size:0.72rem; font-weight:600;">Router</span>
+                                        </div>
+                                        <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 0.5rem;"></div>
+                                        <button class="btn" id="connect-mode-btn-8a" style="background-color: var(--secondary-color); font-size:0.85rem;">
+                                            <i data-lucide="link"></i> Enable Connect Mode
+                                        </button>
+                                        <select id="cable-type-select-8a" style="padding: 0.45rem 0.6rem; font-family: inherit; font-size:0.85rem; border:1px solid #CBD5E1; border-radius:4px;">
+                                            <option value="crossover">Copper Cross-over</option>
+                                            <option value="serial">Serial DCE</option>
+                                            <option value="straight">Copper Straight-Through</option>
+                                        </select>
+                                        <button class="btn" id="delete-mode-btn-8a" style="background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size:0.85rem;" title="Toggle Delete Tool to remove devices or cables">
+                                            <i data-lucide="trash-2"></i> Delete Tool
+                                        </button>
+                                        <button class="btn" id="clear-wires-btn-8a" style="background-color: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size:0.85rem;" title="Clear all connected cables/wires without removing placed devices">
+                                            <i data-lucide="scissors"></i> Clear Wires
+                                        </button>
+                                    </div>
+
+                                    <!-- Topology Canvas 8A -->
+                                    <div class="topology-canvas" id="topology-canvas-8a" style="position: relative; min-height: 340px; margin-top: 0.75rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+                                        <svg class="connection-layer" id="connection-layer-8a" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    </div>
+
+                                    <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                        <button class="btn" id="check-topology-8a" style="background:var(--primary-color); color:white; padding:0.4rem 1rem;">Check Topology</button>
+                                        <button class="btn" id="reset-topology-8a" style="background-color: var(--secondary-color); padding:0.4rem 1rem;">Reset Canvas</button>
+                                    </div>
+                                    <p id="topology-feedback-8a" style="margin-top: 0.5rem; font-weight: bold; font-size:0.9rem;"></p>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 2: IP Addressing Table (8A) -->
+                            <div class="card" id="exp8a-ip-stage" style="display:none; margin-top:1.25rem;">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#059669; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 2</span>
+                                    Addressing Table &mdash; Part 8A (Single Area OSPF)
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.5rem;">
+                                    Double-click <strong>PC0</strong> and <strong>PC1</strong> on the canvas to configure IP Address, Subnet Mask, and Default Gateway per the table below. Router interfaces are pre-assigned.
+                                </p>
+                                <div style="overflow-x:auto;">
+                                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; margin-top:0.5rem;">
+                                        <thead>
+                                            <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                                <th style="padding:0.45rem 0.6rem;">Device</th>
+                                                <th style="padding:0.45rem 0.6rem;">Interface</th>
+                                                <th style="padding:0.45rem 0.6rem;">IP Address</th>
+                                                <th style="padding:0.45rem 0.6rem;">Subnet Mask</th>
+                                                <th style="padding:0.45rem 0.6rem;">Default Gateway</th>
+                                                <th style="padding:0.45rem 0.6rem;">Connection Role</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold; color:#2563EB;">PC0</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">10.0.0.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">10.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">LAN Host (R1 side)</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold; color:#059669;">PC1</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">50.0.0.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">50.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">LAN Host (R3 side)</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router 1</td>
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">10.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Gateway to PC0</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">20.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Link to Router 2</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem;">Se0/1/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">30.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Serial DCE to R3</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="2">Router 2</td>
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">20.0.0.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Link to Router 1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">40.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Link to Router 3</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;" rowspan="3">Router 3</td>
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">50.0.0.1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Gateway to PC1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">40.0.0.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Link to Router 2</td>
+                                            </tr>
+                                            <tr style="background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem;">Se0/1/1</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">30.0.0.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.0.0.0</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#64748B;">Serial DTE to R1</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 3: Cisco IOS CLI Router Configuration (8A) -->
+                            <div class="card" id="exp8a-cli-card" style="display:none; margin-top:1.25rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+                                    <h3 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                        <span style="background:#7C3AED; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 3</span>
+                                        Cisco IOS CLI &mdash; Single Area OSPF Configuration
+                                    </h3>
+                                    <!-- Router selector tabs -->
+                                    <div style="display:flex; gap:0.35rem;" id="r-selector-8a">
+                                        <button class="btn btn-r-sel-8a active" data-r="R1" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#2563EB; color:white; border-radius:4px;">Router 1 (R1)</button>
+                                        <button class="btn btn-r-sel-8a" data-r="R2" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#E2E8F0; color:#334155; border-radius:4px;">Router 2 (R2)</button>
+                                        <button class="btn btn-r-sel-8a" data-r="R3" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#E2E8F0; color:#334155; border-radius:4px;">Router 3 (R3)</button>
+                                    </div>
+                                </div>
+
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Configure OSPF process and network statements under Area 0 for the selected router. Type <code>?</code> or <code>help</code> for commands.
+                                </p>
+
+                                <div class="terminal" id="terminal-8a" style="height:280px; display:flex; flex-direction:column; overflow:hidden; background:#0F172A; border-radius:6px; border:1px solid #334155;">
+                                    <div class="terminal-output" id="terminal-output-8a" style="flex:1; overflow-y:auto; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; color:#38BDF8; padding:0.75rem;"></div>
+                                    <div class="terminal-input-line" style="flex-shrink:0; display:flex; align-items:center; background:#1E293B; padding:0.4rem 0.75rem; border-top:1px solid #334155;">
+                                        <span class="terminal-prompt" id="terminal-prompt-8a" style="color:#10B981; font-family:monospace; font-weight:bold; font-size:0.85rem;">Router1#</span>
+                                        <input type="text" class="terminal-input" id="terminal-input-8a" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1; background:transparent; border:none; outline:none; color:white; font-family:monospace; font-size:0.85rem; padding-left:0.5rem;" placeholder="Enter Cisco command (e.g. router ospf 1, network ...)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 4: Verification & Ping Connectivity (8A) -->
+                            <div class="card" id="exp8a-verify-card" style="display:none; margin-top:1.25rem;">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#2563EB; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 4</span>
+                                    OSPF Verification &amp; End-to-End Connectivity
+                                </h3>
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Verify neighbor adjacencies with <code>show ip ospf neighbor</code>, routing table with <code>show ip route ospf</code>, and test ICMP ping from PC0 (10.0.0.2) to PC1 (50.0.0.2).
+                                </p>
+                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:0.75rem;">
+                                    <button class="btn" id="btn-quick-ping-8a" style="background:#059669; color:white; font-size:0.85rem; padding:0.45rem 1rem;">
+                                        <i data-lucide="send"></i> Test Ping: PC0 &rarr; PC1 (50.0.0.2)
+                                    </button>
+                                    <span id="ping-status-8a" style="font-size:0.85rem; font-weight:600; color:#64748B;">Awaiting verification...</span>
+                                </div>
+                                <div id="verify-output-8a" style="background:#1E293B; color:#E2E8F0; padding:0.75rem; border-radius:6px; font-family:monospace; font-size:0.8rem; min-height:60px;">
+                                    Ready. Run show commands in the CLI or click the Test Ping button above.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <!-- PART 8B: Multi-Area OSPF (Backbone Area 0, Area 1, Area 2)      -->
+                        <!-- ═══════════════════════════════════════════════════════════════ -->
+                        <div id="exp8-part-b" class="exp8-part-container" style="display:none;">
+                            <!-- Part 8B Intro Banner -->
+                            <div style="background: linear-gradient(135deg,#059669 0%,#10B981 100%); color:white; padding:1rem 1.25rem; border-radius:8px; margin-bottom:1.25rem;">
+                                <div style="font-weight:700; font-size:1rem; margin-bottom:0.25rem;">Exercise 8 - B: Configuration of Multi-Area OSPF</div>
+                                <div style="font-size:0.8rem; opacity:0.9;">Construct Star-of-Areas topology &rarr; assign IP addressing across Area 0, Area 1, and Area 2 &rarr; configure central ABR Router 0 and perimeter routers with OSPF Process 15 &rarr; verify inter-area routing.</div>
+                            </div>
+
+                            <!-- STAGE 1: Topology Construction (8B) -->
+                            <div class="card" id="exp8b-topo-card">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:var(--primary-color); color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 1</span>
+                                    Physical Topology Construction (Part 8B)
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Drag <strong>6 PCs (PC0&hellip;PC5)</strong>, <strong>3 Switches (Switch0&hellip;Switch2)</strong>, and <strong>4 Routers (Router0&hellip;Router3)</strong> onto the canvas.<br>
+                                    Connect PCs to Switches (Straight-Through), Switches to Routers (Straight-Through), and perimeter Routers 1, 2, 3 to central ABR Router 0 (Copper Crossover).
+                                </p>
+
+                                <div class="dnd-container" style="flex-direction: column;">
+                                    <!-- Device Palette -->
+                                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="topo-tools-8b">
+                                        <div class="draggable-item" draggable="true" id="node-pc-8b" data-type="PC" data-icon="pc" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/pc.svg" width="28" height="28" alt="PC"><br><span style="font-size:0.72rem; font-weight:600;">PC</span>
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-switch-8b" data-type="Switch" data-icon="switch" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/switch.svg" width="28" height="28" alt="Switch"><br><span style="font-size:0.72rem; font-weight:600;">Switch</span>
+                                        </div>
+                                        <div class="draggable-item" draggable="true" id="node-router-8b" data-type="Router" data-icon="router" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                            <img src="assets/icons/router.svg" width="28" height="28" alt="Router"><br><span style="font-size:0.72rem; font-weight:600;">Router</span>
+                                        </div>
+                                        <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 0.5rem;"></div>
+                                        <button class="btn" id="connect-mode-btn-8b" style="background-color: var(--secondary-color); font-size:0.85rem;">
+                                            <i data-lucide="link"></i> Enable Connect Mode
+                                        </button>
+                                        <select id="cable-type-select-8b" style="padding: 0.45rem 0.6rem; font-family: inherit; font-size:0.85rem; border:1px solid #CBD5E1; border-radius:4px;">
+                                            <option value="straight">Copper Straight-Through</option>
+                                            <option value="crossover">Copper Cross-over</option>
+                                        </select>
+                                        <button class="btn" id="delete-mode-btn-8b" style="background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size:0.85rem;" title="Toggle Delete Tool to remove devices or cables">
+                                            <i data-lucide="trash-2"></i> Delete Tool
+                                        </button>
+                                        <button class="btn" id="clear-wires-btn-8b" style="background-color: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; font-size:0.85rem;" title="Clear all connected cables/wires without removing placed devices">
+                                            <i data-lucide="scissors"></i> Clear Wires
+                                        </button>
+                                    </div>
+
+                                    <!-- Topology Canvas 8B -->
+                                    <div class="topology-canvas" id="topology-canvas-8b" style="position: relative; min-height: 400px; margin-top: 0.75rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+                                        <svg class="connection-layer" id="connection-layer-8b" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                    </div>
+
+                                    <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                        <button class="btn" id="check-topology-8b" style="background:var(--primary-color); color:white; padding:0.4rem 1rem;">Check Topology</button>
+                                        <button class="btn" id="reset-topology-8b" style="background-color: var(--secondary-color); padding:0.4rem 1rem;">Reset Canvas</button>
+                                    </div>
+                                    <p id="topology-feedback-8b" style="margin-top: 0.5rem; font-weight: bold; font-size:0.9rem;"></p>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 2: IP Addressing Table (8B) -->
+                            <div class="card" id="exp8b-ip-stage" style="display:none; margin-top:1.25rem;">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#059669; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 2</span>
+                                    Addressing Table &mdash; Part 8B: Multi-Area OSPF
+                                </h3>
+                                <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.5rem;">
+                                    Double-click each PC on the canvas to configure IP Address, Subnet Mask, and Gateway per the table below.
+                                </p>
+                                <div style="overflow-x:auto;">
+                                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; margin-top:0.5rem;">
+                                        <thead>
+                                            <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                                <th style="padding:0.45rem 0.6rem;">Device</th>
+                                                <th style="padding:0.45rem 0.6rem;">Area</th>
+                                                <th style="padding:0.45rem 0.6rem;">Interface</th>
+                                                <th style="padding:0.45rem 0.6rem;">IP Address</th>
+                                                <th style="padding:0.45rem 0.6rem;">Subnet Mask</th>
+                                                <th style="padding:0.45rem 0.6rem;">Default Gateway</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC0</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#1E40AF; font-weight:600;">Area 0</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.1.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.1.1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC1</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#1E40AF; font-weight:600;">Area 0</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.1.3</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.1.1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC2</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#15803D; font-weight:600;">Area 1</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.3.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.3.1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0; background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC3</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#15803D; font-weight:600;">Area 1</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.3.3</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.3.1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC4</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#7E22CE; font-weight:600;">Area 2</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.2.2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.2.1</td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #E2E8F0;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">PC5</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#7E22CE; font-weight:600;">Area 2</td>
+                                                <td style="padding:0.4rem 0.6rem;">Fa0/0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.2.3</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.0</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">192.168.2.1</td>
+                                            </tr>
+                                            <tr style="background:#F8FAFC;">
+                                                <td style="padding:0.4rem 0.6rem; font-weight:bold;">Router 0</td>
+                                                <td style="padding:0.4rem 0.6rem; color:#DC2626; font-weight:700;">ABR (0/1/2)</td>
+                                                <td style="padding:0.4rem 0.6rem;">Gig0/0, 0/1, 0/2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">10.10.10.10 / 6 / 2</td>
+                                                <td style="padding:0.4rem 0.6rem; font-family:monospace;">255.255.255.252</td>
+                                                <td style="padding:0.4rem 0.6rem;">—</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 3: Cisco IOS CLI Router Configuration (8B) -->
+                            <div class="card" id="exp8b-cli-card" style="display:none; margin-top:1.25rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+                                    <h3 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                        <span style="background:#7C3AED; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 3</span>
+                                        Cisco IOS CLI &mdash; Multi-Area OSPF Configuration
+                                    </h3>
+                                    <!-- Router selector tabs -->
+                                    <div style="display:flex; gap:0.35rem;" id="r-selector-8b">
+                                        <button class="btn btn-r-sel-8b active" data-r="R0" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#DC2626; color:white; border-radius:4px;">Router 0 (ABR)</button>
+                                        <button class="btn btn-r-sel-8b" data-r="R1" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#E2E8F0; color:#334155; border-radius:4px;">Router 1 (Area 0)</button>
+                                        <button class="btn btn-r-sel-8b" data-r="R2" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#E2E8F0; color:#334155; border-radius:4px;">Router 2 (Area 1)</button>
+                                        <button class="btn btn-r-sel-8b" data-r="R3" style="padding:0.3rem 0.65rem; font-size:0.8rem; background:#E2E8F0; color:#334155; border-radius:4px;">Router 3 (Area 2)</button>
+                                    </div>
+                                </div>
+
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Configure OSPF Process 15, Router-ID, and network statements with respective area IDs.
+                                </p>
+
+                                <div class="terminal" id="terminal-8b" style="height:280px; display:flex; flex-direction:column; overflow:hidden; background:#0F172A; border-radius:6px; border:1px solid #334155;">
+                                    <div class="terminal-output" id="terminal-output-8b" style="flex:1; overflow-y:auto; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; color:#38BDF8; padding:0.75rem;"></div>
+                                    <div class="terminal-input-line" style="flex-shrink:0; display:flex; align-items:center; background:#1E293B; padding:0.4rem 0.75rem; border-top:1px solid #334155;">
+                                        <span class="terminal-prompt" id="terminal-prompt-8b" style="color:#10B981; font-family:monospace; font-weight:bold; font-size:0.85rem;">Router0#</span>
+                                        <input type="text" class="terminal-input" id="terminal-input-8b" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1; background:transparent; border:none; outline:none; color:white; font-family:monospace; font-size:0.85rem; padding-left:0.5rem;" placeholder="Enter Cisco command...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STAGE 4: Verification & Ping Connectivity (8B) -->
+                            <div class="card" id="exp8b-verify-card" style="display:none; margin-top:1.25rem;">
+                                <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#2563EB; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 4</span>
+                                    Multi-Area OSPF Database &amp; Inter-Area Routing
+                                </h3>
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                    Inspect OSPF database with <code>show ip ospf database</code> and test cross-area ping from PC0 (Area 0) to PC4 (Area 2).
+                                </p>
+                                <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:0.75rem;">
+                                    <button class="btn" id="btn-quick-ping-8b" style="background:#059669; color:white; font-size:0.85rem; padding:0.45rem 1rem;">
+                                        <i data-lucide="send"></i> Test Ping: PC0 (Area 0) &rarr; PC4 (Area 2: 192.168.2.2)
+                                    </button>
+                                    <span id="ping-status-8b" style="font-size:0.85rem; font-weight:600; color:#64748B;">Awaiting verification...</span>
+                                </div>
+                                <div id="verify-output-8b" style="background:#1E293B; color:#E2E8F0; padding:0.75rem; border-radius:6px; font-family:monospace; font-size:0.8rem; min-height:60px;">
+                                    Ready. Run show commands in the CLI or click the Test Ping button above.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /sim-container -->
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Evaluation</h2>
+                    <p style="font-size:0.9rem; color:#64748B; margin-bottom:1rem;">Answer all 5 questions. A minimum score of <strong>70%</strong> (4 correct out of 5) is required for a passing certificate. Each question is worth 20%.</p>
+                    <div id="quiz-container">
+                        <!-- Dynamic Quiz Rendering via script.js -->
+                    </div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1.5rem; background-color: #2563EB; color: white;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <div id="result-text" style="line-height: 1.8;">
+                        <p>Complete the practical simulation and viva evaluation to view your finalized laboratory result.</p>
+                    </div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #059669; color: white;">
+                        <i data-lucide="award"></i> View Academic Certificate
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- IP Configuration Modal -->
+    <div id="ip-config-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 420px; max-width: 90%;">
+            <h3 id="ip-modal-title" style="margin-bottom: 1rem; color: #1E293B;">IP Configuration</h3>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">IP Address</label>
+                <input type="text" id="ip-address-input" placeholder="e.g. 10.0.0.2" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Subnet Mask</label>
+                <input type="text" id="subnet-mask-input" placeholder="e.g. 255.0.0.0" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.875rem; color: #4B5563; margin-bottom: 0.25rem;">Default Gateway</label>
+                <input type="text" id="gateway-input" placeholder="e.g. 10.0.0.1" style="width: 100%; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn" id="cancel-ip-config" style="background-color: #E2E8F0; color:#334155; padding:0.5rem 1rem; border-radius:4px; border:none; cursor:pointer;">Cancel</button>
+                <button class="btn" id="save-ip-config" style="background-color: var(--primary-color); color:white; padding:0.5rem 1rem; border-radius:4px; border:none; cursor:pointer;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Student Name</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 8</h3>
+                <p style="margin-bottom: 2rem;">Configuration of Single Area and Multi-Area OSPF in Packet Tracer</p>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score"></span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt"></span></p>
+                    </div>
+                    <div>
+                        <p><strong>Date:</strong> <span id="cert-date"></span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/api-sync.js?v=5"></script>
+    <script src="modules/platform-manager.js?v=5"></script>
+    <script src="data/experiment8.js?v=5"></script>
+    <script src="modules/experiment8-logic.js?v=5"></script>
+    <script src="script.js?v=5"></script>
+    <script>
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>

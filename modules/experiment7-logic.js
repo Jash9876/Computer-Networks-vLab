@@ -74,6 +74,7 @@
 
     // Topology connection tracking (for canvas rendering)
     let connectMode = false;
+    let deleteMode = false;
     let firstConnectNode = null;
 
     /* ═══════════════════════════════════════════════
@@ -300,6 +301,53 @@
 
         // Connect mode toggle
         const connectBtn = document.getElementById("connect-mode-btn");
+        const deleteBtn = document.getElementById("delete-mode-btn");
+
+        function toggleDeleteMode() {
+            deleteMode = !deleteMode;
+            if (deleteMode) {
+                if (connectMode && connectBtn) {
+                    connectMode = false;
+                    connectBtn.style.backgroundColor = "var(--secondary-color)";
+                    connectBtn.innerHTML = '<i data-lucide="link"></i> Enable Connect Mode';
+                    if (firstConnectNode) {
+                        firstConnectNode.style.boxShadow = "";
+                        firstConnectNode = null;
+                    }
+                }
+                if (deleteBtn) {
+                    deleteBtn.style.backgroundColor = '#EF4444';
+                    deleteBtn.style.color = 'white';
+                    deleteBtn.style.borderColor = '#DC2626';
+                    deleteBtn.innerHTML = '<i data-lucide="x-circle"></i> Exit Delete Mode';
+                }
+                if (canvas) canvas.style.cursor = 'not-allowed';
+            } else {
+                if (deleteBtn) {
+                    deleteBtn.style.backgroundColor = '#FEF2F2';
+                    deleteBtn.style.color = '#DC2626';
+                    deleteBtn.style.borderColor = '#FECACA';
+                    deleteBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete Tool';
+                }
+                if (canvas) canvas.style.cursor = 'default';
+            }
+
+            if (canvas) {
+                canvas.querySelectorAll('.btn-node-delete').forEach(d => {
+                    d.style.display = deleteMode ? 'block' : 'none';
+                });
+                canvas.querySelectorAll('.btn-wire-delete').forEach(w => {
+                    w.style.display = deleteMode ? 'flex' : 'none';
+                });
+            }
+            refreshConnections(svgLayer);
+            if (window.lucide) lucide.createIcons();
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", toggleDeleteMode);
+        }
+
         if (connectBtn) {
             connectBtn.addEventListener("click", () => {
                 connectMode = !connectMode;
@@ -308,6 +356,23 @@
                     firstConnectNode = null;
                 }
                 if (connectMode) {
+                    if (deleteMode) {
+                        deleteMode = false;
+                        if (deleteBtn) {
+                            deleteBtn.style.backgroundColor = '#FEF2F2';
+                            deleteBtn.style.color = '#DC2626';
+                            deleteBtn.style.borderColor = '#FECACA';
+                            deleteBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete Tool';
+                        }
+                        if (canvas) {
+                            canvas.querySelectorAll('.btn-node-delete').forEach(d => {
+                                d.style.display = 'none';
+                            });
+                            canvas.querySelectorAll('.btn-wire-delete').forEach(w => {
+                                w.style.display = 'none';
+                            });
+                        }
+                    }
                     connectBtn.style.backgroundColor = "var(--accent-color)";
                     connectBtn.innerHTML = '<i data-lucide="mouse-pointer"></i> Enable Move Mode';
                     canvas.style.cursor = "crosshair";
@@ -316,6 +381,7 @@
                     connectBtn.innerHTML = '<i data-lucide="link"></i> Enable Connect Mode';
                     canvas.style.cursor = "default";
                 }
+                refreshConnections(svgLayer);
                 if (window.lucide) lucide.createIcons();
             });
         }
@@ -333,6 +399,7 @@
                 Object.keys(nodeCounters).forEach(k => nodeCounters[k] = 0);
                 window._exp7Connections = [];
                 connectMode = false;
+                deleteMode = false;
                 if (firstConnectNode) {
                     firstConnectNode.style.boxShadow = "";
                     firstConnectNode = null;
@@ -341,6 +408,12 @@
                 if (connectBtn) {
                     connectBtn.style.backgroundColor = "var(--secondary-color)";
                     connectBtn.innerHTML = '<i data-lucide="link"></i> Enable Connect Mode';
+                }
+                if (deleteBtn) {
+                    deleteBtn.style.backgroundColor = '#FEF2F2';
+                    deleteBtn.style.color = '#DC2626';
+                    deleteBtn.style.borderColor = '#FECACA';
+                    deleteBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete Tool';
                 }
                 canvas.style.cursor = "default";
                 if (window.lucide) lucide.createIcons();
@@ -386,12 +459,43 @@
             <span style="font-size:0.75rem; font-weight:700; color:#1E293B; pointer-events:none; text-align:center; line-height:1.1;">${label}</span>
         `;
 
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn-node-delete";
+        delBtn.title = `Delete ${label}`;
+        delBtn.innerHTML = "&times;";
+        delBtn.style.cssText = `position:absolute; top:-7px; right:-7px; width:18px; height:18px; background:#EF4444; color:white; border:none; border-radius:50%; font-size:12px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:30; box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
+        delBtn.style.display = deleteMode ? 'block' : 'none';
+        node.appendChild(delBtn);
+
+        function removeExp7Node() {
+            node.remove();
+            for (let i = window._exp7Connections.length - 1; i >= 0; i--) {
+                if (window._exp7Connections[i].nodeA === node || window._exp7Connections[i].nodeB === node) {
+                    window._exp7Connections.splice(i, 1);
+                }
+            }
+            refreshConnections(svgLayer);
+            const feedback = document.getElementById("topology-feedback");
+            if (feedback) feedback.textContent = "";
+            logObs("Topology Builder", `Deleted ${label}`, "Node removed");
+        }
+
+        delBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            removeExp7Node();
+        });
+
         canvas.appendChild(node);
         logObs("Topology Builder", "Added " + type, "Node placed");
 
         // Dragging (reposition)
         let isDragging = false, startX, startY, origX, origY;
         node.addEventListener("mousedown", e => {
+            if (deleteMode) {
+                e.stopPropagation();
+                removeExp7Node();
+                return;
+            }
             if (connectMode) {
                 e.stopPropagation();
                 handleConnectClick(node, canvas, svgLayer);
@@ -489,23 +593,28 @@
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
         line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
         line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+        line.setAttribute("stroke-width", deleteMode ? "4" : "3");
 
-        if (cableType === "crossover") {
+        if (deleteMode) {
+            line.setAttribute("stroke", "#EF4444");
+            line.setAttribute("stroke-dasharray", "4,4");
+            line.style.cursor = "not-allowed";
+        } else if (cableType === "crossover") {
             line.setAttribute("stroke", "#D97706");
             line.setAttribute("stroke-dasharray", "6,4");
-            line.setAttribute("stroke-width", "3");
+            line.style.cursor = "pointer";
         } else if (cableType === "serial") {
             line.setAttribute("stroke", "#DC2626");
             line.setAttribute("stroke-dasharray", "8,4");
             line.setAttribute("stroke-width", "4");
+            line.style.cursor = "pointer";
         } else {
             // Straight-Through (matching Exp 4's professional blue style)
             line.setAttribute("stroke", "#005BAC");
-            line.setAttribute("stroke-width", "3");
+            line.style.cursor = "pointer";
         }
         
-        line.style.cursor = "pointer";
-        line.addEventListener("click", () => {
+        function removeExp7Edge() {
             const idx = window._exp7Connections.findIndex(c => 
                 (c.nodeA === nodeA && c.nodeB === nodeB) ||
                 (c.nodeA === nodeB && c.nodeB === nodeA)
@@ -515,14 +624,40 @@
                 refreshConnections(svgLayer);
                 logObs("Topology Cabling", `Removed link between ${nodeA?.dataset?.label} and ${nodeB?.dataset?.label}`, "Success");
             }
+        }
+
+        line.addEventListener("click", () => {
+            if (deleteMode) {
+                removeExp7Edge();
+            }
         });
 
         svgLayer.appendChild(line);
+
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        const delWireBtn = document.createElement("button");
+        delWireBtn.className = "btn-wire-delete";
+        delWireBtn.title = "Delete cable";
+        delWireBtn.innerHTML = "&times;";
+        delWireBtn.style.cssText = `position:absolute; left:${Math.round(midX - 11)}px; top:${Math.round(midY - 11)}px; width:22px; height:22px; background:#EF4444; color:white; border:2px solid white; border-radius:50%; font-size:15px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:15; box-shadow:0 1px 4px rgba(0,0,0,0.35); align-items:center; justify-content:center;`;
+        delWireBtn.style.display = deleteMode ? "flex" : "none";
+
+        delWireBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            removeExp7Edge();
+        });
+
+        canvas.appendChild(delWireBtn);
     }
 
     function refreshConnections(svgLayer) {
+        const canvas = document.getElementById("topology-canvas");
         if (!svgLayer) return;
         svgLayer.innerHTML = "";
+        if (canvas) {
+            canvas.querySelectorAll(".btn-wire-delete").forEach(b => b.remove());
+        }
         window._exp7Connections.forEach(({ nodeA, nodeB, cableType }) => {
             if (nodeA && nodeB && nodeA.parentNode && nodeB.parentNode) {
                 drawLine(nodeA, nodeB, cableType, svgLayer);

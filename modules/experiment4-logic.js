@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById(`topology-canvas-${partPrefix}`);
         const svgLayer = document.getElementById(`connection-layer-${partPrefix}`);
         const connectBtn = document.getElementById(`connect-mode-btn-${partPrefix}`);
+        const deleteBtn = document.getElementById(`delete-mode-btn-${partPrefix}`);
         const cableSelect = document.getElementById(`cable-type-select-${partPrefix}`);
         const checkBtn = document.getElementById(`check-topology-${partPrefix}`);
         const resetCanvasBtn = document.getElementById(`reset-topology-${partPrefix}`);
@@ -190,11 +191,60 @@ document.addEventListener('DOMContentLoaded', function () {
         const toolRouter = document.getElementById(`node-router-${partPrefix}`);
 
         let isConnectMode = false;
+        let isDeleteMode = false;
         let selectedNodeForConnect = null;
+
+        function toggleDeleteMode() {
+            isDeleteMode = !isDeleteMode;
+            if (isDeleteMode) {
+                if (isConnectMode && connectBtn) {
+                    isConnectMode = false;
+                    connectBtn.style.backgroundColor = 'var(--secondary-color)';
+                    connectBtn.innerHTML = '<i data-lucide="link"></i> Enable Connect Mode';
+                    if (selectedNodeForConnect) {
+                        selectedNodeForConnect.style.boxShadow = '';
+                        selectedNodeForConnect = null;
+                    }
+                }
+                if (deleteBtn) {
+                    deleteBtn.style.backgroundColor = '#EF4444';
+                    deleteBtn.style.color = 'white';
+                    deleteBtn.style.borderColor = '#DC2626';
+                    deleteBtn.innerHTML = '<i data-lucide="x-circle"></i> Exit Delete Mode';
+                }
+                if (canvas) canvas.style.cursor = 'not-allowed';
+            } else {
+                if (deleteBtn) {
+                    deleteBtn.style.backgroundColor = '#FEF2F2';
+                    deleteBtn.style.color = '#DC2626';
+                    deleteBtn.style.borderColor = '#FECACA';
+                    deleteBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete Tool';
+                }
+                if (canvas) canvas.style.cursor = 'default';
+            }
+
+            if (canvas) {
+                canvas.querySelectorAll('.btn-node-delete').forEach(d => {
+                    d.style.display = isDeleteMode ? 'block' : 'none';
+                });
+                canvas.querySelectorAll('.btn-wire-delete').forEach(w => {
+                    w.style.display = isDeleteMode ? 'flex' : 'none';
+                });
+            }
+            drawConnections();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', toggleDeleteMode);
+        }
 
         function drawConnections() {
             if (!svgLayer) return;
             svgLayer.innerHTML = '';
+            if (canvas) {
+                canvas.querySelectorAll('.btn-wire-delete').forEach(b => b.remove());
+            }
             topoState.edges.forEach(edge => {
                 const n1 = topoState.nodes[edge.sourceId];
                 const n2 = topoState.nodes[edge.targetId];
@@ -205,29 +255,57 @@ document.addEventListener('DOMContentLoaded', function () {
                 line.setAttribute('y1', n1.y);
                 line.setAttribute('x2', n2.x);
                 line.setAttribute('y2', n2.y);
+                line.setAttribute('stroke-width', isDeleteMode ? '4' : '3');
 
-                if (edge.cableType === 'crossover') {
+                if (isDeleteMode) {
+                    line.setAttribute('stroke', '#EF4444');
+                    line.setAttribute('stroke-dasharray', '4,4');
+                    line.style.cursor = 'not-allowed';
+                } else if (edge.cableType === 'crossover') {
                     line.setAttribute('stroke', '#D97706');
                     line.setAttribute('stroke-dasharray', '6,4');
-                    line.setAttribute('stroke-width', '3');
+                    line.style.cursor = 'pointer';
                 } else if (edge.cableType === 'serial') {
                     line.setAttribute('stroke', '#DC2626');
                     line.setAttribute('stroke-dasharray', '8,4');
                     line.setAttribute('stroke-width', '4');
+                    line.style.cursor = 'pointer';
                 } else {
                     line.setAttribute('stroke', '#005BAC');
-                    line.setAttribute('stroke-width', '3');
+                    line.style.cursor = 'pointer';
                 }
 
-                line.style.cursor = 'pointer';
-                line.addEventListener('click', () => {
+                function removeEdge() {
                     const idx = topoState.edges.indexOf(edge);
                     if (idx > -1) {
                         topoState.edges.splice(idx, 1);
                         drawConnections();
+                        if (feedback) feedback.textContent = '';
+                    }
+                }
+
+                line.addEventListener('click', () => {
+                    if (isDeleteMode) {
+                        removeEdge();
                     }
                 });
                 svgLayer.appendChild(line);
+
+                const midX = (n1.x + n2.x) / 2;
+                const midY = (n1.y + n2.y) / 2;
+                const delWireBtn = document.createElement('button');
+                delWireBtn.className = 'btn-wire-delete';
+                delWireBtn.title = 'Delete cable';
+                delWireBtn.innerHTML = '&times;';
+                delWireBtn.style.cssText = `position:absolute; left:${Math.round(midX - 11)}px; top:${Math.round(midY - 11)}px; width:22px; height:22px; background:#EF4444; color:white; border:2px solid white; border-radius:50%; font-size:15px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:15; box-shadow:0 1px 4px rgba(0,0,0,0.35); align-items:center; justify-content:center;`;
+                delWireBtn.style.display = isDeleteMode ? "flex" : "none";
+
+                delWireBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeEdge();
+                });
+
+                if (canvas) canvas.appendChild(delWireBtn);
             });
         }
 
@@ -235,6 +313,23 @@ document.addEventListener('DOMContentLoaded', function () {
             connectBtn.addEventListener('click', () => {
                 isConnectMode = !isConnectMode;
                 if (isConnectMode) {
+                    if (isDeleteMode) {
+                        isDeleteMode = false;
+                        if (deleteBtn) {
+                            deleteBtn.style.backgroundColor = '#FEF2F2';
+                            deleteBtn.style.color = '#DC2626';
+                            deleteBtn.style.borderColor = '#FECACA';
+                            deleteBtn.innerHTML = '<i data-lucide="trash-2"></i> Delete Tool';
+                        }
+                        if (canvas) {
+                            canvas.querySelectorAll('.btn-node-delete').forEach(d => {
+                                d.style.display = 'none';
+                            });
+                            canvas.querySelectorAll('.btn-wire-delete').forEach(w => {
+                                w.style.display = 'none';
+                            });
+                        }
+                    }
                     connectBtn.style.backgroundColor = 'var(--accent-color)';
                     connectBtn.innerHTML = '<i data-lucide="mouse-pointer"></i> Enable Move Mode';
                     canvas.style.cursor = 'crosshair';
@@ -247,6 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         selectedNodeForConnect = null;
                     }
                 }
+                drawConnections();
                 if (window.lucide) lucide.createIcons();
             });
         }
@@ -281,6 +377,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 <span style="font-size:0.75rem; font-weight:700; color:#1E293B; pointer-events:none;">${label}</span>
             `;
 
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn-node-delete';
+            delBtn.title = `Delete ${label}`;
+            delBtn.innerHTML = '&times;';
+            delBtn.style.cssText = `position:absolute; top:-7px; right:-7px; width:18px; height:18px; background:#EF4444; color:white; border:none; border-radius:50%; font-size:12px; font-weight:bold; line-height:18px; text-align:center; cursor:pointer; padding:0; z-index:30; box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
+            delBtn.style.display = isDeleteMode ? 'block' : 'none';
+            el.appendChild(delBtn);
+
+            function removeNode() {
+                el.remove();
+                delete topoState.nodes[id];
+                for (let i = topoState.edges.length - 1; i >= 0; i--) {
+                    if (topoState.edges[i].sourceId === id || topoState.edges[i].targetId === id) {
+                        topoState.edges.splice(i, 1);
+                    }
+                }
+                drawConnections();
+                if (feedback) feedback.textContent = '';
+            }
+
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeNode();
+            });
+
             topoState.nodes[id] = {
                 id,
                 type,
@@ -298,6 +419,11 @@ document.addEventListener('DOMContentLoaded', function () {
             let startX, startY, initX, initY;
 
             el.addEventListener('mousedown', (e) => {
+                if (isDeleteMode) {
+                    e.stopPropagation();
+                    removeNode();
+                    return;
+                }
                 if (isConnectMode) {
                     e.stopPropagation();
                     if (!selectedNodeForConnect) {

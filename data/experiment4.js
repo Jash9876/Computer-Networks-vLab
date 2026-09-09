@@ -8,7 +8,30 @@ const experimentData = {
         "Implement Static Routing to enable communication between remote networks."
     ],
     theory: `
-        <h3>1. Router IP Configuration</h3>
+        <h3>1. Required Hardware / Software Components</h3>
+        <p>The following hardware and software components are utilized for the local router configuration and WAN subnetting topologies:</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 1rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #1E293B; font-size: 0.95rem; font-weight: 700;">Part A: Local Router Configuration</h4>
+                <ul style="margin-left: 1.25rem; margin-top: 0.25rem; margin-bottom: 0; font-size: 0.9rem; color: #334155;">
+                    <li><strong>PC</strong> &times; 2</li>
+                    <li><strong>Router (Cisco 1841 / 2811)</strong> &times; 1</li>
+                    <li><strong>Copper Straight-Through Cable</strong> &times; 2</li>
+                </ul>
+            </div>
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 1rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #1E293B; font-size: 0.95rem; font-weight: 700;">Part B: WAN Subnetting &amp; Serial Routing</h4>
+                <ul style="margin-left: 1.25rem; margin-top: 0.25rem; margin-bottom: 0; font-size: 0.9rem; color: #334155;">
+                    <li><strong>PC</strong> &times; 4</li>
+                    <li><strong>Router (with HWIC-2T Serial Module)</strong> &times; 2</li>
+                    <li><strong>Copper Straight-Through Cable</strong> &times; 4</li>
+                    <li><strong>Serial Cable (DCE &ndash; DTE)</strong> &times; 1</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>2. Router IP Configuration</h3>
         <p>A router connects different networks. To communicate with each network, each router interface must be assigned an IP address belonging to the network connected to that interface.</p>
         <p>The router interface address is also used as the default gateway for devices in that network.</p>
         <p>For example:</p>
@@ -17,11 +40,11 @@ Router(config-if)# ip address 192.168.10.1 255.255.255.0
 Router(config-if)# no shutdown</pre>
         <p>The <code>no shutdown</code> command enables the interface. An interface that is administratively shut down cannot forward packets even when its IP address is correctly configured.</p>
 
-        <h3>2. Default Gateway</h3>
+        <h3>3. Default Gateway</h3>
         <p>A default gateway is the IP address of the router interface through which a device communicates with destinations outside its local network.</p>
         <p>Each PC in the experiment uses the IP address of the corresponding router interface as its default gateway.</p>
 
-        <h3>3. WAN Subnetting (/27 Mask)</h3>
+        <h3>4. WAN Subnetting (/27 Mask)</h3>
         <p>Subnetting divides a larger network into smaller networks.</p>
         <p>In this experiment, the <code>192.168.10.0</code> network is divided using a <code>/27</code> subnet mask:</p>
         <p><code>255.255.255.224</code></p>
@@ -64,31 +87,31 @@ Router(config-if)# no shutdown</pre>
             </tbody>
         </table>
 
-        <h3>4. DTE and DCE in Serial Links</h3>
+        <h3>5. DTE and DCE in Serial Links</h3>
         <p>In a serial WAN connection, one router acts as Data Terminal Equipment (DTE) and the other as Data Circuit-terminating Equipment (DCE).</p>
         <p>The DCE side provides the clocking signal for the serial connection. The clock rate controls the timing of data transmission across the serial link.</p>
 
-        <h3>5. Static Routing</h3>
+        <h3>6. Static Routing</h3>
         <p>Routers automatically know about networks directly connected to their interfaces.</p>
         <p>To reach a remote network that is not directly connected, a static route can be configured. A static route specifies the destination network, subnet mask, and next-hop IP address.</p>
         <p>Example:</p>
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router(config)# ip route [Destination Network] [Subnet Mask] [Next-Hop IP]</pre>
         <p>The next-hop address identifies the neighboring router through which the destination network can be reached.</p>
 
-        <h3>6. Routing Table</h3>
+        <h3>7. Routing Table</h3>
         <p>A routing table contains information about the networks that a router can reach.</p>
         <p>It can contain directly connected networks and manually configured static routes.</p>
         <p>The routing table can be viewed using:</p>
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router# show ip route</pre>
         <p>The router uses this information to determine how packets should be forwarded toward their destination.</p>
 
-        <h3>7. Packet Forwarding</h3>
+        <h3>8. Packet Forwarding</h3>
         <p>When a device sends a packet to a destination outside its local subnet, it forwards the packet to its default gateway.</p>
         <p>The router examines its routing table, identifies the appropriate destination network and next hop, and forwards the packet through the appropriate interface.</p>
         <p>In this experiment, the packet path can be visualized as:</p>
         <p><code>PC &rarr; Router0 &rarr; Serial WAN &rarr; Router1 &rarr; Destination PC</code></p>
 
-        <h3>8. Ping and Connectivity Verification</h3>
+        <h3>9. Ping and Connectivity Verification</h3>
         <p>The <code>ping</code> command is used to test connectivity between network devices.</p>
         <p>It sends ICMP Echo Request messages to the destination and waits for ICMP Echo Reply messages.</p>
         <p>Example:</p>

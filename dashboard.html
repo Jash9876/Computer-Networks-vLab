@@ -115,7 +115,7 @@
                 <div id="overall-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; color: #64748B;">
-                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 8</span>
+                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 9</span>
                 <span>Active Semester: 2025–26</span>
             </div>
         </div>
@@ -224,6 +224,19 @@
                 <div>
                     <span class="badge" id="badge-exp8">Loading...</span>
                     <a href="experiment8.html" class="btn" id="btn-exp8" style="text-decoration: none;">Open Lab</a>
+                </div>
+            </div>
+
+            <!-- Exp 9 -->
+            <div class="exp-card" id="card-exp9">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 9</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Point-to-Point Protocol (PPP) &amp; HDLC Configuration</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure PPP with CHAP authentication &amp; OSPF routing, and inspect synchronous HDLC framing on serial links.</p>
+                </div>
+                <div>
+                    <span class="badge" id="badge-exp9">Loading...</span>
+                    <a href="experiment9.html" class="btn" id="btn-exp9" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
         </div>
@@ -392,7 +405,7 @@
                     const expList = data.experiments || data.detailedProgress || [];
 
                     if (Array.isArray(expList)) {
-                        for (let i = 1; i <= 8; i++) {
+                        for (let i = 1; i <= 9; i++) {
                             const p = expList.find(e => Number(e.experiment_id) === i);
                             if (!p) continue;
 
@@ -413,7 +426,7 @@
             }
 
             // Update UI
-            const totalExp = 8;
+            const totalExp = 9;
             const completedCount = validatedCompleted.length;
             const percent = Math.round((completedCount / totalExp) * 100);
 
@@ -425,7 +438,7 @@
             if (percentEl) percentEl.textContent = `${percent}%`;
             if (barEl) barEl.style.width = `${percent}%`;
 
-            for (let i = 1; i <= 8; i++) {
+            for (let i = 1; i <= 9; i++) {
                 const badge = document.getElementById(`badge-exp${i}`);
                 const btn   = document.getElementById(`btn-exp${i}`);
                 if (!badge) continue;
@@ -475,8 +488,8 @@
             localStorage.removeItem('vlab_progression');
             sessionStorage.clear();
 
-            // Clear all experiment observation caches (1 to 8)
-            for (let i = 1; i <= 8; i++) {
+            // Clear all experiment observation caches (1 to 9)
+            for (let i = 1; i <= 9; i++) {
                 localStorage.removeItem(`vlab_obs_exp_${i}`);
                 localStorage.removeItem(`vlab_score_exp${i}`);
             }

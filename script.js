@@ -16,7 +16,7 @@ function loadData() {
 
     // Aim
     const aimEl = document.getElementById('aim-text');
-    if (aimEl) aimEl.textContent = experimentData.aim;
+    if (aimEl) aimEl.innerHTML = experimentData.aim;
     
     // Objectives
     const objList = document.getElementById('objectives-list');
@@ -27,6 +27,21 @@ function loadData() {
             li.textContent = obj;
             objList.appendChild(li);
         });
+    }
+
+    // Components List
+    const compContainer = document.getElementById('components-container') || document.getElementById('components-list');
+    if (compContainer) {
+        if (experimentData.componentsHTML) {
+            compContainer.innerHTML = experimentData.componentsHTML;
+        } else if (Array.isArray(experimentData.components)) {
+            compContainer.innerHTML = '';
+            experimentData.components.forEach(comp => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${comp.name}</strong> &times; ${comp.count}`;
+                compContainer.appendChild(li);
+            });
+        }
     }
 
     // Theory

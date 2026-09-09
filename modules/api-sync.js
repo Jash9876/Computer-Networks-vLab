@@ -110,6 +110,10 @@
                             8: [
                                 '8A_TOPOLOGY_COMPLETE', '8A_IP_CONFIGURED', '8A_OSPF_CONFIGURED', '8A_CONNECTIVITY_VERIFIED',
                                 '8B_TOPOLOGY_COMPLETE', '8B_IP_CONFIGURED', '8B_OSPF_CONFIGURED', '8B_CONNECTIVITY_VERIFIED'
+                            ],
+                            9: [
+                                '9A_TOPOLOGY_COMPLETE', '9A_IP_CONFIGURED', '9A_OSPF_CONFIGURED', '9A_PPP_CHAP_CONFIGURED', '9A_CONNECTIVITY_VERIFIED',
+                                '9B_TOPOLOGY_COMPLETE', '9B_HDLC_CONFIGURED', '9B_CONNECTIVITY_VERIFIED'
                             ]
                         };
 

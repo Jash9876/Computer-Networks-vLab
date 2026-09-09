@@ -23,6 +23,10 @@ const AUTHORITATIVE_MILESTONES = {
     8: [
         '8A_TOPOLOGY_COMPLETE', '8A_IP_CONFIGURED', '8A_OSPF_CONFIGURED', '8A_CONNECTIVITY_VERIFIED',
         '8B_TOPOLOGY_COMPLETE', '8B_IP_CONFIGURED', '8B_OSPF_CONFIGURED', '8B_CONNECTIVITY_VERIFIED'
+    ],
+    9: [
+        '9A_TOPOLOGY_COMPLETE', '9A_IP_CONFIGURED', '9A_OSPF_CONFIGURED', '9A_PPP_CHAP_CONFIGURED', '9A_CONNECTIVITY_VERIFIED',
+        '9B_TOPOLOGY_COMPLETE', '9B_HDLC_CONFIGURED', '9B_CONNECTIVITY_VERIFIED'
     ]
 };
 
@@ -94,6 +98,20 @@ function resolveMilestone(expId, stage, eventType, payload) {
                 res.push('7A_CONNECTIVITY');
                 res.push('7B_CONNECTIVITY');
             }
+            break;
+        }
+        case 9: {
+            const actLower = act.toLowerCase();
+            const stgLower = stg.toLowerCase();
+            if (stgLower.includes('9a_topology') || (stgLower.includes('topology') && stgLower.includes('9a')) || (eventType === 'TOPOLOGY_VALIDATED' && stgLower.includes('9a'))) res.push('9A_TOPOLOGY_COMPLETE');
+            if (stgLower.includes('9a_ip') || (stgLower.includes('addressing') && stgLower.includes('9a')) || (eventType === 'ADDRESSING_MATCHED' && stgLower.includes('9a'))) res.push('9A_IP_CONFIGURED');
+            if (stgLower.includes('9a_ospf') || (stgLower.includes('ospf') && stgLower.includes('9a')) || (actLower.includes('router ospf') && stgLower.includes('9a'))) res.push('9A_OSPF_CONFIGURED');
+            if (stgLower.includes('9a_ppp') || actLower.includes('encapsulation ppp') || actLower.includes('ppp authentication chap') || actLower.includes('lcp open')) res.push('9A_PPP_CHAP_CONFIGURED');
+            if (stgLower.includes('9a_connectivity') || (eventType === 'PING_SUCCESS' && stgLower.includes('9a')) || (actLower.includes('ping') && stgLower.includes('9a')) || actLower.includes('packet journey') && stgLower.includes('9a')) res.push('9A_CONNECTIVITY_VERIFIED');
+
+            if (stgLower.includes('9b_topology') || (stgLower.includes('topology') && stgLower.includes('9b')) || (eventType === 'TOPOLOGY_VALIDATED' && stgLower.includes('9b'))) res.push('9B_TOPOLOGY_COMPLETE');
+            if (stgLower.includes('9b_hdlc') || actLower.includes('encapsulation hdlc') || actLower.includes('show controllers') || actLower.includes('dce v.35')) res.push('9B_HDLC_CONFIGURED');
+            if (stgLower.includes('9b_connectivity') || (eventType === 'PING_SUCCESS' && stgLower.includes('9b')) || (actLower.includes('ping') && stgLower.includes('9b'))) res.push('9B_CONNECTIVITY_VERIFIED');
             break;
         }
     }

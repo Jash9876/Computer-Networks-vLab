@@ -115,7 +115,7 @@
                 <div id="overall-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; color: #64748B;">
-                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 9</span>
+                <span>Completed Exercises: <strong id="completed-count" style="color: #1E293B;">0</strong> of 10</span>
                 <span>Active Semester: 2025–26</span>
             </div>
         </div>
@@ -239,6 +239,19 @@
                     <a href="experiment9.html" class="btn" id="btn-exp9" style="text-decoration: none;">Open Lab</a>
                 </div>
             </div>
+
+            <!-- Exp 10 -->
+            <div class="exp-card" id="card-exp10">
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color);">EXERCISE 10</div>
+                    <h4 style="margin: 0.25rem 0 0.5rem; color: #1E293B; font-size: 1.05rem;">Border Gateway Protocol (BGP) Configuration</h4>
+                    <p style="margin: 0; color: #64748B; font-size: 0.85rem;">Configure eBGP between Autonomous Systems (AS 10 &amp; AS 20), advertise customer LAN prefixes, and verify BGP tables.</p>
+                </div>
+                <div>
+                    <span class="badge" id="badge-exp10">Loading...</span>
+                    <a href="experiment10.html" class="btn" id="btn-exp10" style="text-decoration: none;">Open Lab</a>
+                </div>
+            </div>
         </div>
     <!-- Classroom Join Modal Overlay -->
     <div id="classroom-gate-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
@@ -308,6 +321,9 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         };
+
+        // Instant paint from local progression cache
+        loadAuthoritativeProgress();
 
         // Initialize User Identity
         async function fetchMe() {
@@ -398,6 +414,24 @@
             let validatedCompleted = [];
             let inProgressExpIds = [];
 
+            // 1. Check local storage progression cache first
+            try {
+                const savedProg = localStorage.getItem('vlab_progression');
+                if (savedProg) {
+                    const parsed = JSON.parse(savedProg);
+                    if (Array.isArray(parsed.completed)) {
+                        validatedCompleted = [...parsed.completed];
+                    }
+                }
+            } catch(e) {}
+
+            // Check individual experiment passed flags
+            for (let i = 1; i <= 10; i++) {
+                if (localStorage.getItem(`vlab_quiz_passed_exp_${i}`) === 'true') {
+                    if (!validatedCompleted.includes(i)) validatedCompleted.push(i);
+                }
+            }
+
             try {
                 const res = await fetch('/api/progress/get', { headers: authHeaders });
                 if (res.ok) {
@@ -405,7 +439,7 @@
                     const expList = data.experiments || data.detailedProgress || [];
 
                     if (Array.isArray(expList)) {
-                        for (let i = 1; i <= 9; i++) {
+                        for (let i = 1; i <= 10; i++) {
                             const p = expList.find(e => Number(e.experiment_id) === i);
                             if (!p) continue;
 
@@ -413,20 +447,27 @@
                             const isInProgress = !isCompleted && (p.status === 'in_progress' || (p.progress_percentage && p.progress_percentage > 0) || (Array.isArray(p.completed_milestones) && p.completed_milestones.length > 0));
 
                             if (isCompleted) {
-                                validatedCompleted.push(i);
-                            } else if (isInProgress) {
-                                inProgressExpIds.push(i);
+                                if (!validatedCompleted.includes(i)) validatedCompleted.push(i);
+                            } else if (isInProgress && !validatedCompleted.includes(i)) {
+                                if (!inProgressExpIds.includes(i)) inProgressExpIds.push(i);
                             }
                         }
-                        localStorage.setItem('vlab_progression', JSON.stringify({ completed: validatedCompleted }));
+                    }
+                    if (Array.isArray(data.completedExperiments)) {
+                        data.completedExperiments.forEach(cid => {
+                            const num = Number(cid);
+                            if (!validatedCompleted.includes(num)) validatedCompleted.push(num);
+                        });
                     }
                 }
             } catch (e) {
                 console.warn('[Dashboard] Could not fetch server progress.');
             }
 
+            localStorage.setItem('vlab_progression', JSON.stringify({ completed: validatedCompleted }));
+
             // Update UI
-            const totalExp = 9;
+            const totalExp = 10;
             const completedCount = validatedCompleted.length;
             const percent = Math.round((completedCount / totalExp) * 100);
 
@@ -438,7 +479,7 @@
             if (percentEl) percentEl.textContent = `${percent}%`;
             if (barEl) barEl.style.width = `${percent}%`;
 
-            for (let i = 1; i <= 9; i++) {
+            for (let i = 1; i <= 10; i++) {
                 const badge = document.getElementById(`badge-exp${i}`);
                 const btn   = document.getElementById(`btn-exp${i}`);
                 if (!badge) continue;
@@ -488,8 +529,8 @@
             localStorage.removeItem('vlab_progression');
             sessionStorage.clear();
 
-            // Clear all experiment observation caches (1 to 9)
-            for (let i = 1; i <= 9; i++) {
+            // Clear all experiment observation caches (1 to 10)
+            for (let i = 1; i <= 10; i++) {
                 localStorage.removeItem(`vlab_obs_exp_${i}`);
                 localStorage.removeItem(`vlab_score_exp${i}`);
             }

@@ -9,11 +9,24 @@ const experimentData = {
         "Analyze hop-by-hop packet forwarding behavior using Ping (ICMP) and Traceroute (tracert)."
     ],
     theory: `
-        <h3>1. Concept of Routing</h3>
+        <h3>1. Required Hardware / Software Components</h3>
+        <p>The following hardware and software components are utilized for demonstrating static and default routing across WAN links:</p>
+
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; max-width: 550px;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1E293B; font-size: 0.95rem; font-weight: 700;">Exercise 5 Components List</h4>
+            <ul style="margin-left: 1.25rem; margin-top: 0.25rem; margin-bottom: 0; font-size: 0.9rem; color: #334155;">
+                <li><strong>PC</strong> &times; 4 (PC0, PC1, PC2, PC3)</li>
+                <li><strong>Router</strong> &times; 2 (Cisco 1841 / 2811 with WIC-2T / HWIC-2T Serial module)</li>
+                <li><strong>Copper Cross-over Cable</strong> &times; 4 (PC to Router direct connections)</li>
+                <li><strong>Serial Cable (DCE &ndash; DTE)</strong> &times; 1 (Router0 Serial to Router1 Serial)</li>
+            </ul>
+        </div>
+
+        <h3>2. Concept of Routing</h3>
         <p>A router is a Layer 3 internetworking device that connects different subnets or networks. By default, a router only knows about networks that are <strong>directly connected</strong> to its active interfaces.</p>
         <p>To reach remote networks that are not directly connected, a router must be provided with routing information through either <strong>Static Routing</strong>, <strong>Default Routing</strong>, or <strong>Dynamic Routing protocols</strong>.</p>
 
-        <h3>2. Addressing Scheme & /27 Subnetting</h3>
+        <h3>3. Addressing Scheme & /27 Subnetting</h3>
         <p>In this experiment, the <code>192.168.10.0</code> network is divided into five <code>/27</code> subnets using the subnet mask <code>255.255.255.224</code> (block size = 32):</p>
         <table style="width:100%; border-collapse:collapse; margin-top:1rem; text-align:left;">
             <thead>
@@ -64,7 +77,7 @@ const experimentData = {
             </tbody>
         </table>
 
-        <h3>3. Static Routing</h3>
+        <h3>4. Static Routing</h3>
         <p>Static routing involves manually defining routing entries in the router's routing table specifying how to reach remote subnets.</p>
         <p><strong>Cisco Command Syntax:</strong></p>
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router(config)# ip route &lt;Destination_Network&gt; &lt;Subnet_Mask&gt; &lt;Next_Hop_IP&gt;</pre>
@@ -72,19 +85,19 @@ const experimentData = {
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router0(config)# ip route 192.168.10.96 255.255.255.224 192.168.10.66
 Router0(config)# ip route 192.168.10.128 255.255.255.224 192.168.10.66</pre>
 
-        <h3>4. Return Path Requirement</h3>
+        <h3>5. Return Path Requirement</h3>
         <p>Routing is inherently bidirectional. A packet cannot successfully be acknowledged if the destination router does not have a route back to the sender. Router1 must be configured with return static routes pointing to Router0's serial interface (<code>192.168.10.65</code>):</p>
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router1(config)# ip route 192.168.10.0 255.255.255.224 192.168.10.65
 Router1(config)# ip route 192.168.10.32 255.255.255.224 192.168.10.65</pre>
 
-        <h3>5. Default Routing (Quad-Zero Route)</h3>
+        <h3>6. Default Routing (Quad-Zero Route)</h3>
         <p>A <strong>Default Route</strong> (also known as Gateway of Last Resort) matches all packets that do not match any other specific route in the routing table.</p>
         <p>It is represented by the address <code>0.0.0.0</code> and mask <code>0.0.0.0</code> (or <code>0.0.0.0/0</code>). When multiple remote networks exist behind a single neighboring gateway (stub router environment), a single default route can replace multiple individual static routes.</p>
         <p><strong>Cisco Command Syntax:</strong></p>
         <pre style="background:#1F2937; color:#10B981; padding:1rem; border-radius:6px; font-size:0.85rem; overflow-x:auto;">Router0(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.66
 Router1(config)# ip route 0.0.0.0 0.0.0.0 192.168.10.65</pre>
 
-        <h3>6. Verification Tools: Ping vs Traceroute</h3>
+        <h3>7. Verification Tools: Ping vs Traceroute</h3>
         <ul>
             <li><strong>ping (ICMP Echo):</strong> Tests end-to-end round-trip connectivity between source and destination.</li>
             <li><strong>tracert (Traceroute):</strong> Identifies every intermediate layer 3 router hop along the path to the destination by sending packets with incrementing TTL (Time-To-Live) values.</li>

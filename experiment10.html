@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Lab: Computer Networks - Exercise 10</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="modules/device-gate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+</head>
+<body>
+    <header style="background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <a href="dashboard.html"><img src="assets/images/srm-logo.png" alt="SRM Logo" style="height: 46px; object-fit: contain;"></a>
+            <div style="border-left: 2px solid #E2E8F0; padding-left: 1rem;">
+                <h1 style="font-size: 1.2rem; margin: 0; color: #1E293B;">Virtual Laboratory</h1>
+                <div class="subtitle" style="font-size: 0.8rem; color: #64748B;">Computer Networks Lab &bull; Exercise 10</div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="dashboard.html" style="font-size: 0.85rem; color: var(--accent-color); font-weight: 600; text-decoration: none;">&larr; Dashboard</a>
+            <span style="font-size: 1.1rem; font-weight: bold; color: var(--primary-color); background: #EFF6FF; padding: 0.3rem 0.8rem; border-radius: 6px;">Exercise 10</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="nav-item active" data-target="aim">
+                <i data-lucide="target"></i> Aim
+            </div>
+            <div class="nav-item" data-target="theory">
+                <i data-lucide="book-open"></i> Theory
+            </div>
+            <div class="nav-item" data-target="procedure">
+                <i data-lucide="clipboard-list"></i> Procedure
+            </div>
+            <div class="nav-item" data-target="simulation">
+                <i data-lucide="play-circle"></i> Simulation
+            </div>
+            <div class="nav-item" data-target="observation">
+                <i data-lucide="eye"></i> Observation
+            </div>
+            <div class="nav-item" data-target="quiz">
+                <i data-lucide="help-circle"></i> Quiz
+            </div>
+            <div class="nav-item" data-target="result">
+                <i data-lucide="check-square"></i> Result
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Aim Section -->
+            <section id="aim" class="section active">
+                <div class="card">
+                    <h2 class="section-title">Aim</h2>
+                    <div id="aim-text" style="margin-bottom: 1.5rem;">Loading...</div>
+                    
+                    <h3 style="margin-bottom: 0.75rem;">Objectives</h3>
+                    <ul id="objectives-list" style="margin-left: 2rem; margin-bottom: 1rem;">
+                        <li>Loading objectives...</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Theory Section -->
+            <section id="theory" class="section">
+                <div class="card">
+                    <h2 class="section-title">Theory</h2>
+                    <div id="theory-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="section">
+                <div class="card">
+                    <h2 class="section-title">Procedure</h2>
+                    <div id="procedure-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Simulation Section -->
+            <section id="simulation" class="section">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+                        <div>
+                            <h2 class="section-title" style="margin-bottom:0.25rem;">Interactive Border Gateway Protocol (BGP) Simulation</h2>
+                            <p style="color:#64748B; font-size:0.9rem; margin:0;">Configure eBGP between Autonomous Systems (AS 10 &amp; AS 20), inspect BGP tables, and test route withdrawal.</p>
+                        </div>
+                        <div id="bgp-peering-status-badge" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:0.35rem 0.8rem; border-radius:6px; font-size:0.85rem; font-weight:600;">
+                            ○ BGP Peering: Idle / Down
+                        </div>
+                    </div>
+
+                    <div class="sim-container">
+                        <!-- STAGE 1: Topology Construction -->
+                        <div class="card" id="stage1-topo-card">
+                            <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                <span style="background:var(--primary-color); color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 1</span>
+                                Autonomous Systems Topology Builder
+                            </h3>
+                            <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.75rem;">
+                                Place <strong>4 PCs</strong>, <strong>2 Switches</strong>, and <strong>2 Routers</strong>. Connect PC0/PC1 to Switch0 and Switch0 to Router0 using <strong>Straight-Through</strong> cables (AS 10). Connect PC2/PC3 to Switch1 and Switch1 to Router1 (AS 20). Connect Router0 to Router1 using a <strong>Copper Cross-Over</strong> cable.
+                            </p>
+
+                            <div class="dnd-container" style="flex-direction: column;">
+                                <!-- Device Palette -->
+                                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;" id="topo-tools">
+                                    <div class="draggable-item" draggable="true" id="node-pc" data-type="PC" data-icon="pc" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                        <img src="assets/icons/pc.svg" width="28" height="28" alt="PC"><br><span style="font-size:0.72rem; font-weight:600;">PC</span>
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-switch" data-type="Switch" data-icon="switch" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                        <img src="assets/icons/switch.svg" width="28" height="28" alt="Switch"><br><span style="font-size:0.72rem; font-weight:600;">Switch</span>
+                                    </div>
+                                    <div class="draggable-item" draggable="true" id="node-router" data-type="Router" data-icon="router" style="min-width:64px; padding:0.5rem 0.65rem; text-align:center; cursor:grab; border:2px solid var(--primary-color); border-radius:6px; background:white;">
+                                        <img src="assets/icons/router.svg" width="28" height="28" alt="Router"><br><span style="font-size:0.72rem; font-weight:600;">Router</span>
+                                    </div>
+                                    <div style="border-left: 2px solid var(--border-color); height: 50px; margin: 0 0.5rem;"></div>
+                                    <button class="btn" id="connect-mode-btn" style="background-color: var(--secondary-color); font-size:0.85rem;">
+                                        <i data-lucide="link"></i> Enable Connect Mode
+                                    </button>
+                                    <select id="cable-type-select" style="padding: 0.45rem 0.6rem; font-family: inherit; font-size:0.85rem; border:1px solid #CBD5E1; border-radius:4px;">
+                                        <option value="straight">Copper Straight-Through</option>
+                                        <option value="crossover">Copper Cross-over</option>
+                                    </select>
+                                    <button class="btn" id="delete-mode-btn" style="background-color: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-size:0.85rem;">
+                                        <i data-lucide="trash-2"></i> Delete Tool
+                                    </button>
+                                </div>
+
+                                <!-- Topology Canvas with AS 10 (Pink) & AS 20 (Green) Visual Boundaries -->
+                                <div class="topology-canvas" id="topology-canvas" style="position: relative; min-height: 400px; margin-top: 0.75rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+                                    <!-- Visual Autonomous System Domains -->
+                                    <div style="position:absolute; left:2%; top:8%; width:46%; height:84%; background:rgba(253, 242, 248, 0.7); border:2px dashed #F472B6; border-radius:12px; pointer-events:none; z-index:0;">
+                                        <span style="position:absolute; top:8px; left:12px; background:#EC4899; color:white; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:4px;">Autonomous System: AS 10</span>
+                                        <span style="position:absolute; bottom:8px; left:12px; color:#BE185D; font-size:0.75rem; font-weight:600;">Customer LAN: 192.168.10.0/24</span>
+                                    </div>
+                                    <div style="position:absolute; right:2%; top:8%; width:46%; height:84%; background:rgba(240, 253, 244, 0.7); border:2px dashed #4ADE80; border-radius:12px; pointer-events:none; z-index:0;">
+                                        <span style="position:absolute; top:8px; right:12px; background:#10B981; color:white; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:4px;">Autonomous System: AS 20</span>
+                                        <span style="position:absolute; bottom:8px; right:12px; color:#047857; font-size:0.75rem; font-weight:600;">Customer LAN: 192.168.20.0/24</span>
+                                    </div>
+                                    <svg class="connection-layer" id="connection-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem; align-items: center; flex-wrap: wrap;">
+                                    <button class="btn" id="check-topology-btn" style="background:var(--primary-color); color:white; padding:0.4rem 1rem;">Check Topology</button>
+                                    <button class="btn" id="reset-topology" style="background-color: var(--secondary-color); padding:0.4rem 1rem;">Reset Canvas</button>
+                                </div>
+                                <p id="topology-feedback" style="margin-top: 0.5rem; font-weight: bold; font-size:0.9rem;"></p>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 2: IP Addressing Table Modal / Card -->
+                        <div class="card" id="stage2-addressing-card" style="display:none; margin-top:1.25rem;">
+                            <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                <span style="background:#059669; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 2</span>
+                                End Device Addressing Configuration
+                            </h3>
+                            <p style="font-size:0.875rem; color:#64748B; margin-bottom:0.5rem;">
+                                Double-click each PC on the canvas (or use the quick table below) to configure its IP Address, Subnet Mask, and Default Gateway as specified in the lab manual.
+                            </p>
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left; margin-top:0.5rem;">
+                                    <thead>
+                                        <tr style="background:#F1F5F9; border-bottom:2px solid #CBD5E1;">
+                                            <th style="padding:0.5rem;">Device</th>
+                                            <th style="padding:0.5rem;">IP Address</th>
+                                            <th style="padding:0.5rem;">Subnet Mask</th>
+                                            <th style="padding:0.5rem;">Default Gateway</th>
+                                            <th style="padding:0.5rem;">AS Domain</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.5rem;"><strong>PC0</strong></td><td style="padding:0.5rem;"><code>192.168.10.2</code></td><td style="padding:0.5rem;"><code>255.255.255.0</code></td><td style="padding:0.5rem;"><code>192.168.10.1</code></td><td style="padding:0.5rem; color:#EC4899; font-weight:600;">AS 10</td></tr>
+                                        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.5rem;"><strong>PC1</strong></td><td style="padding:0.5rem;"><code>192.168.10.3</code></td><td style="padding:0.5rem;"><code>255.255.255.0</code></td><td style="padding:0.5rem;"><code>192.168.10.1</code></td><td style="padding:0.5rem; color:#EC4899; font-weight:600;">AS 10</td></tr>
+                                        <tr style="border-bottom:1px solid #E2E8F0;"><td style="padding:0.5rem;"><strong>PC2</strong></td><td style="padding:0.5rem;"><code>192.168.20.2</code></td><td style="padding:0.5rem;"><code>255.255.255.0</code></td><td style="padding:0.5rem;"><code>192.168.20.1</code></td><td style="padding:0.5rem; color:#10B981; font-weight:600;">AS 20</td></tr>
+                                        <tr><td style="padding:0.5rem;"><strong>PC3</strong></td><td style="padding:0.5rem;"><code>192.168.20.3</code></td><td style="padding:0.5rem;"><code>255.255.255.0</code></td><td style="padding:0.5rem;"><code>192.168.20.1</code></td><td style="padding:0.5rem; color:#10B981; font-weight:600;">AS 20</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top:0.75rem;">
+                                <button class="btn" id="validate-addressing-btn" style="background:#059669; color:white; padding:0.4rem 0.8rem; font-size:0.85rem;">Validate Addressing</button>
+                                <span id="addressing-feedback" style="margin-left:0.75rem; font-weight:600; font-size:0.85rem;"></span>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 3: Dual-Router Cisco IOS CLI -->
+                        <div class="card" id="stage3-cli-card" style="display:none; margin-top:1.25rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+                                <h3 style="margin:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                    <span style="background:#2563EB; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 3</span>
+                                    Dual-Router BGP Cisco IOS CLI
+                                </h3>
+                                <!-- Router Tab Switcher -->
+                                <div style="display:flex; gap:0.35rem;">
+                                    <button id="tab-btn-r0" class="btn" style="background:#2563EB; color:white; padding:0.3rem 0.75rem; font-size:0.8rem; border-radius:4px;">Router0 (AS 10)</button>
+                                    <button id="tab-btn-r1" class="btn" style="background:#F1F5F9; color:#334155; padding:0.3rem 0.75rem; font-size:0.8rem; border-radius:4px;">Router1 (AS 20)</button>
+                                </div>
+                            </div>
+                            <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.5rem;">
+                                Configure GigabitEthernet IP addresses and BGP on both routers using the prompt below. Authentic Cisco IOS syslog notices (<code>%BGP-5-ADJCHANGE</code>) will appear as peering establishes.
+                            </p>
+
+                            <!-- Router0 CLI Panel -->
+                            <div id="cli-panel-r0" style="display:block;">
+                                <div style="background:#0F172A; border-radius:6px; padding:0.75rem; font-family:'Courier New', monospace;">
+                                    <div id="cli-output-router0" style="min-height:220px; max-height:260px; overflow-y:auto; color:#60A5FA; font-size:0.82rem; white-space:pre-wrap; margin-bottom:0.5rem;">Router0 (AS 10) Cisco IOS Software, 2900 Software (C2900-UNIVERSALK9-M).
+Press RETURN to get started!
+
+Router></div>
+                                    <div style="display:flex; align-items:center; gap:0.35rem; border-top:1px solid #334155; padding-top:0.4rem;">
+                                        <span id="cli-prompt-router0" style="color:#38BDF8; font-size:0.82rem; font-weight:bold;">Router></span>
+                                        <input type="text" id="cli-input-router0" placeholder="Type Cisco IOS command (e.g. enable, conf t, router bgp 10)..." style="flex:1; background:transparent; border:none; outline:none; color:#38BDF8; font-family:'Courier New', monospace; font-size:0.82rem;" autocomplete="off" spellcheck="false">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Router1 CLI Panel -->
+                            <div id="cli-panel-r1" style="display:none;">
+                                <div style="background:#0F172A; border-radius:6px; padding:0.75rem; font-family:'Courier New', monospace;">
+                                    <div id="cli-output-router1" style="min-height:220px; max-height:260px; overflow-y:auto; color:#60A5FA; font-size:0.82rem; white-space:pre-wrap; margin-bottom:0.5rem;">Router1 (AS 20) Cisco IOS Software, 2900 Software (C2900-UNIVERSALK9-M).
+Press RETURN to get started!
+
+Router></div>
+                                    <div style="display:flex; align-items:center; gap:0.35rem; border-top:1px solid #334155; padding-top:0.4rem;">
+                                        <span id="cli-prompt-router1" style="color:#38BDF8; font-size:0.82rem; font-weight:bold;">Router></span>
+                                        <input type="text" id="cli-input-router1" placeholder="Type Cisco IOS command (e.g. enable, conf t, router bgp 20)..." style="flex:1; background:transparent; border:none; outline:none; color:#38BDF8; font-family:'Courier New', monospace; font-size:0.82rem;" autocomplete="off" spellcheck="false">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 4: BGP Table & Prefix Inspector -->
+                        <div class="card" id="stage4-inspector-card" style="display:none; margin-top:1.25rem;">
+                            <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                <span style="background:#7C3AED; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 4</span>
+                                BGP Table &amp; Path-Vector Prefix Inspector
+                            </h3>
+                            <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                Live real-time inspection of the BGP database (<code>show ip bgp</code>) across Autonomous Systems. Notice the AS-Path attribute prepended to learned customer prefixes.
+                            </p>
+                            <div id="bgp-inspector-content">
+                                <!-- Populated dynamically by logic -->
+                            </div>
+                        </div>
+
+                        <!-- STAGE 5: Live Fault Injection (Link Failure & Withdrawal) -->
+                        <div class="card" id="stage5-failure-card" style="display:none; margin-top:1.25rem; border:1px solid #FDE68A; background:#FFFDF7;">
+                            <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#92400E;">
+                                <span style="background:#D97706; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 5</span>
+                                🧪 BGP Link Failure &amp; Route Withdrawal Simulator
+                            </h3>
+                            <p style="font-size:0.85rem; color:#78350F; margin-bottom:0.75rem;">
+                                Test how BGP dynamically reacts when an inter-AS physical link drops. Toggling the link down breaks the TCP session, triggering authentic Cisco interface flap syslog messages and withdrawing the remote AS routes.
+                            </p>
+                            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                                <button id="btn-toggle-wan-link" class="btn" style="background:#DC2626; color:white; padding:0.45rem 1rem; font-size:0.85rem;">⚡ Simulate WAN Link Down (Gig0/1)</button>
+                                <span id="wan-link-status-text" style="font-size:0.85rem;"><span style="color:#059669; font-weight:bold;">● Link State: UP (GigabitEthernet0/1 Active)</span></span>
+                            </div>
+                        </div>
+
+                        <!-- STAGE 6: End-to-End Ping Simulation -->
+                        <div class="card" id="stage6-ping-card" style="display:none; margin-top:1.25rem;">
+                            <h3 style="margin-top:0; display:flex; align-items:center; gap:0.5rem; font-size:1rem; color:#0F172A;">
+                                <span style="background:#0284C7; color:white; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:4px;">STAGE 6</span>
+                                Cross-Autonomous System Ping &amp; Packet Simulation
+                            </h3>
+                            <p style="font-size:0.85rem; color:#64748B; margin-bottom:0.75rem;">
+                                Transmit ICMP Echo Requests from <strong>PC0 (192.168.10.2 in AS 10)</strong> across the eBGP WAN boundary to <strong>PC3 (192.168.20.3 in AS 20)</strong>.
+                            </p>
+                            <button id="btn-run-ping" class="btn" style="background:#0284C7; color:white; padding:0.45rem 1rem; font-size:0.85rem;">Run Cross-AS Ping (PC0 &rarr; PC3)</button>
+                            <pre id="ping-output" style="background:#0F172A; color:#38BDF8; padding:0.75rem; border-radius:6px; font-size:0.82rem; margin-top:0.75rem; min-height:80px; white-space:pre-wrap;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Observation Section -->
+            <section id="observation" class="section">
+                <div class="card">
+                    <h2 class="section-title">Observation</h2>
+                    <p>Based on the simulation modules, the following observations were recorded:</p>
+                    <div id="observation-content">
+                        <!-- Populated dynamically by script.js -->
+                    </div>
+                    <button class="btn" id="export-csv" style="margin-top: 1rem; display: none;">Export as CSV</button>
+                </div>
+            </section>
+
+            <!-- Quiz Section -->
+            <section id="quiz" class="section">
+                <div class="card">
+                    <h2 class="section-title">Viva Evaluation</h2>
+                    <p style="font-size:0.9rem; color:#64748B; margin-bottom:1rem;">Answer the questions below to test your understanding. A minimum score of <strong>70%</strong> is required for Academic Certification.</p>
+                    <div id="quiz-container">Loading quiz questions...</div>
+                    <button class="btn" id="submit-quiz" style="margin-top: 1.5rem; background-color: #2563EB; color: white;">Submit Quiz</button>
+                    <div id="quiz-results" class="quiz-results" style="margin-top: 1rem; display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section id="result" class="section">
+                <div class="card">
+                    <h2 class="section-title">Result</h2>
+                    <div id="result-text" style="line-height: 1.8;">
+                        <p>Complete the practical simulation and viva evaluation to view your finalized laboratory result.</p>
+                    </div>
+                    <button class="btn" id="view-cert-btn" style="margin-top: 1.5rem; display: none; background-color: #059669; color: white;">
+                        <i data-lucide="award"></i> View Academic Certificate
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- PC Modal Configuration -->
+    <div id="pc-modal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div class="modal-card" style="background:white; border-radius:8px; padding:1.5rem; max-width:420px; width:90%; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h3 id="pc-modal-title" style="margin-top:0; color:#1E293B; font-size:1.1rem;">Configure IP Address</h3>
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#64748B; margin-bottom:0.25rem;">IP Address</label>
+                <input type="text" id="pc-modal-ip" placeholder="e.g. 192.168.10.2" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; font-size:0.85rem;">
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#64748B; margin-bottom:0.25rem;">Subnet Mask</label>
+                <input type="text" id="pc-modal-mask" placeholder="e.g. 255.255.255.0" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; font-size:0.85rem;">
+            </div>
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#64748B; margin-bottom:0.25rem;">Default Gateway</label>
+                <input type="text" id="pc-modal-gateway" placeholder="e.g. 192.168.10.1" style="width:100%; padding:0.45rem 0.6rem; border:1px solid #CBD5E1; border-radius:4px; font-family:monospace; font-size:0.85rem;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn" id="pc-modal-cancel" style="background:#F1F5F9; color:#334155; padding:0.4rem 0.8rem; font-size:0.85rem;">Cancel</button>
+                <button class="btn" id="pc-modal-save" style="background:var(--primary-color); color:white; padding:0.4rem 0.8rem; font-size:0.85rem;">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; width: 800px; max-width: 90%; text-align: center; border: 10px solid #005BAC; position: relative;">
+            <button id="close-cert" style="position: absolute; top: 10px; right: 10px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            <div id="cert-content" style="padding: 2rem; border: 2px solid #E5E7EB;">
+                <h1 style="color: #005BAC; margin-bottom: 1rem; font-family: serif; font-size: 2.5rem;">CERTIFICATE</h1>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Computer Networks Virtual Lab</p>
+                <p>This certifies that</p>
+                <h2 id="cert-name" style="margin: 1rem 0; font-size: 2rem; color: #1F2937;">Student</h2>
+                <p>has successfully completed</p>
+                <h3 style="margin: 1rem 0; color: #3B82F6;">Exercise 10</h3>
+                <p style="margin-bottom: 2rem;">Configuration of Border Gateway Protocol (BGP)</p>
+
+                <div style="display: flex; justify-content: space-around; margin-top: 3rem;">
+                    <div>
+                        <p><strong>Score:</strong> <span id="cert-score">100%</span></p>
+                        <p><strong>Attempt:</strong> <span id="cert-attempt">1</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Certificate ID:</strong> <span id="cert-code" style="font-family:monospace; color:#2563EB;">CNVL-2026-10-0386-7635</span></p>
+                        <p style="border-top: 1px solid black; padding-top: 0.5rem; margin-top: 2rem;">Instructor Signature</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="print-cert" style="margin-top: 1.5rem; background:#005BAC; color:white;">Print Certificate</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="modules/api-sync.js?v=5"></script>
+    <script src="modules/platform-manager.js?v=5"></script>
+    <script src="data/experiment10.js?v=5"></script>
+    <script src="modules/experiment10-logic.js?v=5"></script>
+    <script src="script.js?v=5"></script>
+    <script>
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>
